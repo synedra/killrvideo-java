@@ -4,9 +4,14 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.Callable;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import javax.inject.Inject;
 
@@ -129,7 +134,15 @@ public class DseConfiguration {
      *      current configuration
      */
     private void populateContactPoints(Builder clusterConfig)  {
+        final Lock lock = new ReentrantLock();
+        final Condition notEmpty = lock.newCondition();
+
+        lock.lock();
         try {
+            while (etcdClient.listDir("/killrvideo/services/cassandra") == null)
+                notEmpty.await(10, TimeUnit.SECONDS);
+
+            notEmpty.signal();
             etcdClient.listDir("/killrvideo/services/cassandra")
                       .stream()
                       .forEach(node -> asSocketInetAdress(node.value)
@@ -140,6 +153,12 @@ public class DseConfiguration {
              * If ETCD is not setup yet we must retry.
              */
             throw new IllegalArgumentException("Cannot retrieve cassandra cluster information from ETCD", e);
+
+        } catch (InterruptedException ie) {
+            throw new IllegalArgumentException("Get cassandra from ETCD interrupted", ie);
+
+        } finally {
+            lock.unlock();
         }
     }
     

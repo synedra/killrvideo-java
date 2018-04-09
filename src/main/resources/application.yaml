@@ -31,6 +31,6 @@ killrvideo:
   cassandra:
     clustername: killrvideo
     mutation-error-log: /tmp/killrvideo-mutation-errors.log
-    maxNumberOfTries: 10
+    maxNumberOfTries: 100
     delayBetweenTries: 2
     

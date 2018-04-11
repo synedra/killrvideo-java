@@ -57,13 +57,14 @@ services:
       KILLRVIDEO_CASSANDRA_REPLICATION: $KILLRVIDEO_CASSANDRA_REPLICATION
       KILLRVIDEO_LOGGING_LEVEL: $KILLRVIDEO_LOGGING_LEVEL
     
+
   # DataStax Enterprise
   # configure this as the seed node
   # start with search and graph modes enabled ("-s -g")
   dse:
+    hostname: solution-day-node1
     image: datastax-docker-images.jfrog.io/datastax/dse-server:6.0.0-eap2
-    hostname: solution_day_node
-    command: [ -s -g -k ]
+    command: [ -s -g ]
     ports:
     - "9042:9042"
     - "8983:8983"
@@ -73,7 +74,23 @@ services:
     environment:
       DS_LICENSE: accept
       NUM_TOKENS: 32
-      CLUSTER_NAME: "Totally Awesome Cluster"
+    # Allow DSE to lock memory with mlock
+    cap_add:
+    - IPC_LOCK
+    ulimits:
+      memlock: -1
+
+  dse_node_2:
+    hostname: solution-day-node2
+    image: datastax-docker-images.jfrog.io/datastax/dse-server:6.0.0-eap2
+    command: [ -s -g ]
+    links:
+    - opscenter
+    - dse
+    environment:
+      DS_LICENSE: accept
+      SEEDS: dse
+      NUM_TOKENS: 32
     # Allow DSE to lock memory with mlock
     cap_add:
     - IPC_LOCK

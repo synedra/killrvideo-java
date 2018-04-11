@@ -74,6 +74,7 @@ services:
     environment:
       DS_LICENSE: accept
       NUM_TOKENS: 32
+      CLUSTER_NAME: "Totally Awesome Cluster"
     # Allow DSE to lock memory with mlock
     cap_add:
     - IPC_LOCK
@@ -91,6 +92,7 @@ services:
       DS_LICENSE: accept
       SEEDS: dse
       NUM_TOKENS: 32
+      CLUSTER_NAME: "Totally Awesome Cluster"
     # Allow DSE to lock memory with mlock
     cap_add:
     - IPC_LOCK

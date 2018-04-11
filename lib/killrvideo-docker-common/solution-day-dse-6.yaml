@@ -62,6 +62,7 @@ services:
   # start with search and graph modes enabled ("-s -g")
   dse:
     image: datastax-docker-images.jfrog.io/datastax/dse-server:6.0.0-eap2
+    hostname: solution_day_node
     command: [ -s -g ]
     ports:
     - "9042:9042"
@@ -72,6 +73,7 @@ services:
     environment:
       DS_LICENSE: accept
       NUM_TOKENS: 32
+      CLUSTER_NAME: "Totally Awesome Cluster"
     # Allow DSE to lock memory with mlock
     cap_add:
     - IPC_LOCK

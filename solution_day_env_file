@@ -1,0 +1,12 @@
+COMPOSE_PROJECT_NAME=killrvideo
+#COMPOSE_FILE=./lib/killrvideo-docker-common/docker-compose.yaml:./docker-compose.yaml
+#COMPOSE_FILE=./lib/killrvideo-docker-common/docker-compose-killrvideo-dse-config.yaml:./docker-compose.yaml
+#COMPOSE_FILE=./lib/killrvideo-docker-common/docker-compose-killrvideo-dse-config.yaml:./docker-compose.yaml:./lib/killrvideo-docker-common/extras/docker-compose-server.yaml
+COMPOSE_FILE=./lib/killrvideo-docker-common/solution-day-dse-6-multi.yaml:./lib/killrvideo-docker-common/extras/docker-compose-server.yaml
+KILLRVIDEO_DOCKER_TOOLBOX=false
+KILLRVIDEO_HOST_IP=10.0.75.1
+KILLRVIDEO_DOCKER_IP=10.0.75.1
+#KILLRVIDEO_DSE_EXTERNAL_IP=54.193.5.106
+KILLRVIDEO_CASSANDRA_REPLICATION={'class' : 'NetworkTopologyStrategy', 'SearchGraph' : 2}
+KILLRVIDEO_GRAPH_REPLICATION={'class' : 'NetworkTopologyStrategy', 'SearchGraph' : 2}
+NODE_ENV=killrvideo-cloud

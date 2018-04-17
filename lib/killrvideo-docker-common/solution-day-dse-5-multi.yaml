@@ -61,7 +61,7 @@ services:
   # configure this as the seed node
   # start with search and graph modes enabled ("-s -g")
   dse:
-    image: store/datastax/dse-server:5.1.5
+    image: datastax/dse-server:5.1.5
     command: [ -s -g ]
     ports:
     - "9042:9042"
@@ -78,22 +78,22 @@ services:
     ulimits:
       memlock: -1
 
-  #dse_node_2:
-  #  image: store/datastax/dse-server:5.1.5
-  #  command: [ -s -g ]
-  #  links:
-  #  - opscenter
-  #  environment:
-  #    DS_LICENSE: accept
-  #    SEEDS: dse
-  #    NUM_TOKENS: 32
-  #  links:
-  #    - dse
-  #  # Allow DSE to lock memory with mlock
-  #  cap_add:
-  #  - IPC_LOCK
-  #  ulimits:
-  #    memlock: -1
+  dse_node_2:
+    image: store/datastax/dse-server:5.1.5
+    command: [ -s -g ]
+    links:
+    - opscenter
+    environment:
+      DS_LICENSE: accept
+      SEEDS: dse
+      NUM_TOKENS: 32
+    links:
+      - dse
+    # Allow DSE to lock memory with mlock
+    cap_add:
+    - IPC_LOCK
+    ulimits:
+      memlock: -1
 
   # Container to load KillrVideo schema and search config into DSE
   # Provides options to configure secure users as well
@@ -110,7 +110,7 @@ services:
   # One instance of DataStax Studio
   studio:
     #image: killrvideo/killrvideo-studio:2.0.0
-    image: datastax-docker-images.jfrog.io/datastax/dse-studio:6.0.0-eap2
+    image: datastax/dse-studio:6.0.0
     ports:
     # The Web UI exposed to our host
     - "9091:9091"
@@ -124,9 +124,7 @@ services:
 
   # OpsCenter
   opscenter:
-    #image: datastax-docker-images.jfrog.io/datastax/dse-opscenter:6.5.0-eap2
-    #image: datastax/datastax-enterprise-opscenter:6.1.3
-    image: datastax/dse-opscenter
+    image: datastax/dse-opscenter:6.1.6
     ports:
     - "8888:8888"
     environment:

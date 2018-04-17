@@ -61,7 +61,7 @@ services:
   # configure this as the seed node
   # start with search and graph modes enabled ("-s -g")
   dse:
-    image: datastax-docker-images.jfrog.io/datastax/dse-server:6.0.0-eap2
+    image: datastax/dse-server:6.0.0
     hostname: solution_day_node
     command: [ -s -g -k ]
     ports:
@@ -94,7 +94,7 @@ services:
 
   # One instance of DataStax Studio
   studio:
-    image: datastax-docker-images.jfrog.io/datastax/dse-studio:6.0.0-eap2
+    image: datastax/dse-studio:6.0.0
     ports:
     # The Web UI exposed to our host
     - "9091:9091"
@@ -108,7 +108,7 @@ services:
 
   # OpsCenter
   opscenter:
-    image: datastax-docker-images.jfrog.io/datastax/dse-opscenter:6.5.0-eap2
+    image: datastax/dse-opscenter:6.5.0
     ports:
     - "8888:8888"
     environment:

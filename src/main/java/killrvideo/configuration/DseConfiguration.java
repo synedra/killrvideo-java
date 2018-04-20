@@ -140,7 +140,7 @@ public class DseConfiguration {
         lock.lock();
         try {
             while (etcdClient.listDir("/killrvideo/services/cassandra") == null)
-                notEmpty.await(10, TimeUnit.SECONDS);
+                notEmpty.await(20, TimeUnit.SECONDS);
 
             notEmpty.signal();
             etcdClient.listDir("/killrvideo/services/cassandra")

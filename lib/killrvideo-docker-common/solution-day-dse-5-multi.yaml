@@ -79,7 +79,7 @@ services:
       memlock: -1
 
   dse_node_2:
-    image: store/datastax/dse-server:5.1.5
+    image: datastax/dse-server:5.1.5
     command: [ -s -g ]
     links:
     - opscenter

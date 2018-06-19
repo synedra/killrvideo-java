@@ -102,7 +102,7 @@ public class SuggestedVideosService extends SuggestedVideoServiceImplBase {
                 QueryBuilder
                         .select().all()
                         .from(Schema.KEYSPACE, videosTableName)
-                        .where(QueryBuilder.eq("solr_query", QueryBuilder.bindMarker())).limit(100)
+                        .where(QueryBuilder.eq("solr_query", QueryBuilder.bindMarker()))
         ).setConsistencyLevel(ConsistencyLevel.LOCAL_ONE);
     }
 
@@ -178,11 +178,11 @@ public class SuggestedVideosService extends SuggestedVideoServiceImplBase {
             LOGGER.debug("delimitedTermList is : " + delimitedTermList);
 
             solrQuery
-                    //.append(pagingDriverStart)
+                    .append(pagingDriverStart)
                     .append("name:").append(delimitedTermList).append(space)
                     .append("tags:").append(delimitedTermList).append(space)
-                    .append("description:").append(delimitedTermList);
-                    //.append(pagingDriverEnd);
+                    .append("description:").append(delimitedTermList)
+                    .append(pagingDriverEnd);
 
             LOGGER.debug("getRelatedVideos() solr_query is : " + solrQuery);
             final BoundStatement statement = getRelatedVideos_getVideosPrepared.bind()

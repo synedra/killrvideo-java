@@ -1,8 +1,16 @@
 package killrvideo.configuration;
 
+import java.io.BufferedInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStream;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
+import java.security.KeyStore;
+import java.security.SecureRandom;
+import java.security.cert.CertificateFactory;
+import java.security.cert.X509Certificate;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Optional;
@@ -10,6 +18,9 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
+import com.datastax.driver.core.*;
+import io.netty.handler.ssl.SslContextBuilder;
+import io.netty.handler.ssl.SslProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,7 +28,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import com.datastax.driver.core.AuthProvider;
 import com.datastax.driver.dse.DseCluster.Builder;
 import com.datastax.driver.dse.DseSession;
 import com.datastax.driver.dse.auth.DsePlainTextAuthProvider;
@@ -31,6 +41,10 @@ import com.evanlennick.retry4j.config.RetryConfigBuilder;
 
 import killrvideo.dao.EtcdDao;
 import killrvideo.graph.KillrVideoTraversalSource;
+
+import javax.net.ssl.KeyManagerFactory;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManagerFactory;
 
 /**
  * Connectivity to DSE (cassandra, graph, search, analytics).
@@ -131,6 +145,61 @@ public class DseConfiguration {
         clusterNodeAdresses.stream()
                            .map(adress -> adress.getHostName())
                            .forEach(clusterConfig::addContactPoint);
+        clusterConfig.withSSL(getSSLOptions());
+    }
+
+    /**
+     * @return {@link com.datastax.driver.core.SSLOptions} with the given keystore and truststore path's for
+     * server certificate validation and client certificate authentication.
+     */
+    private SSLOptions getSSLOptions() {
+        try {
+//            KeyStore ks = KeyStore.getInstance("JKS");
+//            // make sure you close this stream properly (not shown here for brevity)
+//            InputStream trustStore = new FileInputStream("client.truststore");
+//            ks.load(trustStore, "datastax".toCharArray());
+//            TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+//            tmf.init(ks);
+//
+//            SslContextBuilder builder = SslContextBuilder
+//                    .forClient()
+//                    .sslProvider(SslProvider.OPENSSL)
+//                    .trustManager(tmf);
+//                    // only if you use client authentication
+//                    //.keyManager(new File("client.crt"), new File("client.key"));
+//
+//            RemoteEndpointAwareJdkSSLOptions sslOptions = RemoteEndpointAwareJdkSSLOptions.builder()
+//                    .withSSLContext(builder)
+//                    .build();
+
+            String CA_FILE = "cassandra.cert";
+
+
+            FileInputStream fis = new FileInputStream(CA_FILE);
+            X509Certificate ca = (X509Certificate) CertificateFactory.getInstance("X.509")
+                    .generateCertificate(new BufferedInputStream(fis));
+
+            KeyStore ks = KeyStore.getInstance(KeyStore.getDefaultType());
+            ks.load(null, null);
+            ks.setCertificateEntry(Integer.toString(1), ca);
+
+            TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+            tmf.init(ks);
+
+            SSLContext context = SSLContext.getInstance("TLS");
+            context.init(null, tmf.getTrustManagers(), null);
+
+            JdkSSLOptions sslOptions = JdkSSLOptions.builder()
+                    .withSSLContext(context)
+                    .build();
+
+            //return new RemoteEndpointAwareJdkSSLOptions(builder.build());
+            return sslOptions;
+
+        } catch (Exception e) {
+            LOGGER.warn("Exception in SSL stuff: ", e);
+            return null;
+        }
     }
     
     /**

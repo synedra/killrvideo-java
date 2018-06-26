@@ -29,7 +29,7 @@ services:
 
   # Start the KillrVideo web UI on port 3000
   web:
-    image: killrvideo/killrvideo-web:1.2.8
+    image: killrvideo/killrvideo-web:1.3.0
     ports:
     - "3000:3000"
     depends_on:
@@ -45,7 +45,7 @@ services:
 
   # The sample data generator
   generator:
-    image: killrvideo/killrvideo-generator:1.2.5
+    image: killrvideo/killrvideo-generator:1.3.0
     depends_on:
     - dse-config
     - etcd
@@ -60,7 +60,7 @@ services:
   # Container to load KillrVideo schema and search config into DSE
   # Provides options to configure secure users as well
   dse-config:
-    image: killrvideo/killrvideo-dse-config:1.2.2
+    image: killrvideo/killrvideo-dse-config:1.3.0
     environment:
       KILLRVIDEO_DOCKER_IP: $KILLRVIDEO_DOCKER_IP
       KILLRVIDEO_DSE_EXTERNAL_IP: $KILLRVIDEO_DSE_EXTERNAL_IP
@@ -68,6 +68,8 @@ services:
       KILLRVIDEO_GRAPH_REPLICATION: $KILLRVIDEO_GRAPH_REPLICATION
       KILLRVIDEO_DSE_USERNAME: $KILLRVIDEO_DSE_USERNAME
       KILLRVIDEO_DSE_PASSWORD: $KILLRVIDEO_DSE_PASSWORD
+      KILLRVIDEO_ENABLE_SSL: $KILLRVIDEO_ENABLE_SSL
+      KILLRVIDEO_SSL_CERTFILE: $KILLRVIDEO_SSL_CERTFILE
 
   # One instance of DataStax Studio
   studio:

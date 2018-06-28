@@ -1,14 +1,10 @@
 package killrvideo.configuration;
 
-import java.io.BufferedInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.InputStream;
+import java.io.*;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.security.KeyStore;
-import java.security.SecureRandom;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.time.temporal.ChronoUnit;
@@ -19,8 +15,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import com.datastax.driver.core.*;
-import io.netty.handler.ssl.SslContextBuilder;
-import io.netty.handler.ssl.SslProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,7 +36,6 @@ import com.evanlennick.retry4j.config.RetryConfigBuilder;
 import killrvideo.dao.EtcdDao;
 import killrvideo.graph.KillrVideoTraversalSource;
 
-import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManagerFactory;
 
@@ -71,6 +64,9 @@ public class DseConfiguration {
    
     @Value("#{environment.KILLRVIDEO_DSE_PASSWORD}")
     public Optional < String > dsePassword;
+
+    @Value("#{environment.KILLRVIDEO_ENABLE_SSL}")
+    public Optional < Boolean > dseEnableSSL;
    
     @Value("${killrvideo.cassandra.maxNumberOfTries: 10}")
     private int maxNumberOfTries;
@@ -90,6 +86,7 @@ public class DseConfiguration {
          populateContactPoints(clusterConfig);
          populateAuthentication(clusterConfig);
          populateGraphOptions(clusterConfig);
+         populateSSL(clusterConfig);
          
          final AtomicInteger atomicCount = new AtomicInteger(1);
          Callable<DseSession> connectionToDse = () -> {
@@ -127,7 +124,7 @@ public class DseConfiguration {
         return DseGraph.traversal(session, KillrVideoTraversalSource.class);
     }
     
-    /**
+    /**sslOptions
      * Retrieve server name from ETCD and update the contact points.
      *
      * @param clusterConfig
@@ -145,61 +142,43 @@ public class DseConfiguration {
         clusterNodeAdresses.stream()
                            .map(adress -> adress.getHostName())
                            .forEach(clusterConfig::addContactPoint);
-        clusterConfig.withSSL(getSSLOptions());
     }
 
-    /**
-     * @return {@link com.datastax.driver.core.SSLOptions} with the given keystore and truststore path's for
-     * server certificate validation and client certificate authentication.
-     */
-    private SSLOptions getSSLOptions() {
-        try {
-//            KeyStore ks = KeyStore.getInstance("JKS");
-//            // make sure you close this stream properly (not shown here for brevity)
-//            InputStream trustStore = new FileInputStream("client.truststore");
-//            ks.load(trustStore, "datastax".toCharArray());
-//            TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
-//            tmf.init(ks);
-//
-//            SslContextBuilder builder = SslContextBuilder
-//                    .forClient()
-//                    .sslProvider(SslProvider.OPENSSL)
-//                    .trustManager(tmf);
-//                    // only if you use client authentication
-//                    //.keyManager(new File("client.crt"), new File("client.key"));
-//
-//            RemoteEndpointAwareJdkSSLOptions sslOptions = RemoteEndpointAwareJdkSSLOptions.builder()
-//                    .withSSLContext(builder)
-//                    .build();
-
+    private void populateSSL(Builder clusterConfig) {
+        if (dseEnableSSL.isPresent() &&  dseEnableSSL.get()) {
             String CA_FILE = "cassandra.cert";
 
+            try {
+                FileInputStream fis = new FileInputStream(CA_FILE);
+                X509Certificate ca = (X509Certificate) CertificateFactory.getInstance("X.509")
+                        .generateCertificate(new BufferedInputStream(fis));
 
-            FileInputStream fis = new FileInputStream(CA_FILE);
-            X509Certificate ca = (X509Certificate) CertificateFactory.getInstance("X.509")
-                    .generateCertificate(new BufferedInputStream(fis));
+                KeyStore ks = KeyStore.getInstance(KeyStore.getDefaultType());
+                ks.load(null, null);
+                ks.setCertificateEntry(Integer.toString(1), ca);
 
-            KeyStore ks = KeyStore.getInstance(KeyStore.getDefaultType());
-            ks.load(null, null);
-            ks.setCertificateEntry(Integer.toString(1), ca);
+                TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+                tmf.init(ks);
 
-            TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
-            tmf.init(ks);
+                SSLContext sslContext = SSLContext.getInstance("TLS");
+                sslContext.init(null, tmf.getTrustManagers(), null);
 
-            SSLContext context = SSLContext.getInstance("TLS");
-            context.init(null, tmf.getTrustManagers(), null);
+                clusterConfig.withSSL(RemoteEndpointAwareJdkSSLOptions.builder()
+                        .withSSLContext(sslContext)
+                        .build());
+                LOGGER.info(" + SSL is enabled, using supplied SSL certificate: '{}'", CA_FILE);
 
-            JdkSSLOptions sslOptions = JdkSSLOptions.builder()
-                    .withSSLContext(context)
-                    .build();
+            } catch (FileNotFoundException fne) {
+                LOGGER.error("SSL cert file not found. You must provide a valid certification file when using SSL encryption option.", fne);
 
-            //return new RemoteEndpointAwareJdkSSLOptions(builder.build());
-            return sslOptions;
+            }  catch (Exception e) {
+                LOGGER.warn("Exception in SSL configuration: ", e);
+            }
 
-        } catch (Exception e) {
-            LOGGER.warn("Exception in SSL stuff: ", e);
-            return null;
+        } else {
+            LOGGER.info(" + SSL encryption is not enabled)");
         }
+
     }
     
     /**
@@ -215,7 +194,7 @@ public class DseConfiguration {
             AuthProvider cassandraAuthProvider = new DsePlainTextAuthProvider(dseUsername.get(), dsePassword.get());
             clusterConfig.withAuthProvider(cassandraAuthProvider);
             String obfuscatedPassword = new String(new char[dsePassword.get().length()]).replace("\0", "*");
-            LOGGER.info(" + Using supplied DSE username: '%s' and password: '%s' from environment variables", 
+            LOGGER.info(" + Using supplied DSE username: '{}' and password: '{}' from environment variables",
                         dseUsername.get(), obfuscatedPassword);
         } else {
             LOGGER.info(" + Connection is not authenticated (no username/password)");

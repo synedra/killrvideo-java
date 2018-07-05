@@ -40,3 +40,6 @@ killrvideo:
 
   search:
     ignoredWords: and,or,but,nor,so,for,yet,after,as,till,to,the,at,in,not,of,this,an,are,by,is,it,on,why,i,a,be,can,these,that,they,had,do
+
+  ssl:
+    CACertFileLocation: cassandra.cert

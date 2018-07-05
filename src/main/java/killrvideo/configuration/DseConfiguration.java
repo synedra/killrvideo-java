@@ -5,6 +5,7 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.security.KeyStore;
+import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.time.temporal.ChronoUnit;
@@ -15,6 +16,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import com.datastax.driver.core.*;
+import io.netty.handler.ssl.SslContextBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,7 +38,7 @@ import com.evanlennick.retry4j.config.RetryConfigBuilder;
 import killrvideo.dao.EtcdDao;
 import killrvideo.graph.KillrVideoTraversalSource;
 
-import javax.net.ssl.SSLContext;
+import io.netty.handler.ssl.SslContext;
 import javax.net.ssl.TrustManagerFactory;
 
 /**
@@ -67,6 +69,9 @@ public class DseConfiguration {
 
     @Value("#{environment.KILLRVIDEO_ENABLE_SSL}")
     public Optional < Boolean > dseEnableSSL;
+
+    @Value("${killrvideo.ssl.CACertFileLocation: 'cassandra.cert'}")
+    private String sslCACertFileLocation;
    
     @Value("${killrvideo.cassandra.maxNumberOfTries: 10}")
     private int maxNumberOfTries;
@@ -124,7 +129,7 @@ public class DseConfiguration {
         return DseGraph.traversal(session, KillrVideoTraversalSource.class);
     }
     
-    /**sslOptions
+    /**
      * Retrieve server name from ETCD and update the contact points.
      *
      * @param clusterConfig
@@ -140,38 +145,47 @@ public class DseConfiguration {
                     .collect(Collectors.toList());            
         clusterConfig.withPort(clusterNodeAdresses.get(0).getPort());
         clusterNodeAdresses.stream()
-                           .map(adress -> adress.getHostName())
+                           .map(address -> address.getHostName())
                            .forEach(clusterConfig::addContactPoint);
     }
 
+    /**
+     * If SSL is enabled use the supplied CA cert file to create
+     * an SSL context and use to configure our cluster.
+     *
+     * @param clusterConfig
+     *      current configuration
+     */
     private void populateSSL(Builder clusterConfig) {
         if (dseEnableSSL.isPresent() &&  dseEnableSSL.get()) {
-            String CA_FILE = "cassandra.cert";
+            LOGGER.info(" + SSL is enabled, using supplied SSL certificate: '{}'", sslCACertFileLocation);
 
             try {
-                FileInputStream fis = new FileInputStream(CA_FILE);
-                X509Certificate ca = (X509Certificate) CertificateFactory.getInstance("X.509")
+                FileInputStream fis = new FileInputStream(sslCACertFileLocation);
+                X509Certificate caCert = (X509Certificate) CertificateFactory.getInstance("X.509")
                         .generateCertificate(new BufferedInputStream(fis));
 
                 KeyStore ks = KeyStore.getInstance(KeyStore.getDefaultType());
                 ks.load(null, null);
-                ks.setCertificateEntry(Integer.toString(1), ca);
+                ks.setCertificateEntry(Integer.toString(1), caCert);
 
                 TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
                 tmf.init(ks);
 
-                SSLContext sslContext = SSLContext.getInstance("TLS");
-                sslContext.init(null, tmf.getTrustManagers(), null);
+                SslContext sslContext = SslContextBuilder
+                        .forClient()
+                        .trustManager(tmf)
+                        .build();
 
-                clusterConfig.withSSL(RemoteEndpointAwareJdkSSLOptions.builder()
-                        .withSSLContext(sslContext)
-                        .build());
-                LOGGER.info(" + SSL is enabled, using supplied SSL certificate: '{}'", CA_FILE);
+                clusterConfig.withSSL(new RemoteEndpointAwareNettySSLOptions(sslContext));
 
             } catch (FileNotFoundException fne) {
                 LOGGER.error("SSL cert file not found. You must provide a valid certification file when using SSL encryption option.", fne);
 
-            }  catch (Exception e) {
+            } catch (CertificateException ce) {
+                LOGGER.error("Your CA certificate looks invalid. You must provide a valid certification file when using SSL encryption option.", ce);
+
+            } catch (Exception e) {
                 LOGGER.warn("Exception in SSL configuration: ", e);
             }
 

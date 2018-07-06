@@ -41,7 +41,6 @@ import killrvideo.utils.TypeConverter;
 import killrvideo.validation.KillrVideoInputValidator;
 
 @Service
-//public class RatingsService extends AbstractRatingsService {
 public class RatingsService extends RatingsServiceImplBase {
     
     private static final Logger LOGGER = LoggerFactory.getLogger(RatingsService.class);

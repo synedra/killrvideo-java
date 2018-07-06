@@ -57,7 +57,6 @@ import killrvideo.validation.KillrVideoInputValidator;
 import killrvideo.video_catalog.events.VideoCatalogEvents.YouTubeVideoAdded;
 
 @Service
-//public class SuggestedVideosService extends AbstractSuggestedVideoService {
 public class SuggestedVideosService extends SuggestedVideoServiceImplBase {
     
     private static final Logger LOGGER = LoggerFactory.getLogger(SuggestedVideosService.class);

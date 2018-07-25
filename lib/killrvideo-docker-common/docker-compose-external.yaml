@@ -29,7 +29,7 @@ services:
 
   # Start the KillrVideo web UI on port 3000
   web:
-    image: killrvideo/killrvideo-web:1.3.0
+    image: killrvideo/killrvideo-web:2.1.0
     ports:
     - "3000:3000"
     depends_on:
@@ -47,7 +47,7 @@ services:
 
   # The sample data generator
   generator:
-    image: killrvideo/killrvideo-generator:1.3.0
+    image: killrvideo/killrvideo-generator:2.1.0
     depends_on:
     - dse-config
     - etcd
@@ -65,7 +65,7 @@ services:
   # Container to load KillrVideo schema and search config into DSE
   # Provides options to configure secure users as well
   dse-config:
-    image: killrvideo/killrvideo-dse-config:1.3.0
+    image: killrvideo/killrvideo-dse-config:2.1.0
     environment:
       KILLRVIDEO_DOCKER_IP: $KILLRVIDEO_DOCKER_IP
       KILLRVIDEO_DSE_EXTERNAL_IP: $KILLRVIDEO_DSE_EXTERNAL_IP

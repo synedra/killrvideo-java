@@ -5,7 +5,7 @@ version: '3'
 # The default as you see it is set to using killrvideo-java-server, but could as easily be killrvideo-nodejs-server or some other version as long as an image is built.
 services:
   server:
-    image: killrvideo/killrvideo-java-server
+    image: killrvideo/killrvideo-java-server:2.1.0
     ports:
     - "8899:8899"
     depends_on:

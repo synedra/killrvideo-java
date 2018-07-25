@@ -19,7 +19,8 @@ WORKDIR /usr/src/app
 
 # Install app dependencies
 # Bundle app source
-ADD . /usr/src/app
+COPY . /usr/src/app
+RUN mvn compile
 
 EXPOSE 8899
  

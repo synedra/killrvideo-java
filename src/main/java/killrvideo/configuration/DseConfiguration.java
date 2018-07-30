@@ -109,9 +109,9 @@ public class DseConfiguration {
                      LOGGER.info("Attempt #{}/{} failed.. trying in {} seconds.", atomicCount.getAndIncrement(),
                              maxNumberOfTries,  delayBetweenTries); })
                  .onFailure(s -> {
-                     LOGGER.error("Cannot connection to DSE after {} attempts, exiting", maxNumberOfTries);
-                     System.err.println("Can not connect to DSE after " + maxNumberOfTries + " attempts, exiting now.");
-                     System.exit(500);
+                     final String errorString = "Cannot connect to DSE after " + maxNumberOfTries + " attempts, exiting now.";
+                     LOGGER.error(errorString);
+                     exitOnError(errorString, 500);
                   })
                  .onSuccess(s -> {   
                      long timeElapsed = System.currentTimeMillis() - top;
@@ -180,10 +180,14 @@ public class DseConfiguration {
                 clusterConfig.withSSL(new RemoteEndpointAwareNettySSLOptions(sslContext));
 
             } catch (FileNotFoundException fne) {
-                LOGGER.error("SSL cert file not found. You must provide a valid certification file when using SSL encryption option.", fne);
+                final String errorString = "SSL cert file not found. You must provide a valid certification file when using SSL encryption option.";
+                LOGGER.error(errorString, fne);
+                exitOnError(errorString, 500);
 
             } catch (CertificateException ce) {
-                LOGGER.error("Your CA certificate looks invalid. You must provide a valid certification file when using SSL encryption option.", ce);
+                final String errorString = "Your CA certificate looks invalid. You must provide a valid certification file when using SSL encryption option.";
+                LOGGER.error(errorString, ce);
+                exitOnError(errorString, 500);
 
             } catch (Exception e) {
                 LOGGER.warn("Exception in SSL configuration: ", e);
@@ -249,6 +253,11 @@ public class DseConfiguration {
                     + "Invalid Hostname, entry '" + contactPoint + "' will be ignored", e);
         }
         return target;
+    }
+
+    private void exitOnError(String errorString, Integer status) {
+        System.err.println(errorString);
+        System.exit(status);
     }
    
 }

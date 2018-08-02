@@ -70,7 +70,7 @@ public class DseConfiguration {
     @Value("#{environment.KILLRVIDEO_ENABLE_SSL}")
     public Optional < Boolean > dseEnableSSL;
 
-    @Value("${killrvideo.ssl.CACertFileLocation: 'cassandra.cert'}")
+    @Value("${killrvideo.cassandra.ssl.CACertFileLocation: 'cassandra.cert'}")
     private String sslCACertFileLocation;
    
     @Value("${killrvideo.cassandra.maxNumberOfTries: 10}")
@@ -110,8 +110,7 @@ public class DseConfiguration {
                              maxNumberOfTries,  delayBetweenTries); })
                  .onFailure(s -> {
                      final String errorString = "Cannot connect to DSE after " + maxNumberOfTries + " attempts, exiting now.";
-                     LOGGER.error(errorString);
-                     exitOnError(errorString, 500);
+                     exitOnError(errorString, 500, null);
                   })
                  .onSuccess(s -> {   
                      long timeElapsed = System.currentTimeMillis() - top;
@@ -181,16 +180,15 @@ public class DseConfiguration {
 
             } catch (FileNotFoundException fne) {
                 final String errorString = "SSL cert file not found. You must provide a valid certification file when using SSL encryption option.";
-                LOGGER.error(errorString, fne);
-                exitOnError(errorString, 500);
+                exitOnError(errorString, 500, fne);
 
             } catch (CertificateException ce) {
                 final String errorString = "Your CA certificate looks invalid. You must provide a valid certification file when using SSL encryption option.";
-                LOGGER.error(errorString, ce);
-                exitOnError(errorString, 500);
+                exitOnError(errorString, 500, ce);
 
             } catch (Exception e) {
-                LOGGER.warn("Exception in SSL configuration: ", e);
+                final String errorString = "General exception in SSL configuration, I don't really know what's wrong. Take a look at the stack trace.";
+                exitOnError(errorString, 500, e);
             }
 
         } else {
@@ -247,7 +245,7 @@ public class DseConfiguration {
             }
         } catch (NumberFormatException e) {
             LOGGER.warn(" + Cannot read contactPoint - "
-                    + "Invalid Port Numer, entry '" + contactPoint + "' will be ignored", e);
+                    + "Invalid Port Number, entry '" + contactPoint + "' will be ignored", e);
         } catch (UnknownHostException e) {
             LOGGER.warn(" + Cannot read contactPoint - "
                     + "Invalid Hostname, entry '" + contactPoint + "' will be ignored", e);
@@ -255,8 +253,8 @@ public class DseConfiguration {
         return target;
     }
 
-    private void exitOnError(String errorString, Integer status) {
-        System.err.println(errorString);
+    private void exitOnError(String errorString, Integer status, Exception e) {
+        LOGGER.error(errorString, e);
         System.exit(status);
     }
    

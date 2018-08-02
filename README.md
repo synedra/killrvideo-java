@@ -5,7 +5,7 @@
 A reference application for Java developers looking to learn more about using [Apache Cassandra][cassandra] and
 [DataStax Enterprise][dse] in their applications and services. Learn more at [Killrvideo].
 
-We are now fully switched to use version `1.5.1` of the [DSE java driver][DSE Java driver]!  API docs are [here][DSE Java driver API docs].  
+We are now fully switched to use version `1.6.8` of the [DSE java driver][DSE Java driver]!  API docs are [here][DSE Java driver API docs].  
 This version is stable and ready for consumption.
 
 ## Running Locally
@@ -47,6 +47,6 @@ limitations under the License.
 [twitter]: https://twitter.com/SonicDMG
 [clunTwitter]: https://twitter.com/clunven
 [DSE Java driver API docs]: https://github.com/datastax/java-dse-driver
-[DSE Java driver]: https://docs.datastax.com/en/developer/java-driver-dse/1.5/
+[DSE Java driver]: https://docs.datastax.com/en/developer/java-driver-dse/1.6/
 [issues]: https://github.com/KillrVideo/killrvideo-java/issues
 [gremlindsljava]: https://www.datastax.com/dev/blog/gremlin-dsls-in-java-with-dse-graph

@@ -16,11 +16,13 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import com.datastax.driver.core.*;
+import com.datastax.driver.dse.DseCluster;
 import io.netty.handler.ssl.SslContextBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -39,6 +41,9 @@ import killrvideo.dao.EtcdDao;
 import killrvideo.graph.KillrVideoTraversalSource;
 
 import io.netty.handler.ssl.SslContext;
+
+import javax.annotation.PreDestroy;
+import javax.inject.Inject;
 import javax.net.ssl.TrustManagerFactory;
 
 /**
@@ -81,6 +86,8 @@ public class DseConfiguration {
   
     @Autowired
     private EtcdDao etcdDao;
+
+    @Inject DseSession dseSession;
     
     @Bean
     public DseSession initializeDSE() {
@@ -89,7 +96,7 @@ public class DseConfiguration {
         Builder clusterConfig = new Builder();
         clusterConfig.withClusterName(dseClusterName);
 
-        // Grab contact points from ETCD and pass those into our clusterConfig
+       // Grab contact points from ETCD and pass those into our clusterConfig
         populateContactPoints(clusterConfig);
 
         // Check if a username and password are present and if they are populate clusterConfig
@@ -140,7 +147,33 @@ public class DseConfiguration {
                     LOGGER.info("Connection etablished to DSE Cluster in {} millis.", timeElapsed);})
                 .execute(connectionToDse).getResult();
     }
-    
+
+    /**
+     * The destroy() method handles cases where the application is
+     * shutdown via Spring and ensures any TCP connections,
+     * thread pools, etc... to our cluster are freed up.
+     */
+    @PreDestroy
+    public void destroy() {
+        DseCluster dseCluster = dseSession.getCluster();
+        LOGGER.info("Closing cluster connection: " + dseClusterName);
+        dseCluster.close();
+    }
+
+    /**
+     * The exitOnError() method handles cases of abrupt application
+     * exit BEFORE any cluster connection has been established and
+     * allows the application to fully exit as compared to hanging in
+     * a "strange" state with incomplete cluster configuration.
+     * @param errorString
+     * @param status
+     * @param e
+     */
+    private void exitOnError(String errorString, Integer status, Exception e) {
+        LOGGER.error(errorString, e);
+        System.exit(status);
+    }
+
     @Bean
     public MappingManager initializeMappingManager(DseSession session) {
         return new MappingManager(session);
@@ -262,10 +295,4 @@ public class DseConfiguration {
         }
         return target;
     }
-
-    private void exitOnError(String errorString, Integer status, Exception e) {
-        LOGGER.error(errorString, e);
-        System.exit(status);
-    }
-   
 }

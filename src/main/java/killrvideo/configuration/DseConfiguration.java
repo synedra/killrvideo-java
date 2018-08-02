@@ -84,38 +84,61 @@ public class DseConfiguration {
     
     @Bean
     public DseSession initializeDSE() {
-         long top = System.currentTimeMillis();
-         LOGGER.info("Initializing connection to DSE");
-         Builder clusterConfig = new Builder();
-         clusterConfig.withClusterName(dseClusterName);
-         populateContactPoints(clusterConfig);
-         populateAuthentication(clusterConfig);
-         populateGraphOptions(clusterConfig);
-         populateSSL(clusterConfig);
-         
-         final AtomicInteger atomicCount = new AtomicInteger(1);
-         Callable<DseSession> connectionToDse = () -> {
-             return clusterConfig.build().connect();
-         };
-         
-         RetryConfig config = new RetryConfigBuilder()
-                 .retryOnAnyException()
-                 .withMaxNumberOfTries(maxNumberOfTries)
-                 .withDelayBetweenTries(delayBetweenTries, ChronoUnit.SECONDS)
-                 .withFixedBackoff()
-                 .build();
-         return new CallExecutor<DseSession>(config)
-                 .afterFailedTry(s -> { 
-                     LOGGER.info("Attempt #{}/{} failed.. trying in {} seconds.", atomicCount.getAndIncrement(),
-                             maxNumberOfTries,  delayBetweenTries); })
-                 .onFailure(s -> {
-                     final String errorString = "Cannot connect to DSE after " + maxNumberOfTries + " attempts, exiting now.";
-                     exitOnError(errorString, 500, null);
-                  })
-                 .onSuccess(s -> {   
-                     long timeElapsed = System.currentTimeMillis() - top;
-                     LOGGER.info("Connection etablished to DSE Cluster in {} millis.", timeElapsed);})
-                 .execute(connectionToDse).getResult();
+        long top = System.currentTimeMillis();
+        LOGGER.info("Initializing connection to DSE");
+        Builder clusterConfig = new Builder();
+        clusterConfig.withClusterName(dseClusterName);
+
+        // Grab contact points from ETCD and pass those into our clusterConfig
+        populateContactPoints(clusterConfig);
+
+        // Check if a username and password are present and if they are populate clusterConfig
+        final String username = dseUsername.orElse("");
+        final String password = dsePassword.orElse("");
+        if (username.length() > 0 && password.length() > 0) {
+            LOGGER.info(" + Both username and password have values > 0, assuming authentication is intended");
+            populateAuthentication(clusterConfig, username, password);
+
+        } else {
+            LOGGER.info(" + Connection is not authenticated (no username/password)");
+        }
+
+        // Populate clusterConfig with graph options for recommendation engine
+        populateGraphOptions(clusterConfig);
+
+        // Check if SSL is enabled and populate clusterConfig if it is
+        final boolean enableSSL = dseEnableSSL.orElse(false);
+        if (enableSSL) {
+            LOGGER.info(" + SSL is enabled, using supplied SSL certificate: '{}'", sslCACertFileLocation);
+            populateSSL(clusterConfig);
+
+        } else {
+            LOGGER.info(" + SSL encryption is not enabled");
+        }
+
+        final AtomicInteger atomicCount = new AtomicInteger(1);
+        Callable<DseSession> connectionToDse = () -> {
+            return clusterConfig.build().connect();
+        };
+
+        RetryConfig config = new RetryConfigBuilder()
+                .retryOnAnyException()
+                .withMaxNumberOfTries(maxNumberOfTries)
+                .withDelayBetweenTries(delayBetweenTries, ChronoUnit.SECONDS)
+                .withFixedBackoff()
+                .build();
+        return new CallExecutor<DseSession>(config)
+                .afterFailedTry(s -> {
+                    LOGGER.info("Attempt #{}/{} failed.. trying in {} seconds.", atomicCount.getAndIncrement(),
+                            maxNumberOfTries,  delayBetweenTries); })
+                .onFailure(s -> {
+                    final String errorString = "Cannot connect to DSE after " + maxNumberOfTries + " attempts, exiting now.";
+                    exitOnError(errorString, 500, null);
+                })
+                .onSuccess(s -> {
+                    long timeElapsed = System.currentTimeMillis() - top;
+                    LOGGER.info("Connection etablished to DSE Cluster in {} millis.", timeElapsed);})
+                .execute(connectionToDse).getResult();
     }
     
     @Bean
@@ -156,45 +179,37 @@ public class DseConfiguration {
      *      current configuration
      */
     private void populateSSL(Builder clusterConfig) {
-        if (dseEnableSSL.isPresent() &&  dseEnableSSL.get()) {
-            LOGGER.info(" + SSL is enabled, using supplied SSL certificate: '{}'", sslCACertFileLocation);
+        try {
+            FileInputStream fis = new FileInputStream(sslCACertFileLocation);
+            X509Certificate caCert = (X509Certificate) CertificateFactory.getInstance("X.509")
+                    .generateCertificate(new BufferedInputStream(fis));
 
-            try {
-                FileInputStream fis = new FileInputStream(sslCACertFileLocation);
-                X509Certificate caCert = (X509Certificate) CertificateFactory.getInstance("X.509")
-                        .generateCertificate(new BufferedInputStream(fis));
+            KeyStore ks = KeyStore.getInstance(KeyStore.getDefaultType());
+            ks.load(null, null);
+            ks.setCertificateEntry(Integer.toString(1), caCert);
 
-                KeyStore ks = KeyStore.getInstance(KeyStore.getDefaultType());
-                ks.load(null, null);
-                ks.setCertificateEntry(Integer.toString(1), caCert);
+            TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+            tmf.init(ks);
 
-                TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
-                tmf.init(ks);
+            SslContext sslContext = SslContextBuilder
+                    .forClient()
+                    .trustManager(tmf)
+                    .build();
 
-                SslContext sslContext = SslContextBuilder
-                        .forClient()
-                        .trustManager(tmf)
-                        .build();
+            clusterConfig.withSSL(new RemoteEndpointAwareNettySSLOptions(sslContext));
 
-                clusterConfig.withSSL(new RemoteEndpointAwareNettySSLOptions(sslContext));
+        } catch (FileNotFoundException fne) {
+            final String errorString = "SSL cert file not found. You must provide a valid certification file when using SSL encryption option.";
+            exitOnError(errorString, 500, fne);
 
-            } catch (FileNotFoundException fne) {
-                final String errorString = "SSL cert file not found. You must provide a valid certification file when using SSL encryption option.";
-                exitOnError(errorString, 500, fne);
+        } catch (CertificateException ce) {
+            final String errorString = "Your CA certificate looks invalid. You must provide a valid certification file when using SSL encryption option.";
+            exitOnError(errorString, 500, ce);
 
-            } catch (CertificateException ce) {
-                final String errorString = "Your CA certificate looks invalid. You must provide a valid certification file when using SSL encryption option.";
-                exitOnError(errorString, 500, ce);
-
-            } catch (Exception e) {
-                final String errorString = "General exception in SSL configuration, I don't really know what's wrong. Take a look at the stack trace.";
-                exitOnError(errorString, 500, e);
-            }
-
-        } else {
-            LOGGER.info(" + SSL encryption is not enabled)");
+        } catch (Exception e) {
+            final String errorString = "General exception in SSL configuration, I don't really know what's wrong. Take a look at the stack trace.";
+            exitOnError(errorString, 500, e);
         }
-
     }
     
     /**
@@ -204,17 +219,12 @@ public class DseConfiguration {
      * who might need (like us for example) to connect KillrVideo up to an external
      * cluster that requires authentication.
      */
-    private void populateAuthentication(Builder clusterConfig) {
-        if (dseUsername.isPresent() && dsePassword.isPresent() 
-                                    && dseUsername.get().length() > 0) {
-            AuthProvider cassandraAuthProvider = new DsePlainTextAuthProvider(dseUsername.get(), dsePassword.get());
-            clusterConfig.withAuthProvider(cassandraAuthProvider);
-            String obfuscatedPassword = new String(new char[dsePassword.get().length()]).replace("\0", "*");
-            LOGGER.info(" + Using supplied DSE username: '{}' and password: '{}' from environment variables",
-                        dseUsername.get(), obfuscatedPassword);
-        } else {
-            LOGGER.info(" + Connection is not authenticated (no username/password)");
-        }
+    private void populateAuthentication(Builder clusterConfig, String username, String password) {
+        AuthProvider cassandraAuthProvider = new DsePlainTextAuthProvider(username, password);
+        clusterConfig.withAuthProvider(cassandraAuthProvider);
+        String obfuscatedPassword = new String(new char[password.length()]).replace("\0", "*");
+        LOGGER.info(" + Using supplied DSE username: '{}' and password: '{}' from environment variables",
+                username, obfuscatedPassword);
     }
     
     private void populateGraphOptions(Builder clusterConfig) {

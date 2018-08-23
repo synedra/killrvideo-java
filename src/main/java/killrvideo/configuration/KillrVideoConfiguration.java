@@ -44,6 +44,9 @@ public class KillrVideoConfiguration {
     @Value("${killrvideo.cassandra.mutation-error-log: /tmp/killrvideo-mutation-errors.log}")
     private String mutationErrorLog;
 
+    @Value("${killrvideo.ssl.CACertFileLocation: cassandra.cert}")
+    private String sslCACertFileLocation;
+
     /**
      * Create a set of sentence conjunctions and other "undesirable"
      * words we will use later to exclude from search results.

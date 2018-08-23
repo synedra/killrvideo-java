@@ -1,8 +1,13 @@
 package killrvideo.configuration;
 
+import java.io.*;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
+import java.security.KeyStore;
+import java.security.cert.CertificateException;
+import java.security.cert.CertificateFactory;
+import java.security.cert.X509Certificate;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Optional;
@@ -10,14 +15,17 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
+import com.datastax.driver.core.*;
+import com.datastax.driver.dse.DseCluster;
+import io.netty.handler.ssl.SslContextBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import com.datastax.driver.core.AuthProvider;
 import com.datastax.driver.dse.DseCluster.Builder;
 import com.datastax.driver.dse.DseSession;
 import com.datastax.driver.dse.auth.DsePlainTextAuthProvider;
@@ -31,6 +39,12 @@ import com.evanlennick.retry4j.config.RetryConfigBuilder;
 
 import killrvideo.dao.EtcdDao;
 import killrvideo.graph.KillrVideoTraversalSource;
+
+import io.netty.handler.ssl.SslContext;
+
+import javax.annotation.PreDestroy;
+import javax.inject.Inject;
+import javax.net.ssl.TrustManagerFactory;
 
 /**
  * Connectivity to DSE (cassandra, graph, search, analytics).
@@ -57,6 +71,12 @@ public class DseConfiguration {
    
     @Value("#{environment.KILLRVIDEO_DSE_PASSWORD}")
     public Optional < String > dsePassword;
+
+    @Value("#{environment.KILLRVIDEO_ENABLE_SSL}")
+    public Optional < Boolean > dseEnableSSL;
+
+    @Value("${killrvideo.cassandra.ssl.CACertFileLocation: 'cassandra.cert'}")
+    private String sslCACertFileLocation;
    
     @Value("${killrvideo.cassandra.maxNumberOfTries: 10}")
     private int maxNumberOfTries;
@@ -66,43 +86,94 @@ public class DseConfiguration {
   
     @Autowired
     private EtcdDao etcdDao;
+
+    @Inject DseSession dseSession;
     
     @Bean
     public DseSession initializeDSE() {
-         long top = System.currentTimeMillis();
-         LOGGER.info("Initializing connection to DSE");
-         Builder clusterConfig = new Builder();
-         clusterConfig.withClusterName(dseClusterName);
-         populateContactPoints(clusterConfig);
-         populateAuthentication(clusterConfig);
-         populateGraphOptions(clusterConfig);
-         
-         final AtomicInteger atomicCount = new AtomicInteger(1);
-         Callable<DseSession> connectionToDse = () -> {
-             return clusterConfig.build().connect();
-         };
-         
-         RetryConfig config = new RetryConfigBuilder()
-                 .retryOnAnyException()
-                 .withMaxNumberOfTries(maxNumberOfTries)
-                 .withDelayBetweenTries(delayBetweenTries, ChronoUnit.SECONDS)
-                 .withFixedBackoff()
-                 .build();
-         return new CallExecutor<DseSession>(config)
-                 .afterFailedTry(s -> { 
-                     LOGGER.info("Attempt #{}/{} failed.. trying in {} seconds.", atomicCount.getAndIncrement(),
-                             maxNumberOfTries,  delayBetweenTries); })
-                 .onFailure(s -> {
-                     LOGGER.error("Cannot connection to DSE after {} attempts, exiting", maxNumberOfTries);
-                     System.err.println("Can not connect to DSE after " + maxNumberOfTries + " attempts, exiting now.");
-                     System.exit(500);
-                  })
-                 .onSuccess(s -> {   
-                     long timeElapsed = System.currentTimeMillis() - top;
-                     LOGGER.info("Connection etablished to DSE Cluster in {} millis.", timeElapsed);})
-                 .execute(connectionToDse).getResult();
+        long top = System.currentTimeMillis();
+        LOGGER.info("Initializing connection to DSE");
+        Builder clusterConfig = new Builder();
+        clusterConfig.withClusterName(dseClusterName);
+
+       // Grab contact points from ETCD and pass those into our clusterConfig
+        populateContactPoints(clusterConfig);
+
+        // Check if a username and password are present and if they are populate clusterConfig
+        final String username = dseUsername.orElse("");
+        final String password = dsePassword.orElse("");
+        if (username.length() > 0 && password.length() > 0) {
+            LOGGER.info(" + Both username and password have values > 0, assuming authentication is intended");
+            populateAuthentication(clusterConfig, username, password);
+
+        } else {
+            LOGGER.info(" + Connection is not authenticated (no username/password)");
+        }
+
+        // Populate clusterConfig with graph options for recommendation engine
+        populateGraphOptions(clusterConfig);
+
+        // Check if SSL is enabled and populate clusterConfig if it is
+        final boolean enableSSL = dseEnableSSL.orElse(false);
+        if (enableSSL) {
+            LOGGER.info(" + SSL is enabled, using supplied SSL certificate: '{}'", sslCACertFileLocation);
+            populateSSL(clusterConfig);
+
+        } else {
+            LOGGER.info(" + SSL encryption is not enabled");
+        }
+
+        final AtomicInteger atomicCount = new AtomicInteger(1);
+        Callable<DseSession> connectionToDse = () -> {
+            return clusterConfig.build().connect();
+        };
+
+        RetryConfig config = new RetryConfigBuilder()
+                .retryOnAnyException()
+                .withMaxNumberOfTries(maxNumberOfTries)
+                .withDelayBetweenTries(delayBetweenTries, ChronoUnit.SECONDS)
+                .withFixedBackoff()
+                .build();
+        return new CallExecutor<DseSession>(config)
+                .afterFailedTry(s -> {
+                    LOGGER.info("Attempt #{}/{} failed.. trying in {} seconds.", atomicCount.getAndIncrement(),
+                            maxNumberOfTries,  delayBetweenTries); })
+                .onFailure(s -> {
+                    final String errorString = "Cannot connect to DSE after " + maxNumberOfTries + " attempts, exiting now.";
+                    exitOnError(errorString, 500, null);
+                })
+                .onSuccess(s -> {
+                    long timeElapsed = System.currentTimeMillis() - top;
+                    LOGGER.info("Connection etablished to DSE Cluster in {} millis.", timeElapsed);})
+                .execute(connectionToDse).getResult();
     }
-    
+
+    /**
+     * The destroy() method handles cases where the application is
+     * shutdown via Spring and ensures any TCP connections,
+     * thread pools, etc... to our cluster are freed up.
+     */
+    @PreDestroy
+    public void destroy() {
+        DseCluster dseCluster = dseSession.getCluster();
+        LOGGER.info("Closing cluster connection: " + dseClusterName);
+        dseCluster.close();
+    }
+
+    /**
+     * The exitOnError() method handles cases of abrupt application
+     * exit BEFORE any cluster connection has been established and
+     * allows the application to fully exit as compared to hanging in
+     * a "strange" state with incomplete cluster configuration.
+     * @param errorString
+     * @param status
+     * @param e
+     */
+    private void exitOnError(String errorString, Integer status, Exception e) {
+        LOGGER.error(errorString, e);
+        System.exit(status);
+    }
+
     @Bean
     public MappingManager initializeMappingManager(DseSession session) {
         return new MappingManager(session);
@@ -129,8 +200,49 @@ public class DseConfiguration {
                     .collect(Collectors.toList());            
         clusterConfig.withPort(clusterNodeAdresses.get(0).getPort());
         clusterNodeAdresses.stream()
-                           .map(adress -> adress.getHostName())
+                           .map(address -> address.getHostName())
                            .forEach(clusterConfig::addContactPoint);
+    }
+
+    /**
+     * If SSL is enabled use the supplied CA cert file to create
+     * an SSL context and use to configure our cluster.
+     *
+     * @param clusterConfig
+     *      current configuration
+     */
+    private void populateSSL(Builder clusterConfig) {
+        try {
+            FileInputStream fis = new FileInputStream(sslCACertFileLocation);
+            X509Certificate caCert = (X509Certificate) CertificateFactory.getInstance("X.509")
+                    .generateCertificate(new BufferedInputStream(fis));
+
+            KeyStore ks = KeyStore.getInstance(KeyStore.getDefaultType());
+            ks.load(null, null);
+            ks.setCertificateEntry(Integer.toString(1), caCert);
+
+            TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+            tmf.init(ks);
+
+            SslContext sslContext = SslContextBuilder
+                    .forClient()
+                    .trustManager(tmf)
+                    .build();
+
+            clusterConfig.withSSL(new RemoteEndpointAwareNettySSLOptions(sslContext));
+
+        } catch (FileNotFoundException fne) {
+            final String errorString = "SSL cert file not found. You must provide a valid certification file when using SSL encryption option.";
+            exitOnError(errorString, 500, fne);
+
+        } catch (CertificateException ce) {
+            final String errorString = "Your CA certificate looks invalid. You must provide a valid certification file when using SSL encryption option.";
+            exitOnError(errorString, 500, ce);
+
+        } catch (Exception e) {
+            final String errorString = "General exception in SSL configuration, I don't really know what's wrong. Take a look at the stack trace.";
+            exitOnError(errorString, 500, e);
+        }
     }
     
     /**
@@ -140,17 +252,12 @@ public class DseConfiguration {
      * who might need (like us for example) to connect KillrVideo up to an external
      * cluster that requires authentication.
      */
-    private void populateAuthentication(Builder clusterConfig) {
-        if (dseUsername.isPresent() && dsePassword.isPresent() 
-                                    && dseUsername.get().length() > 0) {
-            AuthProvider cassandraAuthProvider = new DsePlainTextAuthProvider(dseUsername.get(), dsePassword.get());
-            clusterConfig.withAuthProvider(cassandraAuthProvider);
-            String obfuscatedPassword = new String(new char[dsePassword.get().length()]).replace("\0", "*");
-            LOGGER.info(" + Using supplied DSE username: '%s' and password: '%s' from environment variables", 
-                        dseUsername.get(), obfuscatedPassword);
-        } else {
-            LOGGER.info(" + Connection is not authenticated (no username/password)");
-        }
+    private void populateAuthentication(Builder clusterConfig, String username, String password) {
+        AuthProvider cassandraAuthProvider = new DsePlainTextAuthProvider(username, password);
+        clusterConfig.withAuthProvider(cassandraAuthProvider);
+        String obfuscatedPassword = new String(new char[password.length()]).replace("\0", "*");
+        LOGGER.info(" + Using supplied DSE username: '{}' and password: '{}' from environment variables",
+                username, obfuscatedPassword);
     }
     
     private void populateGraphOptions(Builder clusterConfig) {
@@ -181,12 +288,11 @@ public class DseConfiguration {
             }
         } catch (NumberFormatException e) {
             LOGGER.warn(" + Cannot read contactPoint - "
-                    + "Invalid Port Numer, entry '" + contactPoint + "' will be ignored", e);
+                    + "Invalid Port Number, entry '" + contactPoint + "' will be ignored", e);
         } catch (UnknownHostException e) {
             LOGGER.warn(" + Cannot read contactPoint - "
                     + "Invalid Hostname, entry '" + contactPoint + "' will be ignored", e);
         }
         return target;
     }
-   
 }

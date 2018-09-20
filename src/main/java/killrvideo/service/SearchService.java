@@ -141,9 +141,9 @@ public class SearchService extends SearchServiceImplBase {
          */
         solrQuery
                 .append(pagingDriverStart)
-                .append("name:(").append(requestQuery).append(")^4 OR ")
-                .append("tags:(").append(requestQuery).append(")^2 OR ")
-                .append("description:(").append(requestQuery).append(")")
+                .append("name:(").append(requestQuery).append("*)^4 OR ")
+                .append("tags:(").append(requestQuery).append("*)^2 OR ")
+                .append("description:(").append(requestQuery).append("*)")
                 .append(pagingDriverEnd);
 
         final BoundStatement statement = searchVideos_getVideosWithSearchPrepared.bind().setString("solr_query", solrQuery.toString());

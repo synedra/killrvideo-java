@@ -177,8 +177,8 @@ public class SuggestedVideosService extends SuggestedVideoServiceImplBase {
 
             solrQuery
                     .append(pagingDriverStart)
-                    .append("name:").append(delimitedTermList).append(space)
-                    .append("tags:").append(delimitedTermList).append(space)
+                    .append("name:(").append(delimitedTermList).append(")^2").append(space)
+                    .append("tags:(").append(delimitedTermList).append(")^4").append(space)
                     .append("description:").append(delimitedTermList)
                     .append(pagingDriverEnd);
 

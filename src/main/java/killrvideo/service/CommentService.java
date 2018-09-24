@@ -25,6 +25,7 @@ import com.datastax.driver.core.PagingState;
 import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.RegularStatement;
 import com.datastax.driver.core.Row;
+import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.querybuilder.QueryBuilder;
 import com.datastax.driver.dse.DseSession;
 import com.google.common.eventbus.EventBus;
@@ -58,25 +59,25 @@ public class CommentService extends CommentsServiceImplBase {
 
     /** Loger for that class. */
     private static Logger LOGGER = LoggerFactory.getLogger(CommentService.class);
-    
+
     @Inject
     private DseSession dseSession;
-    
+
     @Inject
     private EventBus eventBus;
 
     @Inject
     private KillrVideoInputValidator validator;
-   
+
     /** Insert comment in table comments_by_user. */
     private PreparedStatement statementInsertCommentByUser;
-    
+
     /** Insert comment in table comments_by_video. */
     private PreparedStatement statementInsertCommentByVideo;
-    
+
     /** Get all comments from a single user (Account page). */
     private PreparedStatement statementSearchAllCommentsForUser;
-    
+
     /** Get comments from a single user but with filtering on comment id. */
     private PreparedStatement statementSearchCommentsForUserWithStartingPoint;
 
@@ -85,7 +86,7 @@ public class CommentService extends CommentsServiceImplBase {
 
     /** Get comments from a single video but with filtering on comment id. */
     private PreparedStatement statementSearchCommentsForVideoWithStartingPoint;
-    
+
     /**
      * Preparing statement before aueries allow signifiant performance improvements.
      * This can only be done it the statement is 'static', mean the number of parameter
@@ -104,15 +105,15 @@ public class CommentService extends CommentsServiceImplBase {
     /** {@inheritDoc} */
     @Override
     public void commentOnVideo(
-            final CommentOnVideoRequest request, 
+            final CommentOnVideoRequest request,
             StreamObserver<CommentOnVideoResponse> responseObserver) {
-        
+
         // Parameter Validation
         Assert.isTrue(validator.isValid(request, responseObserver), "Invalid parameter for 'commentOnVideo'");
-        
+
         /**
          * Building statement :
-         * We need to insert into comments_by_user and comments_by_video simultaneously, thus using 
+         * We need to insert into comments_by_user and comments_by_video simultaneously, thus using
          * logged batch for automatic retries in case of error.
          */
         final Instant start     = Instant.now();
@@ -127,7 +128,7 @@ public class CommentService extends CommentsServiceImplBase {
         if (LOGGER.isDebugEnabled()) {
             LOGGER.debug("Inserting comment on video {} for user {} : {}", videoId, userId, comment);
         }
-        
+
         // Execute Query asynchronously and process result
         buildCompletableFuture(dseSession.executeAsync(batchStatement)).handle((rs, ex) -> {
             if (rs != null) {
@@ -141,7 +142,7 @@ public class CommentService extends CommentsServiceImplBase {
                 responseObserver.onNext(CommentOnVideoResponse.newBuilder().build());
                 responseObserver.onCompleted();
                 LOGGER.debug("End successfully 'commentOnVideo' in {}", System.currentTimeMillis() - start.getEpochSecond());
-            } else if (ex != null) { 
+            } else if (ex != null) {
                 // if error post error message to bus + routing (onError)
                 LOGGER.error("Exception commenting on video {} }", ex);
                 eventBus.post(new CassandraMutationError(request, ex));
@@ -150,23 +151,23 @@ public class CommentService extends CommentsServiceImplBase {
             return rs;
         });
     }
-    
+
     /** {@inheritDoc} */
     @Override
     public void getUserComments(
-            final GetUserCommentsRequest request, 
+            final GetUserCommentsRequest request,
             StreamObserver<GetUserCommentsResponse> responseObserver) {
 
         // Parameter Validation
         Assert.isTrue(validator.isValid(request, responseObserver), "Invalid parameter for 'getUserComments'");
-        
+
         //  Building statement
         final Instant start = Instant.now();
         BoundStatement stmt = buildStatementUserComments(request);
         if (LOGGER.isDebugEnabled()) {
             LOGGER.debug("Retrieving comments for user {}", request.getUserId().getValue());
         }
-        
+
         // Execute Query asynchronously and process result
         buildCompletableFuture(dseSession.executeAsync(stmt)).handle((rs, ex) -> {
             if (rs != null) {
@@ -175,7 +176,7 @@ public class CommentService extends CommentsServiceImplBase {
                 int remaining     = rs.getAvailableWithoutFetching();
                 Iterator<Row> iterRows = rs.iterator();
                 while(remaining > 0 && iterRows.hasNext()) {
-                    Row row = iterRows.next(); 
+                    Row row = iterRows.next();
                     CommentsByUser commentByUser = new CommentsByUser();
                     commentByUser.setUserid(row.getUUID("userid"));
                     commentByUser.setComment(row.getString("comment"));
@@ -195,7 +196,7 @@ public class CommentService extends CommentsServiceImplBase {
                    eventBus.post(new CassandraMutationError(request, ex));
                    responseObserver.onError(Status.INTERNAL.withCause(ex).asRuntimeException());
                }
-           
+
             return rs;
         });
     }
@@ -203,71 +204,43 @@ public class CommentService extends CommentsServiceImplBase {
     /** {@inheritDoc} */
     @Override
     public void getVideoComments(
-                final GetVideoCommentsRequest request, 
+                final GetVideoCommentsRequest request,
                 StreamObserver<GetVideoCommentsResponse> responseObserver) {
-
-        // Parameter Validation
-        LOGGER.debug("Starting 'getVideoComments'");
-        Assert.isTrue(validator.isValid(request, responseObserver), "Invalid parameter for 'getVideoComments'");
-        
-        // Building statement
         BoundStatement statement = buildStatementVideoComments(request);
-        if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug("Retrieving comments for videos {}", request.getVideoId().getValue());
+
+        ResultSet commentResult = dseSession.execute(statement);
+        final GetVideoCommentsResponse.Builder builder = GetVideoCommentsResponse.newBuilder();
+
+        int remaining = commentResult.getAvailableWithoutFetching();
+        for (Row row : commentResult) {
+            CommentsByVideo commentByVideo = new CommentsByVideo(
+                  row.getUUID("videoid"), row.getUUID("commentid"),
+                  row.getUUID("userid"), row.getString("comment"));
+
+            /**
+            * Explicitly set dateOfComment because I cannot use the @Computed
+            * annotation set on the dateOfComment field when using QueryBuilder.
+            * This gives us the "proper" return object expected for the response to the front-end
+            * UI.  It does not function if this value is null or not the correct type.
+            */
+            commentByVideo.setDateOfComment(row.getTimestamp("comment_timestamp"));
+            builder.addComments(commentByVideo.toVideoComment());
+
+            if (--remaining == 0) {
+                break;
+            }
         }
-        
-        // Execute Query asynchronously and process result
-        buildCompletableFuture(dseSession.executeAsync(statement)).handle((commentResult, ex) -> {
-                    try {
-                        if (commentResult != null) {
-                            final GetVideoCommentsResponse.Builder builder = GetVideoCommentsResponse.newBuilder();
 
-                            int remaining = commentResult.getAvailableWithoutFetching();
-                            for (Row row : commentResult) {
-                                CommentsByVideo commentByVideo = new CommentsByVideo(
-                                        row.getUUID("videoid"), row.getUUID("commentid"),
-                                        row.getUUID("userid"), row.getString("comment")
-                                );
-
-                                /**
-                                 * Explicitly set dateOfComment because I cannot use the @Computed
-                                 * annotation set on the dateOfComment field when using QueryBuilder.
-                                 * This gives us the "proper" return object expected for the response to the front-end
-                                 * UI.  It does not function if this value is null or not the correct type.
-                                 */
-                                commentByVideo.setDateOfComment(row.getTimestamp("comment_timestamp"));
-                                builder.addComments(commentByVideo.toVideoComment());
-
-                                if (--remaining == 0) {
-                                    break;
-                                }
-                            }
-
-                            Optional.ofNullable(commentResult.getExecutionInfo().getPagingState())
-                                    .map(PagingState::toString)
-                                    .ifPresent(builder::setPagingState);
-                            responseObserver.onNext(builder.build());
-                            responseObserver.onCompleted();
-
-                            LOGGER.debug("End get video comments request");
-
-                        } else if (ex != null) {
-                            LOGGER.error("Exception getting video comments : " + mergeStackTrace(ex));
-
-                            responseObserver.onError(Status.INTERNAL.withCause(ex).asRuntimeException());
-                        }
-
-                    } catch (Exception exception) {
-                        LOGGER.error("CATCH Exception getting video comments : " + mergeStackTrace(exception));
-
-                    }
-                    return commentResult;
-                });
+        Optional.ofNullable(commentResult.getExecutionInfo().getPagingState())
+              .map(PagingState::toString)
+              .ifPresent(builder::setPagingState);
+        responseObserver.onNext(builder.build());
+        responseObserver.onCompleted();
     }
-    
+
     /**
      * Init statement based on comment tag.
-     *  
+     *
      * @param request
      *      current request
      * @return
@@ -280,7 +253,7 @@ public class CommentService extends CommentsServiceImplBase {
             statement = statementSearchAllCommentsForUser
                         .bind()
                         .setUUID("userid", fromString(request.getUserId().getValue()));
-        } else {            
+        } else {
             /**
              * Subsequent requests always provide startingCommentId to load page
              * of user comments. Fetch size/page size is expected to be > 1
@@ -297,10 +270,10 @@ public class CommentService extends CommentsServiceImplBase {
         }
         return statement;
     }
-    
+
     /**
      * Init statement based on comment tag.
-     *  
+     *
      * @param request
      *      current request
      * @return
@@ -310,7 +283,7 @@ public class CommentService extends CommentsServiceImplBase {
         BoundStatement statement         = null;
         final TimeUuid startingCommentId = request.getStartingCommentId();
         final Uuid     videoId           = request.getVideoId();
-       
+
         /**
          * Query without startingCommentId to get a reference point
          * Normally, the requested fetch size/page size is 1 to get
@@ -337,7 +310,7 @@ public class CommentService extends CommentsServiceImplBase {
         }
         return statement;
     }
-        
+
     /**
      * Building static prepareStatement in advance to speed up queries.
      */
@@ -349,7 +322,7 @@ public class CommentService extends CommentsServiceImplBase {
         statementInsertCommentByUser = dseSession.prepare(queryCreateCommentByUser.toString())
                                                  .setConsistencyLevel(ConsistencyLevel.LOCAL_QUORUM);
     }
-    
+
     /**
      * Building static prepareStatement in advance to speed up queries.
      */
@@ -361,7 +334,7 @@ public class CommentService extends CommentsServiceImplBase {
         statementInsertCommentByVideo = dseSession.prepare(queryCreateCommentByVideo.toString())
                                                   .setConsistencyLevel(ConsistencyLevel.LOCAL_QUORUM);
     }
-    
+
     /**
      * Notice below I execute fcall() to pull the timestamp out of the
      * commentid timeuuid field, yet I am using the @Computed annotation
@@ -381,7 +354,7 @@ public class CommentService extends CommentsServiceImplBase {
         statementSearchAllCommentsForUser = dseSession.prepare(querySearchAllCommentsForUser)
                                                       .setConsistencyLevel(ConsistencyLevel.LOCAL_QUORUM);
     }
-    
+
     /**
      * Building static prepareStatement in advance to speed up queries.
      */
@@ -395,7 +368,7 @@ public class CommentService extends CommentsServiceImplBase {
         statementSearchCommentsForUserWithStartingPoint = dseSession.prepare(querySearchCommentsFoUserWithStartingPoint)
                                                                     .setConsistencyLevel(ConsistencyLevel.LOCAL_QUORUM);
     }
-    
+
     /**
      * Building static prepareStatement in advance to speed up queries.
      */
@@ -408,7 +381,7 @@ public class CommentService extends CommentsServiceImplBase {
         statementSearchAllCommentsForVideo = dseSession.prepare(auerySearchAllCommentForvideo)
                                                        .setConsistencyLevel(ConsistencyLevel.LOCAL_QUORUM);
     }
-    
+
     /**
      * Building static prepareStatement in advance to speed up queries.
      */

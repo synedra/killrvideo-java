@@ -19,7 +19,7 @@ public class TypeConverter {
                 .setSeconds(instant.getEpochSecond())
                 .setNanos(instant.getNano()).build();
     }
-    
+
     public static Timestamp epochTimeToTimeStamp(long epoch) {
         return Timestamp.newBuilder().setSeconds(epoch).build();
     }
@@ -42,6 +42,11 @@ public class TypeConverter {
         return Uuid.newBuilder()
                 .setValue(uuid.toString())
                 .build();
+    }
+
+    static final long NUM_100NS_INTERVALS_SINCE_UUID_EPOCH = 0x01b21dd213814000L;
+    public static Date getTimeFromUUID(UUID uuid) {
+        return new Date(uuid.timestamp() - NUM_100NS_INTERVALS_SINCE_UUID_EPOCH / 10000);
     }
 
     /**

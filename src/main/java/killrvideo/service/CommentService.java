@@ -28,6 +28,8 @@ import com.datastax.driver.core.Row;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.querybuilder.QueryBuilder;
 import com.datastax.driver.dse.DseSession;
+import com.datastax.driver.mapping.MappingManager;
+import com.datastax.driver.mapping.Result;
 import com.google.common.eventbus.EventBus;
 
 import io.grpc.Status;
@@ -68,6 +70,9 @@ public class CommentService extends CommentsServiceImplBase {
 
     @Inject
     private KillrVideoInputValidator validator;
+
+    @Inject
+    private MappingManager manager;
 
     /** Insert comment in table comments_by_user. */
     private PreparedStatement statementInsertCommentByUser;

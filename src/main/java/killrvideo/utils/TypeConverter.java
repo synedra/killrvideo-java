@@ -46,7 +46,7 @@ public class TypeConverter {
 
     static final long NUM_100NS_INTERVALS_SINCE_UUID_EPOCH = 0x01b21dd213814000L;
     public static Date getTimeFromUUID(UUID uuid) {
-        return new Date(uuid.timestamp() - NUM_100NS_INTERVALS_SINCE_UUID_EPOCH / 10000);
+        return new Date((uuid.timestamp() - NUM_100NS_INTERVALS_SINCE_UUID_EPOCH) / 10000);
     }
 
     /**

@@ -11,12 +11,19 @@ import java.security.cert.X509Certificate;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import com.datastax.driver.core.*;
+import com.datastax.driver.core.policies.ConstantSpeculativeExecutionPolicy;
+import com.datastax.driver.core.policies.DCAwareRoundRobinPolicy;
+import com.datastax.driver.core.policies.LoadBalancingPolicy;
+import com.datastax.driver.core.policies.SpeculativeExecutionPolicy;
 import com.datastax.driver.dse.DseCluster;
+import com.datastax.driver.core.Metadata;
+
 import io.netty.handler.ssl.SslContextBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -125,8 +132,14 @@ public class DseConfiguration {
 
         final AtomicInteger atomicCount = new AtomicInteger(1);
         Callable<DseSession> connectionToDse = () -> {
-            return clusterConfig.build().connect();
-        };
+            DseSession session = clusterConfig.build().connect();
+            Metadata metadata = session.getCluster().getMetadata();
+
+            Set<com.datastax.driver.core.Host> nodes = metadata.getAllHosts();
+            LOGGER.debug("Nodes are: " + nodes);
+
+            return session;
+    };
 
         RetryConfig config = new RetryConfigBuilder()
                 .retryOnAnyException()
@@ -144,7 +157,8 @@ public class DseConfiguration {
                 })
                 .onSuccess(s -> {
                     long timeElapsed = System.currentTimeMillis() - top;
-                    LOGGER.info("Connection etablished to DSE Cluster in {} millis.", timeElapsed);})
+                    LOGGER.info("Connection etablished to DSE Cluster in {} millis.", timeElapsed);
+                })
                 .execute(connectionToDse).getResult();
     }
 
@@ -202,6 +216,19 @@ public class DseConfiguration {
         clusterNodeAdresses.stream()
                            .map(address -> address.getHostName())
                            .forEach(clusterConfig::addContactPoint);
+
+        clusterConfig.withLoadBalancingPolicy(
+                DCAwareRoundRobinPolicy.builder()
+                        .withLocalDc("AWS")
+                        .withUsedHostsPerRemoteDc(3)
+                        .allowRemoteDCsForLocalConsistencyLevel()
+                        .build());
+
+        clusterConfig.withSpeculativeExecutionPolicy(
+                new ConstantSpeculativeExecutionPolicy(
+                        500,20
+                )
+        ).build();
     }
 
     /**

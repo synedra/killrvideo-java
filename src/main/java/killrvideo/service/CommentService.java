@@ -209,13 +209,13 @@ public class CommentService extends CommentsServiceImplBase {
         // Parameter Validation
         LOGGER.debug("Starting 'getVideoComments'");
         Assert.isTrue(validator.isValid(request, responseObserver), "Invalid parameter for 'getVideoComments'");
-        
+
         // Building statement
         BoundStatement statement = buildStatementVideoComments(request);
         if (LOGGER.isDebugEnabled()) {
             LOGGER.debug("Retrieving comments for videos {}", request.getVideoId().getValue());
         }
-        
+
         // Execute Query asynchronously and process result
         buildCompletableFuture(dseSession.executeAsync(statement)).handle((commentResult, ex) -> {
                     try {

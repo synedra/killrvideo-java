@@ -79,8 +79,8 @@ public class SearchService extends SearchServiceImplBase {
         /**
          * Pass a column name of "solr_query" to the QueryBuilder because we are
          * using DSE Search to provide a more comprehensive video search experience.
-         * Notice we are using a consistency of LOCAL_ONE instead of LOCAL_QUORUM
-         * as compared to other queries.  LOCAL_QUORUM is not currently supported by DSE Search.
+         * Notice we are using a consistency of LOCAL_ONE instead of LOCAL_ONE
+         * as compared to other queries.  LOCAL_ONE is not currently supported by DSE Search.
          */
 
         getQuerySuggestions_getTagsPrepared = dseSession.prepare(

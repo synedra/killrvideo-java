@@ -83,7 +83,7 @@ public class UserManagementService extends UserManagementServiceImplBase {
                         .value("password", QueryBuilder.bindMarker())
                         .value("userid", QueryBuilder.bindMarker())
                         .ifNotExists() // use lightweight transaction
-        ).setConsistencyLevel(ConsistencyLevel.LOCAL_QUORUM);
+        ).setConsistencyLevel(ConsistencyLevel.LOCAL_ONE);
 
         createUser_insertUserPrepared = dseSession.prepare(
                 QueryBuilder
@@ -94,7 +94,7 @@ public class UserManagementService extends UserManagementServiceImplBase {
                         .value("email", QueryBuilder.bindMarker())
                         .value("created_date", QueryBuilder.bindMarker())
                         .ifNotExists() // use lightweight transaction
-        ).setConsistencyLevel(ConsistencyLevel.LOCAL_QUORUM);
+        ).setConsistencyLevel(ConsistencyLevel.LOCAL_ONE);
 
         getUserProfile_getUsersPrepared = dseSession.prepare(
                 QueryBuilder
@@ -102,7 +102,7 @@ public class UserManagementService extends UserManagementServiceImplBase {
                         .all()
                         .from(Schema.KEYSPACE, usersTableName)
                         .where(QueryBuilder.in("userid", QueryBuilder.bindMarker()))
-        ).setConsistencyLevel(ConsistencyLevel.LOCAL_QUORUM);
+        ).setConsistencyLevel(ConsistencyLevel.LOCAL_ONE);
     }
 
     @Override

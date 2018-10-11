@@ -142,14 +142,14 @@ public class VideoCatalogService extends VideoCatalogServiceImplBase {
                         "FROM " + Schema.KEYSPACE + "." + latestVideosTableName + " " +
                         "WHERE yyyymmdd = :ymd " +
                         "AND (added_date, videoid) <= (:ad, :vid)"
-        ).setConsistencyLevel(ConsistencyLevel.LOCAL_QUORUM);
+        ).setConsistencyLevel(ConsistencyLevel.LOCAL_ONE);
 
         latestVideoPreview_noStartingPointPrepared = dseSession.prepare(
                 "" +
                         "SELECT * " +
                         "FROM " + Schema.KEYSPACE + "." + latestVideosTableName + " " +
                         "WHERE yyyymmdd = :ymd "
-        ).setConsistencyLevel(ConsistencyLevel.LOCAL_QUORUM);
+        ).setConsistencyLevel(ConsistencyLevel.LOCAL_ONE);
 
         // Prepared statements for getUserVideoPreviews()
         userVideoPreview_startingPointPrepared = dseSession.prepare(
@@ -158,14 +158,14 @@ public class VideoCatalogService extends VideoCatalogServiceImplBase {
                         "FROM " + Schema.KEYSPACE + "." + userVideosTableName + " " +
                         "WHERE userid = :uid " +
                         "AND (added_date, videoid) <= (:ad, :vid)"
-        ).setConsistencyLevel(ConsistencyLevel.LOCAL_QUORUM);
+        ).setConsistencyLevel(ConsistencyLevel.LOCAL_ONE);
 
         userVideoPreview_noStartingPointPrepared = dseSession.prepare(
                 "" +
                         "SELECT * " +
                         "FROM " + Schema.KEYSPACE + "." + userVideosTableName + " " +
                         "WHERE userid = :uid "
-        ).setConsistencyLevel(ConsistencyLevel.LOCAL_QUORUM);
+        ).setConsistencyLevel(ConsistencyLevel.LOCAL_ONE);
 
 
         // Prepared statements for submitYouTubeVideo()
@@ -181,7 +181,7 @@ public class VideoCatalogService extends VideoCatalogServiceImplBase {
                         .value("preview_image_location", QueryBuilder.bindMarker())
                         .value("tags", QueryBuilder.bindMarker())
                         .value("added_date", QueryBuilder.bindMarker())
-        ).setConsistencyLevel(ConsistencyLevel.LOCAL_QUORUM);
+        ).setConsistencyLevel(ConsistencyLevel.LOCAL_ONE);
 
         submitYouTubeVideo_insertUserVideo = dseSession.prepare(
                 QueryBuilder
@@ -191,7 +191,7 @@ public class VideoCatalogService extends VideoCatalogServiceImplBase {
                         .value("name", QueryBuilder.bindMarker())
                         .value("preview_image_location", QueryBuilder.bindMarker())
                         .value("added_date", QueryBuilder.bindMarker())
-        ).setConsistencyLevel(ConsistencyLevel.LOCAL_QUORUM);
+        ).setConsistencyLevel(ConsistencyLevel.LOCAL_ONE);
 
         submitYouTubeVideo_insertLatestVideo = dseSession.prepare(
                 QueryBuilder
@@ -203,7 +203,7 @@ public class VideoCatalogService extends VideoCatalogServiceImplBase {
                         .value("preview_image_location", QueryBuilder.bindMarker())
                         .value("added_date", QueryBuilder.bindMarker())
                         .using(QueryBuilder.ttl(LATEST_VIDEOS_TTL_SECONDS))
-        ).setConsistencyLevel(ConsistencyLevel.LOCAL_QUORUM);
+        ).setConsistencyLevel(ConsistencyLevel.LOCAL_ONE);
     }
 
     @Override

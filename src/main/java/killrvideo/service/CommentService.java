@@ -347,7 +347,7 @@ public class CommentService extends CommentsServiceImplBase {
         queryCreateCommentByUser.append(" (userid, commentid, comment, videoid)");
         queryCreateCommentByUser.append(" VALUES (?, ?, ?, ?) ");
         statementInsertCommentByUser = dseSession.prepare(queryCreateCommentByUser.toString())
-                                                 .setConsistencyLevel(ConsistencyLevel.LOCAL_QUORUM);
+                                                 .setConsistencyLevel(ConsistencyLevel.LOCAL_ONE);
     }
     
     /**
@@ -359,7 +359,7 @@ public class CommentService extends CommentsServiceImplBase {
         queryCreateCommentByVideo.append(" (videoid, commentid, comment, userid)");
         queryCreateCommentByVideo.append(" VALUES (?, ?, ?, ?) ");
         statementInsertCommentByVideo = dseSession.prepare(queryCreateCommentByVideo.toString())
-                                                  .setConsistencyLevel(ConsistencyLevel.LOCAL_QUORUM);
+                                                  .setConsistencyLevel(ConsistencyLevel.LOCAL_ONE);
     }
     
     /**
@@ -379,7 +379,7 @@ public class CommentService extends CommentsServiceImplBase {
                         .from(Schema.KEYSPACE, Schema.TABLENAME_COMMENTS_BY_USER )
                         .where(QueryBuilder.eq("userid", QueryBuilder.bindMarker()));
         statementSearchAllCommentsForUser = dseSession.prepare(querySearchAllCommentsForUser)
-                                                      .setConsistencyLevel(ConsistencyLevel.LOCAL_QUORUM);
+                                                      .setConsistencyLevel(ConsistencyLevel.LOCAL_ONE);
     }
     
     /**
@@ -393,7 +393,7 @@ public class CommentService extends CommentsServiceImplBase {
                 .where(QueryBuilder.eq("userid", QueryBuilder.bindMarker()))
                 .and(QueryBuilder.lte("commentid", QueryBuilder.bindMarker()));
         statementSearchCommentsForUserWithStartingPoint = dseSession.prepare(querySearchCommentsFoUserWithStartingPoint)
-                                                                    .setConsistencyLevel(ConsistencyLevel.LOCAL_QUORUM);
+                                                                    .setConsistencyLevel(ConsistencyLevel.LOCAL_ONE);
     }
     
     /**
@@ -406,7 +406,7 @@ public class CommentService extends CommentsServiceImplBase {
                 .from(Schema.KEYSPACE, Schema.TABLENAME_COMMENTS_BY_VIDEO)
                 .where(QueryBuilder.eq("videoid", QueryBuilder.bindMarker()));
         statementSearchAllCommentsForVideo = dseSession.prepare(auerySearchAllCommentForvideo)
-                                                       .setConsistencyLevel(ConsistencyLevel.LOCAL_QUORUM);
+                                                       .setConsistencyLevel(ConsistencyLevel.LOCAL_ONE);
     }
     
     /**
@@ -420,6 +420,6 @@ public class CommentService extends CommentsServiceImplBase {
                 .where(QueryBuilder.eq("videoid", QueryBuilder.bindMarker()))
                 .and(QueryBuilder.lte("commentid", QueryBuilder.bindMarker()));
         statementSearchCommentsForVideoWithStartingPoint = dseSession.prepare(auerySearchCommentForVideo)
-                .setConsistencyLevel(ConsistencyLevel.LOCAL_QUORUM);
+                .setConsistencyLevel(ConsistencyLevel.LOCAL_ONE);
     }
 }

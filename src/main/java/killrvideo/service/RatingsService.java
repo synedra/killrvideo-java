@@ -77,7 +77,7 @@ public class RatingsService extends RatingsServiceImplBase {
                         .with(QueryBuilder.incr("rating_counter"))
                         .and(QueryBuilder.incr("rating_total", QueryBuilder.bindMarker()))
                         .where(QueryBuilder.eq("videoid", QueryBuilder.bindMarker()))
-        ).setConsistencyLevel(ConsistencyLevel.LOCAL_QUORUM);
+        ).setConsistencyLevel(ConsistencyLevel.LOCAL_ONE);
     }
 
     @Override

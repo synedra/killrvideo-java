@@ -219,7 +219,7 @@ public class DseConfiguration {
 
         clusterConfig.withLoadBalancingPolicy(
                 DCAwareRoundRobinPolicy.builder()
-                        .withLocalDc("AWS")
+                        .withLocalDc("onprem")
                         .withUsedHostsPerRemoteDc(3)
                         .allowRemoteDCsForLocalConsistencyLevel()
                         .build());

@@ -1,6 +1,7 @@
 .classpath
 .settings
 .project
+.factorypath
 target
 bin
 .pmd

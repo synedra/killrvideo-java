@@ -51,6 +51,6 @@ public class TypeConverter {
      * @return
      */
     public static String bytecodeToTraversalString(KillrVideoTraversal<Vertex, Vertex> traversal) {
-        return org.apache.tinkerpop.gremlin.groovy.jsr223.GroovyTranslator.of("g").translate(traversal.getBytecode());
+        return "";
     }
 }

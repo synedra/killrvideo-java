@@ -2,10 +2,6 @@ package killrvideo.entity;
 
 import java.io.Serializable;
 
-import org.hibernate.validator.constraints.Length;
-
-import com.datastax.driver.mapping.annotations.Column;
-
 /**
  * Bean representing shared attributes in videos.
  *
@@ -16,11 +12,8 @@ public abstract class AbstractVideo implements Serializable {
     /** Serial. */
     private static final long serialVersionUID = -4366554197274003003L;
 
-    @Column
-    @Length(min = 1, message = "The video name must not be empty")
     protected String name;
 
-    @Column(name = "preview_image_location")
     protected String previewImageLocation;
 
     /**

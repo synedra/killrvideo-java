@@ -4,41 +4,28 @@ import java.io.Serializable;
 import java.util.Date;
 import java.util.UUID;
 
-import com.datastax.driver.mapping.annotations.ClusteringColumn;
-import com.datastax.driver.mapping.annotations.Column;
-import com.datastax.driver.mapping.annotations.PartitionKey;
-import com.datastax.driver.mapping.annotations.Table;
-
 /**
  * Pojo representing DTO for table 'video_recommendations_by_video'.
  *
  * @author DataStax evangelist team.
  */
-@Table(keyspace = Schema.KEYSPACE, name = Schema.TABLENAME_VIDEO_RECOMMENDATIONS_BYVIDEO)
 public class VideoRecommandationsByVideo implements Serializable {
 
     /** Serial. */
     private static final long serialVersionUID = -7712611503821491103L;
 
-    @PartitionKey
     private UUID videoid;
 
-    @Column(name = "added_date")
     private Date addedDate;
 
-    @Column
     private UUID authorid;
 
-    @Column
     private String name;
 
-    @Column(name = "preview_image_location")
     private String previewImageLocation;
 
-    @ClusteringColumn
     private UUID userid;
 
-    @Column
     private float rating;
 
     /**

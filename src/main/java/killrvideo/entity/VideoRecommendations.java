@@ -2,28 +2,20 @@ package killrvideo.entity;
 
 import java.util.UUID;
 
-import com.datastax.driver.mapping.annotations.Column;
-import com.datastax.driver.mapping.annotations.PartitionKey;
-import com.datastax.driver.mapping.annotations.Table;
-
 /**
  * Pojo representing DTO for table 'video_recommendations'.
  *
  * @author DataStax evangelist team.
  */
-@Table(keyspace = Schema.KEYSPACE, name = Schema.TABLENAME_VIDEO_RECOMMENDATIONS)
 public class VideoRecommendations extends AbstractVideoList {
 
     /** Serial. */
     private static final long serialVersionUID = -1811715623098399219L;
 
-    @PartitionKey
     private UUID userid;
 
-    @Column
     private float rating;
 
-    @Column
     private UUID authorid;
 
     /**

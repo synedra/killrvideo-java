@@ -3,9 +3,6 @@ package killrvideo.entity;
 import java.util.Date;
 import java.util.UUID;
 
-import com.datastax.driver.mapping.annotations.Column;
-import com.datastax.driver.mapping.annotations.ClusteringColumn;
-
 /**
  * Pojo representing multiple videso.
  *
@@ -16,11 +13,8 @@ public class AbstractVideoList extends AbstractVideo {
     /** Serial. */
     private static final long serialVersionUID = 1319627901957309436L;
 
-    @ClusteringColumn
-    @Column(name = "added_date")
     private Date addedDate;
 
-    @ClusteringColumn(1)
     private UUID videoid;
     
     /**

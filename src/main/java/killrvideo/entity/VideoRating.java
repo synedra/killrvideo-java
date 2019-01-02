@@ -4,10 +4,6 @@ import java.io.Serializable;
 import java.util.Optional;
 import java.util.UUID;
 
-import com.datastax.driver.mapping.annotations.Column;
-import com.datastax.driver.mapping.annotations.PartitionKey;
-import com.datastax.driver.mapping.annotations.Table;
-
 import killrvideo.ratings.RatingsServiceOuterClass.GetRatingResponse;
 import killrvideo.utils.TypeConverter;
 
@@ -16,19 +12,15 @@ import killrvideo.utils.TypeConverter;
  *
  * @author DataStax evangelist team.
  */
-@Table(keyspace = Schema.KEYSPACE, name = Schema.TABLENAME_VIDEOS_RATINGS)
 public class VideoRating implements Serializable {
 
     /** Serial. */
     private static final long serialVersionUID = -8874199914791405808L;
 
-    @PartitionKey
     private UUID videoid;
 
-    @Column(name = "rating_counter")
     private Long ratingCounter;
 
-    @Column(name = "rating_total")
     private Long ratingTotal;
 
     /**

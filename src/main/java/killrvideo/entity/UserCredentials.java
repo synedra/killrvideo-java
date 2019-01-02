@@ -7,30 +7,20 @@ import javax.validation.constraints.NotNull;
 
 import org.hibernate.validator.constraints.Length;
 
-import com.datastax.driver.mapping.annotations.Column;
-import com.datastax.driver.mapping.annotations.PartitionKey;
-import com.datastax.driver.mapping.annotations.Table;
-
 /**
  * Pojo representing DTO for table 'user_credentials'
  *
  * @author DataStax evangelist team.
  */
-@Table(keyspace = Schema.KEYSPACE, name = Schema.TABLENAME_USER_CREDENTIALS)
 public class UserCredentials implements Serializable {
 
     /** Serial. */
     private static final long serialVersionUID = 2013590265131367178L;
 
-    @PartitionKey
     private String email;
 
-    @Length(min = 1, message = "password must not be empty")
-    @Column(name = "password")
     private String password;
 
-    @NotNull
-    @Column
     private UUID userid;
 
     /**

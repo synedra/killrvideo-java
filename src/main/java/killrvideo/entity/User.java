@@ -7,10 +7,6 @@ import javax.validation.constraints.NotNull;
 
 import org.hibernate.validator.constraints.Length;
 
-import com.datastax.driver.mapping.annotations.Column;
-import com.datastax.driver.mapping.annotations.PartitionKey;
-import com.datastax.driver.mapping.annotations.Table;
-
 import killrvideo.user_management.UserManagementServiceOuterClass.UserProfile;
 import killrvideo.utils.TypeConverter;
 
@@ -19,26 +15,16 @@ import killrvideo.utils.TypeConverter;
  *
  * @author DataStax evangelist team.
  */
-@Table(keyspace = Schema.KEYSPACE, name = Schema.TABLENAME_USERS)
 public class User {
 
-    @PartitionKey
     private UUID userid;
 
-    @Length(min = 1, message = "firstName must not be empty")
-    @Column
     private String firstname;
 
-    @Length(min = 1, message = "lastname must not be empty")
-    @Column
     private String lastname;
 
-    @Length(min = 1, message = "email must not be empty")
-    @Column
     private String email;
 
-    @NotNull
-    @Column(name = "created_date")
     private Date createdAt;
 
     /**
@@ -162,7 +148,5 @@ public class User {
      */
     public void setCreatedAt(Date createdAt) {
         this.createdAt = createdAt;
-    }
-    
-    
+    }    
 }

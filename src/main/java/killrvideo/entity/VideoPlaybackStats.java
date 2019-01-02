@@ -4,10 +4,6 @@ import java.io.Serializable;
 import java.util.Optional;
 import java.util.UUID;
 
-import com.datastax.driver.mapping.annotations.Column;
-import com.datastax.driver.mapping.annotations.PartitionKey;
-import com.datastax.driver.mapping.annotations.Table;
-
 import killrvideo.statistics.StatisticsServiceOuterClass.PlayStats;
 import killrvideo.utils.TypeConverter;
 
@@ -16,13 +12,11 @@ import killrvideo.utils.TypeConverter;
  *
  * @author DataStax evangelist team.
  */
-@Table(keyspace = Schema.KEYSPACE, name = Schema.TABLENAME_PLAYBACK_STATS)
 public class VideoPlaybackStats implements Serializable {
 
     /** Serial. */
     private static final long serialVersionUID = -8636413035520458200L;
 
-    @PartitionKey
     private UUID videoid;
 
     /**
@@ -30,7 +24,6 @@ public class VideoPlaybackStats implements Serializable {
      * is no "@Counter" annotation that I know of.  No worries though, just use the incr() function
      * while using the QueryBuilder.  Something similar to with(QueryBuilder.incr("views")).
      */
-    @Column
     private Long views;
 
     /**
@@ -80,6 +73,4 @@ public class VideoPlaybackStats implements Serializable {
     public void setViews(Long views) {
         this.views = views;
     }
-    
-    
 }

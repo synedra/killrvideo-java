@@ -4,39 +4,26 @@ import java.io.Serializable;
 import java.util.Date;
 import java.util.UUID;
 
-import com.datastax.driver.mapping.annotations.Column;
-import com.datastax.driver.mapping.annotations.ClusteringColumn;
-import com.datastax.driver.mapping.annotations.PartitionKey;
-import com.datastax.driver.mapping.annotations.Table;
-
 /**
  * Pojo representing DTO for table 'comments_by_video'
  *
  * @author DataStax evangelist team.
  */
-@Table(keyspace = Schema.KEYSPACE, name = Schema.TABLENAME_ENCODING_JOBS_NOTIFICATION)
 public class EncodingJobNotification implements Serializable {
 
     /** Serial. */
     private static final long serialVersionUID = -7458495256206978510L;
 
-    @PartitionKey
     private UUID videoid;
 
-    @ClusteringColumn(1)
-    @Column(name = "status_date")
     private Date statusDate;
 
-    @ClusteringColumn(2)
     private String etag;
 
-    @Column
     private String jobid;
 
-    @Column
     private String newstate;
 
-    @Column
     private String oldstate;
 
     /**

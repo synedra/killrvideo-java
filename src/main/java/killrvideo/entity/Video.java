@@ -8,10 +8,6 @@ import javax.validation.constraints.NotNull;
 
 import org.hibernate.validator.constraints.Length;
 
-import com.datastax.driver.mapping.annotations.Column;
-import com.datastax.driver.mapping.annotations.PartitionKey;
-import com.datastax.driver.mapping.annotations.Table;
-
 import killrvideo.search.SearchServiceOuterClass.SearchResultsVideoPreview;
 import killrvideo.search.SearchServiceOuterClass.SearchResultsVideoPreview.Builder;
 import killrvideo.suggested_videos.SuggestedVideosService.SuggestedVideoPreview;
@@ -26,36 +22,23 @@ import killrvideo.video_catalog.VideoCatalogServiceOuterClass.VideoPreview;
  *
  * @author DataStax evangelist team.
  */
-@Table(keyspace = Schema.KEYSPACE, name = Schema.TABLENAME_VIDEOS)
 public class Video extends AbstractVideo {
 
     /** Serial. */
     private static final long serialVersionUID = 7035802926837646137L;
 
-    @PartitionKey
     private UUID videoid;
 
-    @NotNull
-    @Column
     private UUID userid;
 
-    @Length(min = 1, message = "description must not be empty")
-    @Column
     private String description;
 
-    @Length(min = 1, message = "location must not be empty")
-    @Column
     private String location;
 
-    @Column(name = "location_type")
     private int locationType;
 
-    @Column
-    @EmptyCollectionIfNull
     private Set<String> tags;
 
-    @NotNull
-    @Column(name = "added_date")
     private Date addedDate;
 
     /**

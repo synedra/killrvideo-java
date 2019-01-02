@@ -6,16 +6,6 @@ import java.io.Serializable;
 import java.util.Date;
 import java.util.UUID;
 
-import javax.validation.constraints.NotNull;
-
-import org.hibernate.validator.constraints.Length;
-
-import com.datastax.driver.mapping.annotations.ClusteringColumn;
-import com.datastax.driver.mapping.annotations.Column;
-import com.datastax.driver.mapping.annotations.Computed;
-import com.datastax.driver.mapping.annotations.PartitionKey;
-import com.datastax.driver.mapping.annotations.Table;
-
 import killrvideo.comments.CommentsServiceOuterClass;
 import killrvideo.comments.CommentsServiceOuterClass.CommentOnVideoRequest;
 import killrvideo.utils.TypeConverter;
@@ -25,24 +15,17 @@ import killrvideo.utils.TypeConverter;
  *
  * @author DataStax evangelist team.
  */
-@Table(keyspace = Schema.KEYSPACE, name = Schema.TABLENAME_COMMENTS_BY_VIDEO)
 public class CommentsByVideo implements Serializable {
 
     /** Serial. */
     private static final long serialVersionUID = -6365600205169278881L;
 
-    @PartitionKey
     private UUID videoid;
 
-    @ClusteringColumn
     private UUID commentid;
 
-    @NotNull
-    @Column
     private UUID userid;
 
-    @Length(min = 1, message = "The comment must not be empty")
-    @Column
     private String comment;
 
     /**
@@ -55,8 +38,6 @@ public class CommentsByVideo implements Serializable {
      * result with an alias of comment_timestamp.  Again, reference CommentService.getUserComments()
      * or CommentService.getVideoComments() for examples of how to implement.
      */
-    @NotNull
-    @Computed("toTimestamp(commentid)")
     private Date dateOfComment;
 
     /**

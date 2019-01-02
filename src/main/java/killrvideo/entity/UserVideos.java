@@ -4,9 +4,6 @@ import java.util.Date;
 import java.util.Optional;
 import java.util.UUID;
 
-import com.datastax.driver.mapping.annotations.PartitionKey;
-import com.datastax.driver.mapping.annotations.Table;
-
 import killrvideo.utils.TypeConverter;
 import killrvideo.video_catalog.VideoCatalogServiceOuterClass.VideoPreview;
 
@@ -15,13 +12,11 @@ import killrvideo.video_catalog.VideoCatalogServiceOuterClass.VideoPreview;
  *
  * @author DataStax evangelist team.
  */
-@Table(keyspace = Schema.KEYSPACE, name = Schema.TABLENAME_USER_VIDEOS)
 public class UserVideos extends AbstractVideoList {
 
     /** Serial. */
     private static final long serialVersionUID = -4689177834790056936L;
     
-    @PartitionKey
     private UUID userid;
 
     /**
@@ -77,7 +72,5 @@ public class UserVideos extends AbstractVideoList {
      */
     public void setUserid(UUID userid) {
         this.userid = userid;
-    }
-    
-    
+    }    
 }

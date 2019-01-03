@@ -51,7 +51,7 @@ public class VideoCatalogService extends VideoCatalogServiceImplBase {
 
     @Override
     public void getLatestVideoPreviews(GetLatestVideoPreviewsRequest request, StreamObserver<GetLatestVideoPreviewsResponse> responseObserver) {
-
+        responseObserver.onError(new Throwable("Not implemented"));
     }
 
 

@@ -1,5 +1,7 @@
 package killrvideo.service;
 
+import io.grpc.Status;
+
 import java.util.UUID;
 import java.util.Date;
 
@@ -102,9 +104,10 @@ public class UserManagementService extends UserManagementServiceImplBase {
             String passwordFromRequest = request.getPassword();
             UUID userId = userAccess.getAuthenticatedIdByEmailPassword(email, passwordFromRequest);
             
-            if (userId == null){
+            if (userId == null) {
                 LOGGER.info("Invalid credentials");
-                responseObserver.onError(new Throwable("Invalid credentials"));
+                responseObserver.onError(Status.INVALID_ARGUMENT
+                  .augmentDescription("Invalid credentials").asRuntimeException());
             } else {
                     LOGGER.info("Boom shakalaka we in!");
                     LOGGER.info("User ID: " + userId);

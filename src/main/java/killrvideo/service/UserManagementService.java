@@ -65,18 +65,18 @@ public class UserManagementService extends UserManagementServiceImplBase {
             user.setLastname(lastName);
             user.setEmail(email);
             
-            UUID userId = userAccess.createNewUser(password, user);   
+            boolean success = userAccess.createNewUser(password, user);   
             
-            if (userId == null){
+            if (success){
+                LOGGER.info("Boom shakalaka 'new toys!'");
+                LOGGER.info("User ID: " + userIdUuid);
+                
+                responseObserver.onNext(CreateUserResponse.newBuilder().build());
+                responseObserver.onCompleted();
+                LOGGER.info("Response complete.");
+            } else {
                 LOGGER.info("User already exists");
                 responseObserver.onError(new Throwable("User already exists"));
-            } else {
-                    LOGGER.info("Boom shakalaka 'new toys!'");
-                    LOGGER.info("User ID: " + userId);
-                    
-                    responseObserver.onNext(CreateUserResponse.newBuilder().build());
-                    responseObserver.onCompleted();
-                    LOGGER.info("Response complete.");
             }
         }
         catch(Throwable e)

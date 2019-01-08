@@ -4,6 +4,7 @@ import java.io.File;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
+import java.text.SimpleDateFormat;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,8 +19,8 @@ public class UserAccess {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(UserAccess.class);
 
-    public UUID createNewUser(String password, User user) throws Exception {
-        return null;
+    public boolean createNewUser(String password, User user) throws Exception {
+	   return false;
     }
 
     public UUID getAuthenticatedIdByEmailPassword(String email, String password) throws Exception {

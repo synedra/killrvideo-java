@@ -92,7 +92,7 @@ public class VideoCatalogService extends VideoCatalogServiceImplBase {
 
             videoAccess.addNewVideo(newVideo);   
             
-            LOGGER.debug("Added new video: " + newVideo);
+            LOGGER.debug("Added new video: \n" + newVideo);
 
             responseObserver.onNext(SubmitYouTubeVideoResponse.newBuilder().build());
             responseObserver.onCompleted();

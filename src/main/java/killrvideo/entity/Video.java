@@ -125,7 +125,19 @@ public class Video extends AbstractVideo {
                 .setUserId(TypeConverter.uuidToUuid(userid))
                 .build();
     }
-
+    
+    public String toString() {
+        return 
+          "Video, Name: " + name + "\n" +
+          "\tvideoid: " + videoid + "\n" +
+          "\tuserid: " + userid + "\n" +
+          "\tpreviewImageLocation: " + previewImageLocation + "\n" +
+          "\tdescription: " + description + "\n" +
+          "\tlocation: " + location + "\n" +
+          "\tlocationType: " + locationType + "\n" +
+          "\ttags: " + tags + "\n" +
+          "\taddedDate: " + addedDate + "\n";
+    }
     /**
      * Getter for attribute 'videoid'.
      *

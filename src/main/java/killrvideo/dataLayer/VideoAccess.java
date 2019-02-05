@@ -20,7 +20,7 @@ public class VideoAccess {
     private static final Logger LOGGER = LoggerFactory.getLogger(UserAccess.class);
     
     public void addNewVideo(Video video) throws Exception {
-        LOGGER.debug("------Start createNewUser------");
+        LOGGER.debug("------Start add new video------");
 
     }
 }

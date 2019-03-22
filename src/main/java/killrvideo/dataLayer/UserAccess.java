@@ -1,10 +1,8 @@
 package killrvideo.dataLayer;
 
 import java.io.File;
-import java.util.Date;
-import java.util.List;
 import java.util.UUID;
-import java.text.SimpleDateFormat;
+import java.time.Instant;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

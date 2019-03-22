@@ -14,7 +14,7 @@ import killrvideo.graph.KillrVideoTraversal;
 
 public class TypeConverter {
 
-    public static Timestamp instantToTimeStamp(Instant instant) {
+    public static Timestamp instantToTimestamp(Instant instant) {
         return Timestamp.newBuilder()
                 .setSeconds(instant.getEpochSecond())
                 .setNanos(instant.getNano()).build();
@@ -25,7 +25,7 @@ public class TypeConverter {
     }
 
     public static Timestamp dateToTimestamp(Date date) {
-        return instantToTimeStamp(date.toInstant());
+        return instantToTimestamp(date.toInstant());
     }
 
     public static Date dateFromTimestamp(Timestamp timestamp) {

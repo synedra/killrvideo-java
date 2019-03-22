@@ -37,12 +37,8 @@ import killrvideo.video_catalog.VideoCatalogServiceOuterClass.SubmitYouTubeVideo
 import killrvideo.video_catalog.VideoCatalogServiceOuterClass.SubmitYouTubeVideoResponse;
 import killrvideo.video_catalog.VideoCatalogServiceOuterClass.VideoLocationType;
 
-import java.io.File;
-import java.net.MalformedURLException;
-import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
@@ -75,9 +71,7 @@ public class VideoCatalogService extends VideoCatalogServiceImplBase {
         try
         {       
 
-            final Date now = new Date();
-            final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd");
-            final String yyyyMMdd = dateFormat.format(now);
+            final Instant now = Instant.now();
             final String location = request.getYouTubeVideoId();
             final String name = request.getName();
             final String description = request.getDescription();

@@ -1,6 +1,6 @@
 package killrvideo.entity;
 
-import java.util.Date;
+import java.time.Instant;
 import java.util.Set;
 import java.util.UUID;
 
@@ -39,7 +39,7 @@ public class Video extends AbstractVideo {
 
     private Set<String> tags;
 
-    private Date addedDate;
+    private Instant addedDate;
 
     /**
      * Default Constructor allowing reflection.
@@ -49,14 +49,14 @@ public class Video extends AbstractVideo {
     /**
      * Constructor wihout location nor preview.
      */
-    public Video(UUID videoid, UUID userid, String name, String description, int locationType, Set<String> tags, Date addedDate) {
+    public Video(UUID videoid, UUID userid, String name, String description, int locationType, Set<String> tags, Instant addedDate) {
         this(videoid, userid, name, description, null, locationType, null, tags, addedDate);
     }
 
     /**
      * All attributes constructor.
      */
-    public Video(UUID videoid, UUID userid, String name, String description, String location, int locationType, String previewImageLocation, Set<String> tags, Date addedDate) {
+    public Video(UUID videoid, UUID userid, String name, String description, String location, int locationType, String previewImageLocation, Set<String> tags, Instant addedDate) {
         super(name, previewImageLocation);
         this.videoid = videoid;
         this.userid = userid;
@@ -73,7 +73,7 @@ public class Video extends AbstractVideo {
     public GetVideoResponse toVideoResponse() {
         final GetVideoResponse videoResponse = GetVideoResponse
                 .newBuilder()
-                .setAddedDate(TypeConverter.dateToTimestamp(addedDate))
+                .setAddedDate(TypeConverter.instantToTimestamp(addedDate))
                 .setDescription(description)
                 .setLocation(location)
                 .setLocationType(VideoLocationType.forNumber(getLocationType()))
@@ -91,7 +91,7 @@ public class Video extends AbstractVideo {
      */
     public VideoPreview toVideoPreview() {
         return VideoPreview.newBuilder()
-                .setAddedDate(TypeConverter.dateToTimestamp(addedDate))
+                .setAddedDate(TypeConverter.instantToTimestamp(addedDate))
                 .setName(name)
                 .setPreviewImageLocation(previewImageLocation)
                 .setUserId(TypeConverter.uuidToUuid(userid))
@@ -108,7 +108,7 @@ public class Video extends AbstractVideo {
     	if (previewImageLocation != null)  builder.setPreviewImageLocation(previewImageLocation);
     	if (userid != null)    			   builder.setUserId(TypeConverter.uuidToUuid(userid));
     	if (videoid != null)   			   builder.setVideoId(TypeConverter.uuidToUuid(videoid));
-    	if (addedDate != null) 			   builder.setAddedDate(TypeConverter.dateToTimestamp(addedDate));
+    	if (addedDate != null) 			   builder.setAddedDate(TypeConverter.instantToTimestamp(addedDate));
         return builder.build();
     }
 
@@ -119,7 +119,7 @@ public class Video extends AbstractVideo {
         return SuggestedVideoPreview
                 .newBuilder()
                 .setVideoId(TypeConverter.uuidToUuid(videoid))
-                .setAddedDate(TypeConverter.dateToTimestamp(addedDate))
+                .setAddedDate(TypeConverter.instantToTimestamp(addedDate))
                 .setName(name)
                 .setPreviewImageLocation(previewImageLocation)
                 .setUserId(TypeConverter.uuidToUuid(userid))
@@ -258,7 +258,7 @@ public class Video extends AbstractVideo {
      * @return
      *       current value of 'addedDate'
      */
-    public Date getAddedDate() {
+    public Instant getAddedDate() {
         return addedDate;
     }
 
@@ -267,7 +267,7 @@ public class Video extends AbstractVideo {
      * @param addedDate
      * 		new value for 'addedDate '
      */
-    public void setAddedDate(Date addedDate) {
+    public void setAddedDate(Instant addedDate) {
         this.addedDate = addedDate;
     }
     

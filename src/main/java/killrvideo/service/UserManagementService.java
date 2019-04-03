@@ -78,7 +78,7 @@ public class UserManagementService extends UserManagementServiceImplBase {
                 LOGGER.info("Response complete.");
             } else {
                 LOGGER.info("User already exists");
-                responseObserver.onError(new Throwable("User already exists"));
+                responseObserver.onError(Status.INVALID_ARGUMENT.augmentDescription("User already exists").asRuntimeException());
             }
         }
         catch(Throwable e)

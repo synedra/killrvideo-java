@@ -25,14 +25,11 @@ public class SearchService extends SearchServiceImplBase {
 
     @Override
     public void searchVideos(SearchVideosRequest request, StreamObserver<SearchVideosResponse> responseObserver) {
-
+        // LOGGER.debug("SEARCH VIDEOS");
     }
 
     @Override
     public void getQuerySuggestions(GetQuerySuggestionsRequest request, StreamObserver<GetQuerySuggestionsResponse> responseObserver) {
-
-        LOGGER.debug("Start getting query suggestions by name, tag, and description");
-
+        // LOGGER.debug("Start getting query suggestions by name, tag, and description");
     }
-
 }

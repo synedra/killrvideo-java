@@ -31,10 +31,8 @@ public class StatisticsService extends StatisticsServiceImplBase {
 
     @Override
     public void getNumberOfPlays(GetNumberOfPlaysRequest request, StreamObserver<GetNumberOfPlaysResponse> responseObserver) {
-
-        LOGGER.debug("-----Start getting number of plays------");
+        // LOGGER.debug("-----Start getting number of plays------");
         final GetNumberOfPlaysResponse.Builder builder = GetNumberOfPlaysResponse.newBuilder();
-                
 
         for (Uuid requestedVideoId : request.getVideoIdsList()) {
             builder.addStats(PlayStats
@@ -46,5 +44,6 @@ public class StatisticsService extends StatisticsServiceImplBase {
                                         
         responseObserver.onNext(builder.build());
         responseObserver.onCompleted();
+        // LOGGER.debug("-----End getting number of plays------");
     }
 }

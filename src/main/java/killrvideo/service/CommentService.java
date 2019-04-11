@@ -64,7 +64,7 @@ public class CommentService extends CommentsServiceImplBase {
     public void commentOnVideo(
             final CommentOnVideoRequest request, 
             StreamObserver<CommentOnVideoResponse> responseObserver) {
-        
+        // LOGGER.info("commentOnVideo");
     }
     
     /** {@inheritDoc} */
@@ -72,7 +72,7 @@ public class CommentService extends CommentsServiceImplBase {
     public void getUserComments(
             final GetUserCommentsRequest request, 
             StreamObserver<GetUserCommentsResponse> responseObserver) {
-
+        // LOGGER.info("getUserComments");
     }
 
     /** {@inheritDoc} */
@@ -80,7 +80,10 @@ public class CommentService extends CommentsServiceImplBase {
     public void getVideoComments(
                 final GetVideoCommentsRequest request, 
                 StreamObserver<GetVideoCommentsResponse> responseObserver) {
-
+         // LOGGER.info("getVideoComments");
+         final GetVideoCommentsResponse.Builder builder = GetVideoCommentsResponse.newBuilder();
+         responseObserver.onNext(builder.build());
+         responseObserver.onCompleted();
+         // LOGGER.info("END getVideoComments");
     }
-    
 }

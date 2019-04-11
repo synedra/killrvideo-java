@@ -44,22 +44,25 @@ public class RatingsService extends RatingsServiceImplBase {
 
     @Override
     public void rateVideo(RateVideoRequest request, StreamObserver<RateVideoResponse> responseObserver) {
-
-        LOGGER.debug("-----Start rate video request-----");
-
+        // LOGGER.debug("-----Start rate video request-----");
     }
 
     @Override
     public void getRating(GetRatingRequest request, StreamObserver<GetRatingResponse> responseObserver) {
+        // LOGGER.debug("-----Start get video rating request-----");
+        responseObserver.onNext(GetRatingResponse.newBuilder()
+            .setVideoId(request.getVideoId())
+            .setRatingsCount(0L)
+            .setRatingsTotal(0L)
+            .build());
 
-        LOGGER.debug("-----Start get video rating request-----");
-
+        responseObserver.onCompleted();
+        // LOGGER.debug("-----End get video rating request-----");
     }
 
     @Override
     public void getUserRating(GetUserRatingRequest request, StreamObserver<GetUserRatingResponse> responseObserver) {
-
-        LOGGER.debug("-----Start get user rating request-----");
+        // LOGGER.debug("-----Start get user rating request-----");
     }
 
 }

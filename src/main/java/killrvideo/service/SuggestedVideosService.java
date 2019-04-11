@@ -1,5 +1,7 @@
 package killrvideo.service;
 
+import java.util.UUID;
+
 import javax.annotation.PostConstruct;
 
 import org.slf4j.Logger;
@@ -9,6 +11,7 @@ import org.springframework.stereotype.Service;
 import com.google.common.eventbus.Subscribe;
 
 import io.grpc.stub.StreamObserver;
+import killrvideo.common.CommonTypes.Uuid;
 import killrvideo.ratings.events.RatingsEvents.UserRatedVideo;
 import killrvideo.suggested_videos.SuggestedVideoServiceGrpc.SuggestedVideoServiceImplBase;
 import killrvideo.suggested_videos.SuggestedVideosService.GetRelatedVideosRequest;
@@ -30,12 +33,20 @@ public class SuggestedVideosService extends SuggestedVideoServiceImplBase {
 
     @Override
     public void getRelatedVideos(GetRelatedVideosRequest request, StreamObserver<GetRelatedVideosResponse> responseObserver) {
+        // LOGGER.info("getRelatedVideos");
+        final Uuid videoIdUuid = request.getVideoId();
 
+        final GetRelatedVideosResponse.Builder builder = GetRelatedVideosResponse.newBuilder()
+                .setVideoId(videoIdUuid);
+                
+        responseObserver.onNext(builder.build());
+        responseObserver.onCompleted();
+        // LOGGER.info("END getRelatedVideos");
     }
 
     @Override
     public void getSuggestedForUser(GetSuggestedForUserRequest request, StreamObserver<GetSuggestedForUserResponse> responseObserver) {
-
+        LOGGER.info("getSuggestedForUser");
     }
 
     /**
@@ -47,7 +58,7 @@ public class SuggestedVideosService extends SuggestedVideoServiceImplBase {
      */
     @Subscribe
     public void handle(YouTubeVideoAdded youTubeVideoAdded) {
-
+        // LOGGER.info("handle");
     }
 
     /**
@@ -59,7 +70,7 @@ public class SuggestedVideosService extends SuggestedVideoServiceImplBase {
      */
     @Subscribe
     public void handle(UserCreated userCreated) {
-
+        // LOGGER.info("handle(UserCreated)");
     }
 
     /**
@@ -72,6 +83,6 @@ public class SuggestedVideosService extends SuggestedVideoServiceImplBase {
     @Subscribe
     @SuppressWarnings({"rawtypes", "unchecked"})
     public void handle(UserRatedVideo userRatedVideo) {
-
+        // LOGGER.info("handle(UserRatedVideo");
     }
 }

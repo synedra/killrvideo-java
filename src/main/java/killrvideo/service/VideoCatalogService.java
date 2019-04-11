@@ -112,17 +112,26 @@ public class VideoCatalogService extends VideoCatalogServiceImplBase {
             return;
         }
 
-        final UUID videoId = UUID.fromString(request.getVideoId().getValue());
+        try
+        {       
+
+            final UUID videoId = UUID.fromString(request.getVideoId().getValue());
         
-        Video video = videoAccess.getVideo(videoId);
+            Video video = videoAccess.getVideo(videoId);
         
-        if (CollectionUtils.isEmpty(video.getTags())) {
-            video.setTags(Collections.emptySet());
+            if (CollectionUtils.isEmpty(video.getTags())) {
+                video.setTags(Collections.emptySet());
+            }
+        
+            responseObserver.onNext((video.toVideoResponse()));
+            responseObserver.onCompleted();        
+            LOGGER.info("END getVideo");
         }
-        
-        responseObserver.onNext((video.toVideoResponse()));
-        responseObserver.onCompleted();        
-        LOGGER.info("END getVideo");
+        catch(Throwable e)
+        {
+            e.printStackTrace();
+            LOGGER.debug("Error: " + e);
+        }
     }
     
     @Override

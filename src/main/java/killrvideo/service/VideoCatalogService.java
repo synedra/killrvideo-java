@@ -16,12 +16,15 @@ import com.google.protobuf.ProtocolStringList;
 
 import io.grpc.Status;
 import killrvideo.video_catalog.VideoCatalogServiceOuterClass;
+
+import org.apache.commons.collections4.CollectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import io.grpc.stub.StreamObserver;
 import killrvideo.dataLayer.VideoAccess;
+import killrvideo.entity.LatestVideos;
 import killrvideo.entity.Video;
 import killrvideo.validation.KillrVideoInputValidator;
 import killrvideo.video_catalog.VideoCatalogServiceGrpc.VideoCatalogServiceImplBase;
@@ -36,9 +39,11 @@ import killrvideo.video_catalog.VideoCatalogServiceOuterClass.GetVideoResponse;
 import killrvideo.video_catalog.VideoCatalogServiceOuterClass.SubmitYouTubeVideoRequest;
 import killrvideo.video_catalog.VideoCatalogServiceOuterClass.SubmitYouTubeVideoResponse;
 import killrvideo.video_catalog.VideoCatalogServiceOuterClass.VideoLocationType;
+import killrvideo.video_catalog.VideoCatalogServiceOuterClass.VideoPreview;
 
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
@@ -102,12 +107,31 @@ public class VideoCatalogService extends VideoCatalogServiceImplBase {
 
     @Override
     public void getVideo(GetVideoRequest request, StreamObserver<GetVideoResponse> responseObserver) {
+        LOGGER.info("getVideo");
+        if (!validator.isValid(request, responseObserver)) {
+            return;
+        }
 
+        final UUID videoId = UUID.fromString(request.getVideoId().getValue());
+        
+        Video video = videoAccess.getVideo(videoId);
+        
+        if (CollectionUtils.isEmpty(video.getTags())) {
+            video.setTags(Collections.emptySet());
+        }
+        
+        responseObserver.onNext((video.toVideoResponse()));
+        responseObserver.onCompleted();        
+        LOGGER.info("END getVideo");
     }
-
+    
     @Override
     public void getVideoPreviews(GetVideoPreviewsRequest request, StreamObserver<GetVideoPreviewsResponse> responseObserver) {
-
+        LOGGER.debug("-----getVideoPreviews-----");
+        final GetVideoPreviewsResponse.Builder builder = GetVideoPreviewsResponse.newBuilder();
+                
+        responseObserver.onNext(builder.build());
+        responseObserver.onCompleted();
     }
 
     @Override
@@ -118,14 +142,20 @@ public class VideoCatalogService extends VideoCatalogServiceImplBase {
             return;
         }
 
-        final List<VideoCatalogServiceOuterClass.VideoPreview> results = new ArrayList<>();
-
         try {
-            responseObserver.onNext(GetLatestVideoPreviewsResponse
+          final List<LatestVideos> results = videoAccess.getLatestVideos();
+          final List<VideoPreview> ret = new ArrayList<VideoPreview>();
+        
+          for(LatestVideos v : results)
+            ret.add(v.toVideoPreview());
+            
+          LOGGER.info("Num latest videos: " + ret.size());
+
+          responseObserver.onNext(GetLatestVideoPreviewsResponse
                     .newBuilder()
-                    .addAllVideoPreviews(results)
+                    .addAllVideoPreviews(ret)
                     .build());
-            responseObserver.onCompleted();
+          responseObserver.onCompleted();
 
         } catch (Throwable throwable) {
             LOGGER.error("Exception when getting latest preview videos : " + mergeStackTrace(throwable));
@@ -138,6 +168,7 @@ public class VideoCatalogService extends VideoCatalogServiceImplBase {
 
     @Override
     public void getUserVideoPreviews(GetUserVideoPreviewsRequest request, StreamObserver<GetUserVideoPreviewsResponse> responseObserver) {
+        LOGGER.debug("-----getUserVideoPreviews-----");
 
     }
 

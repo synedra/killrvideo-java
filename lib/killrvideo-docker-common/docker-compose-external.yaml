@@ -57,12 +57,10 @@ services:
       KILLRVIDEO_DSE_USERNAME: $KILLRVIDEO_DSE_USERNAME
       KILLRVIDEO_DSE_PASSWORD: $KILLRVIDEO_DSE_PASSWORD
       NODE_ENV: $NODE_ENV
-      KILLRVIDEO_ENABLE_SSL: $KILLRVIDEO_ENABLE_SSL
       KILLRVIDEO_CASSANDRA_REPLICATION: $KILLRVIDEO_CASSANDRA_REPLICATION
       KILLRVIDEO_LOGGING_LEVEL: $KILLRVIDEO_LOGGING_LEVEL
+      KILLRVIDEO_ENABLE_SSL: $KILLRVIDEO_ENABLE_SSL
       KILLRVIDEO_YOUTUBE_API_KEY: $KILLRVIDEO_YOUTUBE_API_KEY
-    volumes:
-      - "../../cassandra.cert:/opt/killrvideo-generator/cassandra.cert"
     
   # Container to load KillrVideo schema and search config into DSE
   # Provides options to configure secure users as well
@@ -82,7 +80,7 @@ services:
 
   # One instance of DataStax Studio
   studio:
-    image: datastax/dse-studio:6.0.2
+    image: datastax/dse-studio:latest
     ports:
     # The Web UI exposed to our host
     - "9091:9091"

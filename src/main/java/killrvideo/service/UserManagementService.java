@@ -68,7 +68,8 @@ public class UserManagementService extends UserManagementServiceImplBase {
     private String usersTableName;
     private String userCredentialsTableName;
     private PreparedStatement createUser_checkEmailPrepared;
-    private PreparedStatement createUser_insertUserPrepared;
+    // TODO: Declare variable for prepared statement
+    // private PreparedStatement ...
     private PreparedStatement getUserProfile_getUsersPrepared;
 
     @PostConstruct
@@ -85,16 +86,8 @@ public class UserManagementService extends UserManagementServiceImplBase {
                         .ifNotExists() // use lightweight transaction
         ).setConsistencyLevel(ConsistencyLevel.LOCAL_QUORUM);
 
-        createUser_insertUserPrepared = dseSession.prepare(
-                QueryBuilder
-                        .insertInto(Schema.KEYSPACE, usersTableName)
-                        .value("userid", QueryBuilder.bindMarker())
-                        .value("firstname", QueryBuilder.bindMarker())
-                        .value("lastname", QueryBuilder.bindMarker())
-                        .value("email", QueryBuilder.bindMarker())
-                        .value("created_date", QueryBuilder.bindMarker())
-                        .ifNotExists() // use lightweight transaction
-        ).setConsistencyLevel(ConsistencyLevel.LOCAL_QUORUM);
+        // TODO: Create prepared statement
+        // createUser_insertUserPrepared = ...
 
         getUserProfile_getUsersPrepared = dseSession.prepare(
                 QueryBuilder
@@ -108,6 +101,9 @@ public class UserManagementService extends UserManagementServiceImplBase {
     @Override
     public void createUser(CreateUserRequest request, StreamObserver<CreateUserResponse> responseObserver) {
 
+        //TODO: REMOVE COMMENT BEGIN
+        /*
+
         LOGGER.debug("-----Start creating user-----");
 
         if (!validator.isValid(request, responseObserver)) {
@@ -120,120 +116,42 @@ public class UserManagementService extends UserManagementServiceImplBase {
         final String firstName = request.getFirstName();
         final String lastName = request.getLastName();
 
-        /** Trim the password **/
+        // Trim the password
         final String hashedPassword = HashUtils.hashPassword(request.getPassword().trim());
         final String email = request.getEmail();
-        final String exceptionMessage = String.format("Exception creating user because it already exists with email %s", email);
+        final String dupUserMessaage = String.format("Exception creating user because it already exists with email %s", email);
 
-        /**
-         * We insert first the credentials since
-         * the LWT condition is on the user email
-         *
-         * Note, the LWT condition is set up at the prepared statement
-         */
         final BoundStatement checkEmailQuery = createUser_checkEmailPrepared.bind()
                 .setString("email", email)
                 .setString("password", hashedPassword)
                 .setUUID("userid", userIdUUID);
 
-        /**
-         * Note that we have multiple executeAsync() calls in the following chain.
-         * We check our user_credentials first, if that passes, we move onto inserting
-         * the user into the users table.  Both cases use lightweight transactions
-         * to ensure we are not duplicating already existing users within the database.
-         */
-        CompletableFuture<ResultSet> checkEmailFuture = FutureUtils.buildCompletableFuture(dseSession.executeAsync(checkEmailQuery))
-                /**
-                 * I use the *Async() version of .handle below because I am
-                 * chaining multiple async futures.  In testing we found that chains like
-                 * this would cause timeouts possibly from starvation.
-                 */
-                .handleAsync((rs, ex) -> {
-                    try {
-                        if (rs != null) {
-                            /** Check the result of the LWT, if it's false
-                             * the email already exists within our user_credentials
-                             * table and must not be duplicated.
-                             * Note the use of wasApplied(), this is a convenience method
-                             * described here ->
-                             * http://docs.datastax.com/en/drivers/java/3.2/com/datastax/driver/core/ResultSet.html#wasApplied--
-                             * that allows an easy check of a conditional statement.
-                             */
-                            if (!rs.wasApplied()) {
-                                throw new Throwable(exceptionMessage);
-                            }
+        ResultSet checkEmailResultSet = dseSession.execute(checkEmailQuery);
+        if (!checkEmailResultSet.wasApplied()) {
+            responseObserver.onError(Status.INVALID_ARGUMENT
+              .augmentDescription(dupUserMessaage).asRuntimeException());
+            responseObserver.onCompleted();
+            return;
+        }
 
-                        } else { // throw in case our result set is null
-                            throw new Throwable(ex);
-                        }
+        // TODO: Create a BoundStatement
+        final BoundStatement insertUser = ...;
 
-                    } catch (Throwable t) {
-                        final String message = t.getMessage();
-                        responseObserver.onError(Status.INVALID_ARGUMENT.augmentDescription(message).asRuntimeException());
-                        LOGGER.debug(this.getClass().getName() + ".createUser() " + message);
-                    }
-                    return rs;
-                });
+        // TODO: Execute the statement
+        ResultSet insertUserResultSet = ...
 
-        /**
-         * No LWT error, we can proceed further
-         * Execute our insert statement in an async
-         * fashion as well and pass the result to the next
-         * line in the chain
-         */
-        CompletableFuture<ResultSet> insertUserFuture = checkEmailFuture.thenCompose(rs -> {
-            final BoundStatement insertUser = createUser_insertUserPrepared.bind()
-                    .setUUID("userid", userIdUUID)
-                    .setString("firstname", firstName)
-                    .setString("lastname", lastName)
-                    .setString("email", email)
-                    .setTimestamp("created_date", now);
+        if(!insertUserResultSet.wasApplied()) {
+          responseObserver.onError(Status.INVALID_ARGUMENT
+            .augmentDescription("User ID not unique").asRuntimeException());
+          responseObserver.onCompleted();
+          return;
+        }
 
-            return FutureUtils.buildCompletableFuture(dseSession.executeAsync(insertUser));
-        });
+        responseObserver.onNext(CreateUserResponse.newBuilder().build());
+        responseObserver.onCompleted();
 
-        /**
-         * thenAccept in the same thread pool (not using thenAcceptAsync())
-         */
-        insertUserFuture.thenAccept(rs -> {
-            try {
-                if (rs != null) {
-                    /** Check to see if userInsert was applied.
-                     * userId should be unique, if not, the insert
-                     * should fail
-                     */
-                    if (rs.wasApplied()) {
-                        LOGGER.debug("User id is unique, creating user");
-
-                        /**
-                         * eventbus.post() for UserCreated below is located in the
-                         * SuggestedVideos Service class within the handle() method.
-                         * The UserCreated type triggers the handler and is responsible
-                         * for adding data to our graph recommendation engine.
-                         */
-                        eventBus.post(UserCreated.newBuilder()
-                                .setUserId(userIdUuid)
-                                .setEmail(email)
-                                .setFirstName(firstName)
-                                .setLastName(lastName)
-                                .setTimestamp(TypeConverter.instantToTimeStamp(now.toInstant()))
-                                .build());
-                        responseObserver.onNext(CreateUserResponse.newBuilder().build());
-                        responseObserver.onCompleted();
-
-                        LOGGER.debug("End creating user");
-
-                    } else {
-                        throw new Throwable("User ID already exists");
-                    }
-                }
-
-            } catch (Throwable t) {
-                eventBus.post(new CassandraMutationError(request, t));
-                responseObserver.onError(Status.INTERNAL.withCause(t).asRuntimeException());
-                LOGGER.error(this.getClass().getName() + ".createUser() " + "Exception creating user : " + mergeStackTrace(t));
-            }
-        });
+        //TODO: REMOVE BLOCK COMMENT END
+        */
     }
 
     @Override

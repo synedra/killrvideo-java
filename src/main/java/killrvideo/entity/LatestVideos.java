@@ -1,5 +1,6 @@
 package killrvideo.entity;
 
+import java.time.Instant;
 import java.util.Date;
 import java.util.Optional;
 import java.util.UUID;
@@ -35,6 +36,12 @@ public class LatestVideos extends AbstractVideoList {
         this.userid = userid;
     }
     
+    public LatestVideos(UUID userid, UUID videoid, String name, String previewImageLocation, Instant addedDate) {
+        super(name, previewImageLocation, Date.from(addedDate), videoid);
+        this.yyyymmdd = "20190505";
+        this.userid = userid;
+    }
+
     /**
      * Mapping to GRPC generated classes.
      */

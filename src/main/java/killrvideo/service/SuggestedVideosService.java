@@ -1,5 +1,7 @@
 package killrvideo.service;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 import javax.annotation.PostConstruct;
@@ -18,6 +20,7 @@ import killrvideo.suggested_videos.SuggestedVideosService.GetRelatedVideosReques
 import killrvideo.suggested_videos.SuggestedVideosService.GetRelatedVideosResponse;
 import killrvideo.suggested_videos.SuggestedVideosService.GetSuggestedForUserRequest;
 import killrvideo.suggested_videos.SuggestedVideosService.GetSuggestedForUserResponse;
+import killrvideo.suggested_videos.SuggestedVideosService.SuggestedVideoPreview;
 import killrvideo.user_management.events.UserManagementEvents.UserCreated;
 import killrvideo.video_catalog.events.VideoCatalogEvents.YouTubeVideoAdded;
 
@@ -46,7 +49,18 @@ public class SuggestedVideosService extends SuggestedVideoServiceImplBase {
 
     @Override
     public void getSuggestedForUser(GetSuggestedForUserRequest request, StreamObserver<GetSuggestedForUserResponse> responseObserver) {
-        LOGGER.info("getSuggestedForUser");
+        // LOGGER.info("getSuggestedForUser");
+        
+        final Uuid userId = request.getUserId();
+        final GetSuggestedForUserResponse.Builder builder = GetSuggestedForUserResponse.newBuilder();
+        builder.setUserId(userId);
+        
+        final List<SuggestedVideoPreview> result = new ArrayList<SuggestedVideoPreview>();
+        builder.addAllVideos(result);
+               
+        responseObserver.onNext(builder.build());
+        responseObserver.onCompleted();
+        // LOGGER.info("END getSuggestedForUser");
     }
 
     /**
@@ -58,7 +72,7 @@ public class SuggestedVideosService extends SuggestedVideoServiceImplBase {
      */
     @Subscribe
     public void handle(YouTubeVideoAdded youTubeVideoAdded) {
-        // LOGGER.info("handle");
+        // LOGGER.info("XXXXXXXXXXXXX handle");
     }
 
     /**
@@ -70,7 +84,7 @@ public class SuggestedVideosService extends SuggestedVideoServiceImplBase {
      */
     @Subscribe
     public void handle(UserCreated userCreated) {
-        // LOGGER.info("handle(UserCreated)");
+        // LOGGER.info("XXXXXXXXXXXXXX handle(UserCreated)");
     }
 
     /**
@@ -83,6 +97,6 @@ public class SuggestedVideosService extends SuggestedVideoServiceImplBase {
     @Subscribe
     @SuppressWarnings({"rawtypes", "unchecked"})
     public void handle(UserRatedVideo userRatedVideo) {
-        // LOGGER.info("handle(UserRatedVideo");
+        // LOGGER.info("XXXXXXXXXXXXXXX handle(UserRatedVideo");
     }
 }

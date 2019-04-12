@@ -9,8 +9,8 @@ spring:
   
   profiles:
    active:
-    #- discovery_etcd
-    - discovery_static
+    - discovery_etcd
+    #- discovery_static
     - messaging_memory
     #- messaging_kafka
     
@@ -44,7 +44,7 @@ killrvideo:
   cassandra:
     clustername: killrvideo
     mutation-error-log: /tmp/killrvideo-mutation-errors.log
-    maxNumberOfTries: 10
+    maxNumberOfTries: 100
     delayBetweenTries: 2
   ssl:
     enable: false
@@ -79,10 +79,10 @@ killrvideo:
     # No lookups, direct values (leveraging on Docker,Kubernetes serviceNames) 
     static:
       kafka: 
-        host: 10.0.75.1
+        host: kafka
         port: 8082
       cassandra:
-        host: 10.0.75.1
+        host: dse
         port: 9042
 
   ############################################################################################

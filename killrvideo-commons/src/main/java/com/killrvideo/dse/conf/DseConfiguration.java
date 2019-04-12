@@ -63,7 +63,7 @@ public class DseConfiguration {
 	/** Internal logger. */
     private static final Logger LOGGER = LoggerFactory.getLogger(DseConfiguration.class);
      
-    @Value("${killrvideo.discovery.service.cassandra: cassandra}")
+    @Value("${killrvideo.discovery.services.cassandra:cassandra}")
     private String cassandraServiceName;
     
     @Value("${killrvideo.cassandra.clustername: 'killrvideo'}")
@@ -229,7 +229,7 @@ public class DseConfiguration {
      *      current configuration
      */
      private void populateContactPoints(Builder clusterConfig)  {
-        discoveryDao.lookup(cassandraServiceName).stream()
+        discoveryDao.lookup(cassandraServiceName.trim()).stream()
                     .map(this::asSocketInetAdress)
                     .filter(node -> node.isPresent())
                     .map(node -> node.get())

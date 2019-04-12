@@ -89,6 +89,10 @@
 		<!-- Maven -->
 		<java.version>11</java.version>
 		
+		<!-- Docker -->
+		<docker.image.prefix>killrvideo</docker.image.prefix>
+		<maven-docker-plugin.version>1.4.10</maven-docker-plugin.version>
+		
 		<build-helper-maven-plugin.version>3.0.0</build-helper-maven-plugin.version>
 		<cassandra-maven-plugin.version>3.5</cassandra-maven-plugin.version>
 		<maven-compiler-plugin.version>3.7.0</maven-compiler-plugin.version>

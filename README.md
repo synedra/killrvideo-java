@@ -5,16 +5,12 @@
 A reference application for Java developers looking to learn more about using [Apache Cassandra][cassandra] and
 [DataStax Enterprise][dse] in their applications and services. Learn more at [Killrvideo].
 
-We are now fully switched to use version `1.6.8` of the [DSE java driver][DSE Java driver]!  API docs are [here][DSE Java driver API docs].  
-This version is stable and ready for consumption.
-
 ## Running Locally
 
 Use these guides to get started running KillrVideo locally on your development machine:
 * [Getting Started with KillrVideo][getting-started]: Follow this to setup common dependencies like Docker.
 * [Getting Started with Java][getting-started-java]: Follow this to get this Java code 
-running.
-  
+running.  
 
 ## Pull Requests, Requests for More Examples
 This project will continue to evolve along with Cassandra and you can expect that as Cassandra and the DataStax 

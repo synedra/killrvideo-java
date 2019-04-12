@@ -1,7 +1,7 @@
 version: '3'
 # Other services are specified in .\lib\killrvideo-docker-common\docker-compose.yaml
 services:
-
+ 
   # Ensure consistency in Kafka World
   zookeeper:
     image: wurstmeister/zookeeper:3.4.6
@@ -21,6 +21,7 @@ services:
     ports:
     - 9092:9092
 
+  # We UI for Kafka, brosing topics
   kafkahq:
     image: tchiotludo/kafkahq
     environment:
@@ -76,5 +77,20 @@ services:
     environment:
       SERVICE_9091_NAME: studio
       DS_LICENSE: accept
-
-      
+   
+  # Java Backend services    
+  server:
+    image: killrvideo/killrvideo-services-java:latest
+    ports:
+    - "8899:8899"
+    depends_on:
+    - etcd
+    - web
+    environment:
+      KILLRVIDEO_HOST_IP: $KILLRVIDEO_HOST_IP
+      KILLRVIDEO_DOCKER_IP: $KILLRVIDEO_DOCKER_IP
+      KILLRVIDEO_DSE_USERNAME: $KILLRVIDEO_DSE_USERNAME
+      KILLRVIDEO_DSE_PASSWORD: $KILLRVIDEO_DSE_PASSWORD
+      KILLRVIDEO_ENABLE_SSL: $KILLRVIDEO_ENABLE_SSL
+    volumes:
+      - "../../cassandra.cert:/usr/src/app/cassandra.cert"  

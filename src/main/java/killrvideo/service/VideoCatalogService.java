@@ -50,7 +50,6 @@ import static killrvideo.utils.ExceptionUtils.mergeStackTrace;
 
 
 @Service
-//public class VideoCatalogService extends AbstractVideoCatalogService {
 public class VideoCatalogService extends VideoCatalogServiceImplBase {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(VideoCatalogService.class);
@@ -58,10 +57,6 @@ public class VideoCatalogService extends VideoCatalogServiceImplBase {
 
     @Inject
     KillrVideoInputValidator validator;
-
-    @PostConstruct
-    public void init(){
-    }
 
     @Override
     public void submitYouTubeVideo(SubmitYouTubeVideoRequest request, StreamObserver<SubmitYouTubeVideoResponse> responseObserver) {
@@ -80,7 +75,7 @@ public class VideoCatalogService extends VideoCatalogServiceImplBase {
             final String name = request.getName();
             final String description = request.getDescription();
             final ProtocolStringList tagsList = request.getTagsList();
-            final String previewImageLocation = "//img.youtube.com/vi/"+ location + "/hqdefault.jpg";
+            final String previewImageLocation = "//img.youtube.com/vi/" + location + "/hqdefault.jpg";
             final UUID videoId = UUID.fromString(request.getVideoId().getValue());
             final UUID userId = UUID.fromString(request.getUserId().getValue());
         

@@ -1,4 +1,6 @@
 language: java
+jdk:
+  - openjdk11
 
 # Sudo required for doing docker build
 sudo: required

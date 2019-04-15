@@ -99,7 +99,7 @@ services:
       
   # Java Backend services    
   server:
-    image: killrvideo/killrvideo-services-java:latest
+    image: killrvideo/killrvideo-java:latest
     ports:
     - "8899:8899"
     depends_on:

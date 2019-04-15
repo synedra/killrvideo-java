@@ -2,6 +2,8 @@
 
 [![License Apache2](https://img.shields.io/hexpm/l/plug.svg)](http://www.apache.org/licenses/LICENSE-2.0)
 
+[![Build Status](https://travis-ci.org/KillrVideo/killrvideo-java.svg?branch=master)](https://travis-ci.org/KillrVideo/killrvideo-java)
+
 A reference application for Java developers looking to learn more about using [Apache Cassandra][cassandra] and
 [DataStax Enterprise][dse] in their applications and services. Learn more at [Killrvideo].
 

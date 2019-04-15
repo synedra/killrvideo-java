@@ -53,10 +53,10 @@ import static killrvideo.utils.ExceptionUtils.mergeStackTrace;
 public class VideoCatalogService extends VideoCatalogServiceImplBase {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(VideoCatalogService.class);
-    VideoAccess videoAccess = new VideoAccess();
+    private VideoAccess videoAccess = new VideoAccess();
 
     @Inject
-    KillrVideoInputValidator validator;
+    private KillrVideoInputValidator validator;
     
     @PostConstruct
     public void init(){

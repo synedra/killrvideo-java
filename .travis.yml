@@ -1,0 +1,20 @@
+language: java
+jdk:
+  - openjdk11
+
+# Sudo required for doing docker build
+sudo: required
+services:
+- docker
+
+# Build the app and a docker image
+script:
+- mvn clean install
+- docker build -t ${TRAVIS_COMMIT} ./killrvideo-services
+
+# If successful, see if we need to publish also
+after_success:
+- test -z $TRAVIS_TAG && travis_terminate 0
+- docker tag ${TRAVIS_COMMIT} killrvideo/killrvideo-java:${TRAVIS_TAG}
+- echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+- docker push killrvideo/killrvideo-java:${TRAVIS_TAG}

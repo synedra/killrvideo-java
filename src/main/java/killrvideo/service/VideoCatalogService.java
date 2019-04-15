@@ -57,6 +57,10 @@ public class VideoCatalogService extends VideoCatalogServiceImplBase {
 
     @Inject
     KillrVideoInputValidator validator;
+    
+    @PostConstruct
+    public void init(){
+    }
 
     @Override
     public void submitYouTubeVideo(SubmitYouTubeVideoRequest request, StreamObserver<SubmitYouTubeVideoResponse> responseObserver) {

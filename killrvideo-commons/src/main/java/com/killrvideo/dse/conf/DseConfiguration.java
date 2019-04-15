@@ -47,7 +47,6 @@ import com.evanlennick.retry4j.config.RetryConfigBuilder;
 import com.killrvideo.discovery.ServiceDiscoveryDao;
 import com.killrvideo.dse.graph.KillrVideoTraversalSource;
 import com.killrvideo.dse.utils.BlobToStringCodec;
-import com.killrvideo.model.CommonConstants;
 
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
@@ -80,6 +79,12 @@ public class DseConfiguration {
    
     @Value("#{environment.KILLRVIDEO_DSE_PASSWORD}")
     public Optional < String > dsePassword;
+    
+    @Value("${killrvideo.cassandra.keyspace:killrvideo}")
+    private String keyspace;
+    
+    @Value("${killrvideo.cassandra.keyspace-init:killrvideo}")
+    private String keyspaceInit;
     
     @Value("${killrvideo.cassandra.maxNumberOfTries: 10}")
     private int maxNumberOfTries  = 10;
@@ -124,7 +129,8 @@ public class DseConfiguration {
          
          final AtomicInteger atomicCount = new AtomicInteger(1);
          Callable<DseSession> connectionToDse = () -> {
-             return clusterConfig.build().connect(CommonConstants.KILLRVIDEO_KEYSPACE);
+             clusterConfig.build().connect(keyspaceInit);
+             return clusterConfig.build().connect(keyspace);
          };
          
          // Connecting to DSE with a retry mechanism : 

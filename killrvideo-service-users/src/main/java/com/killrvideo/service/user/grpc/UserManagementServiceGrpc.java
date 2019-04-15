@@ -20,6 +20,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import com.google.protobuf.Timestamp;
 import com.killrvideo.messaging.dao.MessagingDao;
 import com.killrvideo.service.user.dao.UserDseDao;
 import com.killrvideo.service.user.dto.User;
@@ -35,6 +36,7 @@ import killrvideo.user_management.UserManagementServiceOuterClass.GetUserProfile
 import killrvideo.user_management.UserManagementServiceOuterClass.GetUserProfileResponse;
 import killrvideo.user_management.UserManagementServiceOuterClass.VerifyCredentialsRequest;
 import killrvideo.user_management.UserManagementServiceOuterClass.VerifyCredentialsResponse;
+import killrvideo.user_management.events.UserManagementEvents.UserCreated;
 
 /**
  * Create or update users.
@@ -75,20 +77,27 @@ public class UserManagementServiceGrpc extends UserManagementServiceImplBase {
         User user = mapUserRequest2User(grpcReq);
         final String hashedPassword = HashUtils.hashPassword(grpcReq.getPassword().trim());
         
-         // Invoke DAO Async
-        userDseDao.createUserAsync(user, hashedPassword).whenComplete((result, error) -> {
+        // Invoke DAO Async
+        CompletableFuture<Void> futureDse = userDseDao.createUserAsync(user, hashedPassword);
+        
+        // If OK, then send Message
+        CompletableFuture<Object> futureDseAndMessaging = futureDse.thenCompose(rs -> {
+            return messagingDao.sendEvent(topicUserCreated, UserCreated.newBuilder()
+                    .setEmail(grpcReq.getEmail())
+                    .setFirstName(grpcReq.getFirstName())
+                    .setLastName(grpcReq.getLastName())
+                    .setUserId(grpcReq.getUserId())
+                    .setTimestamp(Timestamp.newBuilder())
+                    .build());
+        });
+        
+        futureDseAndMessaging.whenComplete((result, error) -> {
             if (error != null ) {
                 traceError("createUser", starts, error);
                 grpcResObserver.onError(Status.INVALID_ARGUMENT.augmentDescription(error.getMessage())
                                .asRuntimeException());
             } else {
                 traceSuccess("createUser", starts);
-                /*messagingDao.sendEvent(topicUserCreated, UserCreated.newBuilder()
-                        .setEmail(grpcReq.getEmail())
-                        .setFirstName(grpcReq.getFirstName())
-                        .setLastName(grpcReq.getLastName())
-                        .setUserId(grpcReq.getUserId())
-                        .setTimestamp(Timestamp.newBuilder().build()));*/
                 grpcResObserver.onNext(CreateUserResponse.newBuilder().build());
                 grpcResObserver.onCompleted();
             }

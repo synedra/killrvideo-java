@@ -23,22 +23,22 @@ public class ServiceDiscoveryDaoStatic implements ServiceDiscoveryDao {
     /** Initialize dedicated connection to ETCD system. */
     private static final Logger LOGGER = LoggerFactory.getLogger(ServiceDiscoveryDaoStatic.class);
     
-    @Value("${killrvideo.discovery.service.kafka: kafka}")
+    @Value("${killrvideo.discovery.services.kafka:kafka}")
     private String kafkaServiceName;
     
-    @Value("${killrvideo.discovery.static.kafka.port: 8082}")
+    @Value("${killrvideo.discovery.static.kafka.port:8082}")
     private int kafkaPort;
     
-    @Value("${killrvideo.discovery.static.kafka.host: 10.0.75.1}")
+    @Value("${killrvideo.discovery.static.kafka.host:kafka}")
     private String kafkaHost;
     
-    @Value("${killrvideo.discovery.service.cassandra: cassandra}")
+    @Value("${killrvideo.discovery.services.cassandra:cassandra}")
     private String cassandraServiceName;
     
-    @Value("${killrvideo.discovery.static.cassandra.port: 9042}")
+    @Value("${killrvideo.discovery.static.cassandra.port:9042}")
     private int cassandraPort;
     
-    @Value("${killrvideo.discovery.static.cassandra.host: 10.0.75.1}")
+    @Value("${killrvideo.discovery.static.cassandra.host:dse}")
     private String cassandraHost;
     
     /** {@inheritDoc} */
@@ -46,10 +46,14 @@ public class ServiceDiscoveryDaoStatic implements ServiceDiscoveryDao {
     public List<String> lookup(String serviceName) {
         List< String > endPointList = new ArrayList<>();
         LOGGER.info(" List (static) endpoints for key '{}':", serviceName);
-        if (kafkaServiceName.equalsIgnoreCase(serviceName)) {
+        if (kafkaServiceName.trim().equalsIgnoreCase(serviceName.trim())) {
             endPointList.add(kafkaHost + ":" + kafkaPort);
-        } else if (cassandraServiceName.equalsIgnoreCase(serviceName)) {
+            LOGGER.info(" + Adding '{}':", kafkaHost + ":" + kafkaPort);
+        } else if (cassandraServiceName.trim().equalsIgnoreCase(serviceName.trim())) {
             endPointList.add(cassandraHost + ":" + cassandraPort);
+            LOGGER.info(" + Adding '{}':", cassandraHost + ":" + cassandraPort);
+        } else {
+            throw new IllegalArgumentException("End point list cannot be empty");
         }
         LOGGER.info(" + [OK] Endpoints retrieved '{}':", endPointList);
         return endPointList;

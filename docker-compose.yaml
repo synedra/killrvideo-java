@@ -1,42 +1,97 @@
 version: '3'
-# Other services are specified in .\lib\killrvideo-docker-common\docker-compose.yaml
+############################################################################################
+# READ ME : This file is meant to run the containers locally and have the backend running
+# in you IDE. ETCD is enable.
+# 
+# Will be Aggregated with : .\lib\killrvideo-docker-common\docker-compose.yaml
+############################################################################################
 services:
- 
-  # Ensure consistency in Kafka World
-  zookeeper:
-    image: wurstmeister/zookeeper:3.4.6
-    ports:
-      - 2181:2181
 
-  # Start the Kafka Engine for Killrvideo
-  kafka:
-    image: wurstmeister/kafka:1.0.0
-    depends_on:
-    - zookeeper
+  # ---------------------------------- 
+  # DataStax Enterprise Database
+  # ----------------------------------
+  dse: 
+    image: datastax/dse-server:6.7.2
+    command: [ -s -g ] # Run with Search and Graph capabilities enabled
+    ports: # Exposes ports to be available. Kompose tool needs that to create a k8s service and make backend available for other services.
+      - "9042:9042" # Exposes DSE port
+      - "8983:8983" # Exposes DSE Search port
+      - "8182:8182" # Exposes DSE Graph port
     environment:
-      KAFKA_ADVERTISED_HOST_NAME: 10.0.75.1
-      KAFKA_ADVERTISED_PORT: 9092
-      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      KAFKA_CREATE_TOPICS: "topic-kv-videoCreation:1:1,topic-kv-userCreation:1:1,topic-kv-videoRating:1:1"
-    ports:
-    - 9092:9092
-
-  # We UI for Kafka, brosing topics
-  kafkahq:
-    image: tchiotludo/kafkahq
-    environment:
-      KAFKAHQ_CONFIGURATION: |
-        kafkahq:
-          connections:
-            docker-kafka-server:
-              properties:
-                bootstrap.servers: "10.0.75.1:9092"
-    ports:
-      - "8080:8080"
+      DS_LICENSE: accept # Accept licence on start
+      DC: DC1
+      JVM_EXTRA_OPTS: -Xmx1g -Xms1g
+      NUM_TOKENS: 32
+    cap_add:
+      - IPC_LOCK # Allow DSE to lock memory with mlock
     depends_on:
-      - kafka
-
-  # Start the KillrVideo web UI on port 3000
+      - opscenter  
+    ulimits:
+      memlock: -1
+  
+  # ----------------------------------     
+  # DataStax Studio
+  # ----------------------------------
+  studio:
+    image: datastax/dse-studio:6.7.0
+    ports:
+    # The Web UI exposed to our host
+    - "9091:9091"
+    depends_on:
+    - dse
+    environment:
+      SERVICE_9091_NAME: studio
+      DS_LICENSE: accept
+    volumes:
+       - "/tmp/docker/studio-notebooks:/var/lib/datastax-studio"  
+   
+  # ----------------------------------
+  # OpsCenter 6.7.0
+  # ----------------------------------
+  opscenter:
+    image: "datastax/dse-opscenter:6.7.0"
+    ports:
+      - 8888:8888
+    environment:
+      - DS_LICENSE=accept
+  
+  # ----------------------------------
+  # Etcd for our service registry
+  # ----------------------------------
+  etcd:
+    image: quay.io/coreos/etcd:v2.3.6
+    command: [ -advertise-client-urls, "http://${KILLRVIDEO_DOCKER_IP}:2379", -listen-client-urls, "http://0.0.0.0:2379" ]
+    ports:
+    # The client port
+    - "2379:2379"
+    environment:
+      SERVICE_2379_NAME: etcd
+  
+  registrator:
+    image: gliderlabs/registrator:latest
+    # Tell registrator where the etcd HTTP API is and to use the docker VM's IP
+    command: [ -ip, "$KILLRVIDEO_DOCKER_IP", "etcd://etcd:2379/killrvideo/services" ]
+    volumes:
+    # So registrator can use the docker API to inspect containers
+    - "/var/run/docker.sock:/tmp/docker.sock"
+    depends_on:
+    - etcd
+  
+  dse-config:
+    image: killrvideo/killrvideo-dse-config:1.2.2
+    environment:
+      KILLRVIDEO_DOCKER_IP: $KILLRVIDEO_DOCKER_IP
+      KILLRVIDEO_DSE_EXTERNAL_IP: $KILLRVIDEO_DSE_EXTERNAL_IP
+      KILLRVIDEO_CASSANDRA_REPLICATION: $KILLRVIDEO_CASSANDRA_REPLICATION
+      KILLRVIDEO_GRAPH_REPLICATION: $KILLRVIDEO_GRAPH_REPLICATION
+    depends_on:
+    - dse
+      
+  # ----------------------------------
+  # Killrvideo
+  # ----------------------------------
+  
+  # Web UI (looking backend in ETCD)
   web:
     image: killrvideo/killrvideo-web:1.2.8
     ports:
@@ -52,7 +107,7 @@ services:
       KILLRVIDEO_CASSANDRA_REPLICATION: $KILLRVIDEO_CASSANDRA_REPLICATION
       KILLRVIDEO_LOGGING_LEVEL: $KILLRVIDEO_LOGGING_LEVEL
 
-  # The sample data generator
+  # Look for video in youtube and push to backend (ETCD required)
   generator:
     image: killrvideo/killrvideo-generator:1.2.5
     depends_on:
@@ -65,32 +120,20 @@ services:
       NODE_ENV: $NODE_ENV
       KILLRVIDEO_CASSANDRA_REPLICATION: $KILLRVIDEO_CASSANDRA_REPLICATION
       KILLRVIDEO_LOGGING_LEVEL: $KILLRVIDEO_LOGGING_LEVEL
-
-  # One instance of DataStax Studio
-  studio:
-    image: datastax/dse-studio:6.0.2
-    ports:
-    # The Web UI exposed to our host
-    - "9091:9091"
-    depends_on:
-    - dse
-    environment:
-      SERVICE_9091_NAME: studio
-      DS_LICENSE: accept
    
   # Java Backend services    
-  server:
-    image: killrvideo/killrvideo-services-java:latest
-    ports:
-    - "8899:8899"
-    depends_on:
-    - etcd
-    - web
-    environment:
-      KILLRVIDEO_HOST_IP: $KILLRVIDEO_HOST_IP
-      KILLRVIDEO_DOCKER_IP: $KILLRVIDEO_DOCKER_IP
-      KILLRVIDEO_DSE_USERNAME: $KILLRVIDEO_DSE_USERNAME
-      KILLRVIDEO_DSE_PASSWORD: $KILLRVIDEO_DSE_PASSWORD
-      KILLRVIDEO_ENABLE_SSL: $KILLRVIDEO_ENABLE_SSL
-    volumes:
-      - "../../cassandra.cert:/usr/src/app/cassandra.cert"  
+  #server:
+  #  image: killrvideo/killrvideo-services-java:latest
+  #  ports:
+  #  - "8899:8899"
+  #  depends_on:
+  #  - etcd
+  #  - web
+  #  environment:
+  #    KILLRVIDEO_HOST_IP: $KILLRVIDEO_HOST_IP
+  #    KILLRVIDEO_DOCKER_IP: $KILLRVIDEO_DOCKER_IP
+  #    KILLRVIDEO_DSE_USERNAME: $KILLRVIDEO_DSE_USERNAME
+  #    KILLRVIDEO_DSE_PASSWORD: $KILLRVIDEO_DSE_PASSWORD
+  #    KILLRVIDEO_ENABLE_SSL: $KILLRVIDEO_ENABLE_SSL
+  #  volumes:
+  #    - "../../cassandra.cert:/usr/src/app/cassandra.cert"  

@@ -3,7 +3,6 @@ FROM openjdk:11.0.3-jdk-slim-stretch
 MAINTAINER Cedrick Lunven <cedrick.lunven@datastax.com>
 MAINTAINER Davig Gilardi  <david.gilardi@datastax.com>
 
-
 ########################################################
 ## Environment Variables
 ########################################################

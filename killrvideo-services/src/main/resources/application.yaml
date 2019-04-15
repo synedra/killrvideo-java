@@ -9,12 +9,11 @@ spring:
   
   profiles:
    active:
-    - discovery_etcd
-    #- discovery_static
+    #- discovery_etcd
+    - discovery_static
     - messaging_memory
     #- messaging_kafka
     
-  
 
 ############################################################################################
 # Configuration of KillrVideo Backend Services
@@ -39,9 +38,11 @@ killrvideo:
     suggestedVideo: true
   
   grpc-server: 
-    port: 8899
+    port: 50101
       
   cassandra:
+    keyspace: killrvideo
+    keyspace-init: kv_init_done
     clustername: killrvideo
     mutation-error-log: /tmp/killrvideo-mutation-errors.log
     maxNumberOfTries: 100

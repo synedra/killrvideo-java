@@ -8,6 +8,8 @@ import java.util.Date;
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 
+import com.datastax.dse.driver.api.core.DseSession;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -33,13 +35,17 @@ public class UserManagementService extends UserManagementServiceImplBase {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(UserManagementService.class);
     
-  private UserAccess userAccess = new UserAccess();
+  private UserAccess userAccess;
 
   @Inject
   private KillrVideoInputValidator validator;
+
+  @Inject
+  private DseSession session;
    
   @PostConstruct
-  public void init(){
+  public void init() {
+    userAccess = new UserAccess();
   }
 
   @Override

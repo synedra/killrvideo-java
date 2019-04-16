@@ -52,131 +52,128 @@ import static killrvideo.utils.ExceptionUtils.mergeStackTrace;
 @Service
 public class VideoCatalogService extends VideoCatalogServiceImplBase {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(VideoCatalogService.class);
-    private VideoAccess videoAccess = new VideoAccess();
+  private static final Logger LOGGER = LoggerFactory.getLogger(VideoCatalogService.class);
+  private VideoAccess videoAccess = new VideoAccess();
 
-    @Inject
-    private KillrVideoInputValidator validator;
+  @Inject
+  private KillrVideoInputValidator validator;
     
-    @PostConstruct
-    public void init(){
+  @PostConstruct
+  public void init(){
+  }
+
+  @Override
+  public void submitYouTubeVideo(SubmitYouTubeVideoRequest request, StreamObserver<SubmitYouTubeVideoResponse> responseObserver) {
+
+    LOGGER.debug("-----Start adding YouTube video -----");
+        
+    if (!validator.isValid(request, responseObserver)) {
+      return;
     }
 
-    @Override
-    public void submitYouTubeVideo(SubmitYouTubeVideoRequest request, StreamObserver<SubmitYouTubeVideoResponse> responseObserver) {
-
-        LOGGER.debug("-----Start adding YouTube video -----");
+    try
+    {       
+      final Instant now = Instant.now();
+      final String location = request.getYouTubeVideoId();
+      final String name = request.getName();
+      final String description = request.getDescription();
+      final ProtocolStringList tagsList = request.getTagsList();
+      final String previewImageLocation = "//img.youtube.com/vi/" + location + "/hqdefault.jpg";
+      final UUID videoId = UUID.fromString(request.getVideoId().getValue());
+      final UUID userId = UUID.fromString(request.getUserId().getValue());
         
-        if (!validator.isValid(request, responseObserver)) {
-            return;
-        }
+      Video newVideo = new Video(videoId, userId, name, description, location,
+                                 VideoLocationType.YOUTUBE.ordinal(), previewImageLocation, 
+                                 Sets.newHashSet(tagsList.iterator()), now);
 
-        try
-        {       
+      videoAccess.addNewVideo(newVideo);   
+           
+      LOGGER.debug("Added new video: \n" + newVideo);
 
-            final Instant now = Instant.now();
-            final String location = request.getYouTubeVideoId();
-            final String name = request.getName();
-            final String description = request.getDescription();
-            final ProtocolStringList tagsList = request.getTagsList();
-            final String previewImageLocation = "//img.youtube.com/vi/" + location + "/hqdefault.jpg";
-            final UUID videoId = UUID.fromString(request.getVideoId().getValue());
-            final UUID userId = UUID.fromString(request.getUserId().getValue());
-        
-            Video newVideo = new Video(videoId, userId, name, description, location,
-                                    VideoLocationType.YOUTUBE.ordinal(), previewImageLocation, 
-                                    Sets.newHashSet(tagsList.iterator()), now);
+      responseObserver.onNext(SubmitYouTubeVideoResponse.newBuilder().build());
+      responseObserver.onCompleted();
 
-            videoAccess.addNewVideo(newVideo);   
-            
-            LOGGER.debug("Added new video: \n" + newVideo);
-
-            responseObserver.onNext(SubmitYouTubeVideoResponse.newBuilder().build());
-            responseObserver.onCompleted();
-
-            LOGGER.debug("End submitting youtube video");
-        }
-        catch(Throwable e)
-        {
-            e.printStackTrace();
-            LOGGER.debug("Error: " + e);
-        }
+      LOGGER.debug("End submitting youtube video");
     }
-
-    @Override
-    public void getVideo(GetVideoRequest request, StreamObserver<GetVideoResponse> responseObserver) {
-        LOGGER.info("getVideo");
-        if (!validator.isValid(request, responseObserver)) {
-            return;
-        }
-
-        try
-        {       
-
-            final UUID videoId = UUID.fromString(request.getVideoId().getValue());
-        
-            Video video = videoAccess.getVideo(videoId);
-        
-            if (CollectionUtils.isEmpty(video.getTags())) {
-                video.setTags(Collections.emptySet());
-            }
-        
-            responseObserver.onNext((video.toVideoResponse()));
-            responseObserver.onCompleted();        
-            LOGGER.info("END getVideo");
-        }
-        catch(Throwable e)
-        {
-            e.printStackTrace();
-            LOGGER.debug("Error: " + e);
-        }
+    catch(Throwable e)
+    {
+      e.printStackTrace();
+      LOGGER.debug("Error: " + e);
     }
+  }
+
+  @Override
+  public void getVideo(GetVideoRequest request, StreamObserver<GetVideoResponse> responseObserver) {
+    LOGGER.info("getVideo");
     
-    @Override
-    public void getVideoPreviews(GetVideoPreviewsRequest request, StreamObserver<GetVideoPreviewsResponse> responseObserver) {
-        LOGGER.debug("-----getVideoPreviews-----");
-        final GetVideoPreviewsResponse.Builder builder = GetVideoPreviewsResponse.newBuilder();
+    if (!validator.isValid(request, responseObserver)) {
+      return;
+    }
+
+    try
+    {       
+      final UUID videoId = UUID.fromString(request.getVideoId().getValue());
+        
+      Video video = videoAccess.getVideo(videoId);
+        
+      if(CollectionUtils.isEmpty(video.getTags())) {
+        video.setTags(Collections.emptySet());
+      }
+        
+      responseObserver.onNext((video.toVideoResponse()));
+      responseObserver.onCompleted();        
+      LOGGER.info("END getVideo");
+    }
+    catch(Throwable e)
+    {
+      e.printStackTrace();
+      LOGGER.debug("Error: " + e);
+    }
+  }
+    
+  @Override
+  public void getVideoPreviews(GetVideoPreviewsRequest request, StreamObserver<GetVideoPreviewsResponse> responseObserver) {
+    LOGGER.debug("-----getVideoPreviews-----");
+    final GetVideoPreviewsResponse.Builder builder = GetVideoPreviewsResponse.newBuilder();
                 
-        responseObserver.onNext(builder.build());
+    responseObserver.onNext(builder.build());
+    responseObserver.onCompleted();
+  }
+
+  @Override
+  public void getLatestVideoPreviews(GetLatestVideoPreviewsRequest request, StreamObserver<GetLatestVideoPreviewsResponse> responseObserver) {
+    LOGGER.debug("-----Start getting latest video preview-----");
+
+    if (!validator.isValid(request, responseObserver)) {
+      return;
+    }
+
+    try
+    {
+      final List<LatestVideos> results = videoAccess.getLatestVideos();
+      final List<VideoPreview> ret = new ArrayList<VideoPreview>();
+        
+      for(LatestVideos v : results)
+        ret.add(v.toVideoPreview());
+            
+      LOGGER.info("Num latest videos: " + ret.size());
+
+      responseObserver.onNext(GetLatestVideoPreviewsResponse.newBuilder()
+        .addAllVideoPreviews(ret)
+        .build());
         responseObserver.onCompleted();
     }
-
-    @Override
-    public void getLatestVideoPreviews(GetLatestVideoPreviewsRequest request, StreamObserver<GetLatestVideoPreviewsResponse> responseObserver) {
-        LOGGER.debug("-----Start getting latest video preview-----");
-
-        if (!validator.isValid(request, responseObserver)) {
-            return;
-        }
-
-        try {
-          final List<LatestVideos> results = videoAccess.getLatestVideos();
-          final List<VideoPreview> ret = new ArrayList<VideoPreview>();
-        
-          for(LatestVideos v : results)
-            ret.add(v.toVideoPreview());
-            
-          LOGGER.info("Num latest videos: " + ret.size());
-
-          responseObserver.onNext(GetLatestVideoPreviewsResponse
-                    .newBuilder()
-                    .addAllVideoPreviews(ret)
-                    .build());
-          responseObserver.onCompleted();
-
-        } catch (Throwable throwable) {
-            LOGGER.error("Exception when getting latest preview videos : " + mergeStackTrace(throwable));
-            responseObserver.onError(Status.INTERNAL.withCause(throwable).asRuntimeException());
-        }
-
-        LOGGER.debug("End getting latest video preview");
+    catch (Throwable throwable)
+    {
+      LOGGER.error("Exception when getting latest preview videos : " + mergeStackTrace(throwable));
+      responseObserver.onError(Status.INTERNAL.withCause(throwable).asRuntimeException());
     }
 
+    LOGGER.debug("End getting latest video preview");
+  }
 
-    @Override
-    public void getUserVideoPreviews(GetUserVideoPreviewsRequest request, StreamObserver<GetUserVideoPreviewsResponse> responseObserver) {
-        LOGGER.debug("-----getUserVideoPreviews-----");
-
-    }
-
+  @Override
+  public void getUserVideoPreviews(GetUserVideoPreviewsRequest request, StreamObserver<GetUserVideoPreviewsResponse> responseObserver) {
+    LOGGER.debug("-----getUserVideoPreviews-----");
+  }
 }

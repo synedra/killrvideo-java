@@ -20,8 +20,9 @@ public class DseConfiguration {
   public DseSession initializeDSE() {
     DseSession session = null;
     try
-    {
-
+    { 
+      session = DseSession.builder().forClusterConfig(
+        new File("/projects/creds/config.yaml").toURI().toURL()).build();
     }
     catch(Throwable e)
     {

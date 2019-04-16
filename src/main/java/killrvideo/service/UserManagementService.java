@@ -29,7 +29,6 @@ import killrvideo.common.CommonTypes;
 
 
 @Service
-//public class UserManagementService extends AbstractUserManagementService {
 public class UserManagementService extends UserManagementServiceImplBase {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(UserManagementService.class);

@@ -45,7 +45,7 @@ public class UserManagementService extends UserManagementServiceImplBase {
    
   @PostConstruct
   public void init() {
-    userAccess = new UserAccess(dseSession);
+    userAccess = new UserAccess();
   }
 
   @Override

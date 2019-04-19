@@ -63,7 +63,7 @@ public class VideoCatalogService extends VideoCatalogServiceImplBase {
     
   @PostConstruct
   public void init() {
-    videoAccess = new VideoAccess(dseSession);
+    videoAccess = new VideoAccess();
   }
 
   @Override

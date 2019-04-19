@@ -16,20 +16,20 @@ import killrvideo.entity.User;
 
 public class UserAccess {
 
--   private static final Logger LOGGER = LoggerFactory.getLogger(UserAccess.class);
--
--   public boolean createNewUser(String password, User user) throws Exception {
--      LOGGER.debug("------Start createNewUser------");
--       return false;
--   }
--
--   public UUID getAuthenticatedIdByEmailPassword(String email, String password) throws Exception {
--       LOGGER.debug("------Start getAuthenticatedIdByEmailPassword------");
--       return null;
--   }
--
--   public User getUserById(UUID userid) throws Exception {
--       LOGGER.debug("------Start getUserById------");
--       return null;
--   }
--}
+  private static final Logger LOGGER = LoggerFactory.getLogger(UserAccess.class);
+
+  public boolean createNewUser(String password, User user) throws Exception {
+    LOGGER.debug("------Start createNewUser------");
+    return false;
+  }
+
+  public UUID getAuthenticatedIdByEmailPassword(String email, String password) throws Exception {
+    LOGGER.debug("------Start getAuthenticatedIdByEmailPassword------");
+    return null;
+  }
+
+  public User getUserById(UUID userid) throws Exception {
+    LOGGER.debug("------Start getUserById------");
+    return null;
+  }
+}

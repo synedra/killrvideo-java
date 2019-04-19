@@ -41,11 +41,11 @@ public class UserManagementService extends UserManagementServiceImplBase {
   private KillrVideoInputValidator validator;
 
   @Inject
-  private DseSession session;
+  private DseSession dseSession;
    
   @PostConstruct
   public void init() {
-    userAccess = new UserAccess();
+    userAccess = new UserAccess(dseSession);
   }
 
   @Override

@@ -53,7 +53,6 @@ import static killrvideo.utils.ExceptionUtils.mergeStackTrace;
 public class VideoCatalogService extends VideoCatalogServiceImplBase {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(VideoCatalogService.class);
-  private VideoAccess videoAccess;
 
   @Inject
   private KillrVideoInputValidator validator;
@@ -62,9 +61,7 @@ public class VideoCatalogService extends VideoCatalogServiceImplBase {
   private DseSession dseSession;
     
   @PostConstruct
-  public void init() {
-    videoAccess = new VideoAccess();
-  }
+  public void init() { }
 
   @Override
   public void submitYouTubeVideo(SubmitYouTubeVideoRequest request, StreamObserver<SubmitYouTubeVideoResponse> responseObserver) {
@@ -90,7 +87,7 @@ public class VideoCatalogService extends VideoCatalogServiceImplBase {
                                  VideoLocationType.YOUTUBE.ordinal(), previewImageLocation, 
                                  Sets.newHashSet(tagsList.iterator()), now);
 
-      videoAccess.addNewVideo(newVideo);   
+      VideoAccess.addNewVideo(dseSession, newVideo);   
            
       LOGGER.debug("Added new video: \n" + newVideo);
 
@@ -118,7 +115,7 @@ public class VideoCatalogService extends VideoCatalogServiceImplBase {
     {       
       final UUID videoId = UUID.fromString(request.getVideoId().getValue());
         
-      Video video = videoAccess.getVideo(videoId);
+      Video video = VideoAccess.getVideo(dseSession, videoId);
         
       if(CollectionUtils.isEmpty(video.getTags())) {
         video.setTags(Collections.emptySet());
@@ -154,7 +151,7 @@ public class VideoCatalogService extends VideoCatalogServiceImplBase {
 
     try
     {
-      final List<LatestVideos> results = videoAccess.getLatestVideos();
+      final List<LatestVideos> results = VideoAccess.getLatestVideos(dseSession);
       final List<VideoPreview> ret = new ArrayList<VideoPreview>();
         
       for(LatestVideos v : results)

@@ -26,17 +26,17 @@ import killrvideo.entity.Video;
 public class VideoAccess {
   private static final Logger LOGGER = LoggerFactory.getLogger(UserAccess.class);
     
-  public void addNewVideo(Video video) throws Exception {
+  public static void addNewVideo(DseSession session, Video video) throws Exception {
     LOGGER.debug("------Start add new video------");
 
   }
 
-  public Video getVideo(UUID videoId) throws Exception {
+  public static Video getVideo(DseSession session, UUID videoId) throws Exception {
     LOGGER.debug("------Start get video------");
     return null;  
   }
 
-  public List<LatestVideos> getLatestVideos() throws Exception {
+  public static List<LatestVideos> getLatestVideos(DseSession session) throws Exception {
     LOGGER.debug("------Start get latest videos------");
     return new ArrayList<LatestVideos>();
   } 

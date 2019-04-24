@@ -35,8 +35,6 @@ public class UserManagementService extends UserManagementServiceImplBase {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(UserManagementService.class);
     
-  private UserAccess userAccess;
-
   @Inject
   private KillrVideoInputValidator validator;
 
@@ -45,7 +43,6 @@ public class UserManagementService extends UserManagementServiceImplBase {
    
   @PostConstruct
   public void init() {
-    userAccess = new UserAccess();
   }
 
   @Override
@@ -72,7 +69,7 @@ public class UserManagementService extends UserManagementServiceImplBase {
       user.setLastname(lastName);
       user.setEmail(email);
             
-      boolean success = userAccess.createNewUser(password, user);   
+      boolean success = UserAccess.createNewUser(dseSession, password, user);   
            
       if (success){
         LOGGER.info("Boom shakalaka 'new toys!'");
@@ -108,7 +105,7 @@ public class UserManagementService extends UserManagementServiceImplBase {
     {        
       String email = request.getEmail();
       String passwordFromRequest = request.getPassword();
-      UUID userId = userAccess.getAuthenticatedIdByEmailPassword(email, passwordFromRequest);
+      UUID userId = UserAccess.getAuthenticatedIdByEmailPassword(dseSession, email, passwordFromRequest);
             
       if(userId == null) {
         LOGGER.info("Invalid credentials");
@@ -147,7 +144,7 @@ public class UserManagementService extends UserManagementServiceImplBase {
       Uuid id = request.getUserIds(0);
       UUID userid = UUID.fromString(id.getValue());
       LOGGER.debug("userid = "+userid.toString());
-      User user = userAccess.getUserById(userid);
+      User user = UserAccess.getUserById(dseSession, userid);
 
       final GetUserProfileResponse.Builder builder = GetUserProfileResponse.newBuilder();
     

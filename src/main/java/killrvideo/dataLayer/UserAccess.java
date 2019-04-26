@@ -8,6 +8,8 @@ import com.datastax.oss.driver.api.core.cql.BatchStatement;
 import com.datastax.oss.driver.api.core.cql.BoundStatement;
 import com.datastax.oss.driver.api.core.cql.DefaultBatchType;
 import com.datastax.oss.driver.api.core.cql.PreparedStatement;
+import com.datastax.oss.driver.api.core.cql.ResultSet;
+import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.cql.SimpleStatementBuilder;
 import com.datastax.dse.driver.api.core.DseSession;

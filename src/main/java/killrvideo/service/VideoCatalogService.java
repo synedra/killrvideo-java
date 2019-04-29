@@ -61,7 +61,9 @@ public class VideoCatalogService extends VideoCatalogServiceImplBase {
   private DseSession dseSession;
     
   @PostConstruct
-  public void init() { }
+  public void init() {
+    VideoAccess.init(dseSession);
+  }
 
   @Override
   public void submitYouTubeVideo(SubmitYouTubeVideoRequest request, StreamObserver<SubmitYouTubeVideoResponse> responseObserver) {

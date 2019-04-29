@@ -42,4 +42,8 @@ public class VideoAccess {
     LOGGER.debug("------Start get latest videos------");
     return new ArrayList<LatestVideos>();
   } 
+  
+  public static void init(DseSession session) {
+      
+  }
 }

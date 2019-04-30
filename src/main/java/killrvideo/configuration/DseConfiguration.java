@@ -22,7 +22,7 @@ public class DseConfiguration {
     try
     { 
       session = DseSession.builder().forClusterConfig(
-        new File("/projects/creds/config.yaml").toURI().toURL()).build();
+        "/projects/creds/config.yaml").build();
     }
     catch(Throwable e)
     {

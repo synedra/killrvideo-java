@@ -21,8 +21,7 @@ public class DseConfiguration {
     DseSession session = null;
     try
     { 
-      session = DseSession.builder().forClusterConfig(
-        "/projects/creds").build();
+      session = DseSession.builder().forClusterConfig("/projects/creds").build();
     }
     catch(Throwable e)
     {

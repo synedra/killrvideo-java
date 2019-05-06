@@ -63,6 +63,13 @@ public class RatingsService extends RatingsServiceImplBase {
     @Override
     public void getUserRating(GetUserRatingRequest request, StreamObserver<GetUserRatingResponse> responseObserver) {
         // LOGGER.debug("-----Start get user rating request-----");
+        responseObserver.onNext(GetUserRatingResponse
+                                    .newBuilder()
+                                    .setUserId(request.getUserId())
+                                    .setVideoId(request.getVideoId())
+                                    .setRating(0)
+                                    .build());
+        responseObserver.onCompleted();
     }
 
 }

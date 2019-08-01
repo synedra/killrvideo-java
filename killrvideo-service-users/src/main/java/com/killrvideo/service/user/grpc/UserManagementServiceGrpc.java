@@ -77,27 +77,20 @@ public class UserManagementServiceGrpc extends UserManagementServiceImplBase {
         User user = mapUserRequest2User(grpcReq);
         final String hashedPassword = HashUtils.hashPassword(grpcReq.getPassword().trim());
         
-        // Invoke DAO Async
-        CompletableFuture<Void> futureDse = userDseDao.createUserAsync(user, hashedPassword);
-        
-        // If OK, then send Message
-        CompletableFuture<Object> futureDseAndMessaging = futureDse.thenCompose(rs -> {
-            return messagingDao.sendEvent(topicUserCreated, UserCreated.newBuilder()
-                    .setEmail(grpcReq.getEmail())
-                    .setFirstName(grpcReq.getFirstName())
-                    .setLastName(grpcReq.getLastName())
-                    .setUserId(grpcReq.getUserId())
-                    .setTimestamp(Timestamp.newBuilder())
-                    .build());
-        });
-        
-        futureDseAndMessaging.whenComplete((result, error) -> {
+         // Invoke DAO Async
+        userDseDao.createUserAsync(user, hashedPassword).whenComplete((result, error) -> {
             if (error != null ) {
                 traceError("createUser", starts, error);
                 grpcResObserver.onError(Status.INVALID_ARGUMENT.augmentDescription(error.getMessage())
                                .asRuntimeException());
             } else {
                 traceSuccess("createUser", starts);
+                messagingDao.sendEvent(topicUserCreated, UserCreated.newBuilder()
+                        .setEmail(grpcReq.getEmail())
+                        .setFirstName(grpcReq.getFirstName())
+                        .setLastName(grpcReq.getLastName())
+                        .setUserId(grpcReq.getUserId())
+                        .setTimestamp(Timestamp.newBuilder().build()));
                 grpcResObserver.onNext(CreateUserResponse.newBuilder().build());
                 grpcResObserver.onCompleted();
             }

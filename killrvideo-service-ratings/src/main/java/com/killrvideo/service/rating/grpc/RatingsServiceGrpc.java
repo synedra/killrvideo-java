@@ -5,12 +5,10 @@ import static com.killrvideo.service.rating.grpc.RatingsServiceGrpcMapper.maptoU
 import static com.killrvideo.service.rating.grpc.RatingsServiceGrpcValidator.validateGrpcRequest_GetRating;
 import static com.killrvideo.service.rating.grpc.RatingsServiceGrpcValidator.validateGrpcRequest_GetUserRating;
 import static com.killrvideo.service.rating.grpc.RatingsServiceGrpcValidator.validateGrpcRequest_RateVideo;
-import static com.killrvideo.utils.GrpcMappingUtils.instantToTimeStamp;
 
 import java.time.Duration;
 import java.time.Instant;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,6 +18,7 @@ import org.springframework.stereotype.Service;
 
 import com.killrvideo.messaging.dao.MessagingDao;
 import com.killrvideo.service.rating.dao.RatingDseDao;
+import com.killrvideo.utils.GrpcMappingUtils;
 
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
@@ -71,22 +70,16 @@ public class RatingsServiceGrpc extends RatingsServiceImplBase {
         UUID userid  = UUID.fromString(grpcReq.getUserId().getValue());
         Integer rate = grpcReq.getRating();
         
-        CompletableFuture<Void> futureDse = dseRatingDao.rateVideo(videoid, userid, rate);
-        
-        // If OK, then send Message to Kafka
-        CompletableFuture<Object> futureDseAndMessaging = futureDse.thenCompose(rs -> {
-            return messagingDao.sendEvent(topicvideoRated, 
-                    UserRatedVideo.newBuilder()
-                    .setRating(grpcReq.getRating())
-                    .setRatingTimestamp(instantToTimeStamp(Instant.now()))
-                    .setUserId(grpcReq.getUserId())
-                    .setVideoId(grpcReq.getVideoId())
-                    .build());
-        });
-        
-        futureDseAndMessaging.whenComplete((result, error) -> {
+        // Invoking Dao (Async), publish event if successful
+        dseRatingDao.rateVideo(videoid, userid, rate).whenComplete((result, error) -> {
             if (error == null) {
                 traceSuccess("rateVideo", starts);
+                messagingDao.sendEvent(topicvideoRated, 
+                        UserRatedVideo.newBuilder()
+                        .setRating(grpcReq.getRating())
+                        .setRatingTimestamp(GrpcMappingUtils.instantToTimeStamp(Instant.now()))
+                        .setUserId(grpcReq.getUserId())
+                        .setVideoId(grpcReq.getVideoId()).build());
                 grpcResObserver.onNext(RateVideoResponse.newBuilder().build());
                 grpcResObserver.onCompleted();
             } else {

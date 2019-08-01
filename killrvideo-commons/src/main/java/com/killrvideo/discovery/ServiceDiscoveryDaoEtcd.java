@@ -118,46 +118,20 @@ public class ServiceDiscoveryDaoEtcd implements ServiceDiscoveryDao {
      *      list of values
      */
     public List < String > lookup(String serviceName) {
-        final AtomicInteger atomicCount  = new AtomicInteger(1);
-        final String serviceDirectoryKey = KILLRVIDEO_SERVICE_NAMESPACE + serviceName + "/";
-        
         List< String > endPointList = new ArrayList<>();
-        Callable<List <EtcdNode>> lookupInEdtcd = () -> {
-            try {
-                
-                List< EtcdNode > existingNodes = etcdClient.listDir(serviceDirectoryKey);
-                if ((existingNodes == null || existingNodes.isEmpty())) {
-                    throw new IllegalStateException("Key '" + serviceDirectoryKey + "' has not"
-                            + "been found in ETCD or no endpoint is available (yet)");
-                }
-                LOGGER.info(" + [OK] Endpoints retrieved '{}':", endPointList);
-                return existingNodes;
-            } catch (EtcdClientException e) {
-                throw new IllegalStateException("Error when querying ETCD Server : " + e.getMessage());
+        String serviceDirectoryKey = KILLRVIDEO_SERVICE_NAMESPACE + serviceName + "/";
+        LOGGER.info(" List endpoints for key '{}':", serviceDirectoryKey);
+        try {
+            List< EtcdNode > existingNodes = etcdClient.listDir(serviceDirectoryKey);
+            if (existingNodes != null) {
+                endPointList = existingNodes
+                        .stream()
+                        .map(node -> node.value)
+                        .collect(Collectors.toList());
             }
-        };
-        
-        RetryConfig etcdRetryConfig = new RetryConfigBuilder()
-                .retryOnAnyException()
-                .withMaxNumberOfTries(maxNumberOfTriesEtcd)
-                .withDelayBetweenTries(delayBetweenTriesEtcd, ChronoUnit.SECONDS)
-                .withFixedBackoff()
-                .build();
-        
-        return new CallExecutor<List <EtcdNode>>(etcdRetryConfig)
-                .afterFailedTry(s -> { 
-                    LOGGER.info("Attempt #{}/{} : Key '" + serviceDirectoryKey + "' has not been found in ETCD or no endpoint is available (yet)", 
-                             atomicCount.getAndIncrement(), maxNumberOfTriesEtcd, 
-                             delayBetweenTriesEtcd); })
-                .onFailure(s -> {
-                    LOGGER.error("Key '\" + serviceDirectoryKey + \"' has not been found after {} attempts, exiting", maxNumberOfTriesEtcd);
-                    System.err.println("Key '\" + serviceDirectoryKey + \"' has not been found after " + maxNumberOfTriesEtcd + " attempts, exiting now.");
-                    System.exit(500);
-                 })
-                .execute(lookupInEdtcd).getResult()
-                .stream()
-                .map(node -> node.value)
-                .collect(Collectors.toList());
+        } catch (EtcdClientException e) {}
+        LOGGER.info(" + [OK] Endpoints retrieved '{}':", endPointList);
+        return endPointList;
     }
     
     /**

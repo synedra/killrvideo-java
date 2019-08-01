@@ -95,7 +95,7 @@ public class VideoCatalogServiceGrpc extends VideoCatalogServiceImplBase {
         CompletableFuture<Void> futureDse = videoCatalogDao.insertVideoAsync(video);
         
         // If OK, then send Message to Kafka
-        CompletableFuture<Object> futureAndMessaging = futureDse.thenCompose(rs -> {
+        CompletableFuture<Object> futureAndKafka = futureDse.thenCompose(rs -> {
             return messagingDao.sendEvent(topicVideoCreated, YouTubeVideoAdded.newBuilder()
                             .setAddedDate(Timestamp.newBuilder().build())
                             .setDescription(video.getDescription())
@@ -108,7 +108,7 @@ public class VideoCatalogServiceGrpc extends VideoCatalogServiceImplBase {
         });
         
         // Building Response
-        futureAndMessaging.whenComplete((result, error) -> { 
+        futureAndKafka.whenComplete((result, error) -> { 
             if (error != null ) {
                 traceError("submitYouTubeVideo", starts, error);
                 grpcResObserver.onError(Status.INTERNAL.withCause(error).asRuntimeException());

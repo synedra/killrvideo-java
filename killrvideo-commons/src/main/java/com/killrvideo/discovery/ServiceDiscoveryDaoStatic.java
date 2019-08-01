@@ -1,7 +1,9 @@
 package com.killrvideo.discovery;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,39 +25,53 @@ public class ServiceDiscoveryDaoStatic implements ServiceDiscoveryDao {
     /** Initialize dedicated connection to ETCD system. */
     private static final Logger LOGGER = LoggerFactory.getLogger(ServiceDiscoveryDaoStatic.class);
     
-    @Value("${killrvideo.discovery.services.kafka:kafka}")
+    @Value("${killrvideo.discovery.service.kafka: kafka}")
     private String kafkaServiceName;
     
-    @Value("${killrvideo.discovery.static.kafka.port:8082}")
+    @Value("${killrvideo.discovery.static.kafka.port: 8082}")
     private int kafkaPort;
     
-    @Value("${killrvideo.discovery.static.kafka.host:kafka}")
-    private String kafkaHost;
+    @Value("${killrvideo.discovery.static.kafka.brokers}")
+    private String kafkaBrokers;
+    @Value("#{environment.KILLRVIDEO_KAFKA_BROKERS}")
+    private Optional<String> kafkaBrokersEnvVar;
     
-    @Value("${killrvideo.discovery.services.cassandra:cassandra}")
+    @Value("${killrvideo.discovery.service.cassandra: cassandra}")
     private String cassandraServiceName;
     
-    @Value("${killrvideo.discovery.static.cassandra.port:9042}")
+    @Value("${killrvideo.discovery.static.cassandra.port: 9042}")
     private int cassandraPort;
     
-    @Value("${killrvideo.discovery.static.cassandra.host:dse}")
-    private String cassandraHost;
-    
+    @Value("${killrvideo.discovery.static.cassandra.contactPoints}")
+    private String cassandraContactPoints;
+    @Value("#{environment.KILLRVIDEO_DSE_CONTACTPOINTS}")
+    private Optional<String> cassandraContactPointsEnvVar;
+   
     /** {@inheritDoc} */
     @Override
     public List<String> lookup(String serviceName) {
         List< String > endPointList = new ArrayList<>();
-        LOGGER.info(" List (static) endpoints for key '{}':", serviceName);
-        if (kafkaServiceName.trim().equalsIgnoreCase(serviceName.trim())) {
-            endPointList.add(kafkaHost + ":" + kafkaPort);
-            LOGGER.info(" + Adding '{}':", kafkaHost + ":" + kafkaPort);
-        } else if (cassandraServiceName.trim().equalsIgnoreCase(serviceName.trim())) {
-            endPointList.add(cassandraHost + ":" + cassandraPort);
-            LOGGER.info(" + Adding '{}':", cassandraHost + ":" + cassandraPort);
-        } else {
-            throw new IllegalArgumentException("End point list cannot be empty");
+        LOGGER.info(" + Lookup for key '{}':", serviceName);
+        if (kafkaServiceName.equalsIgnoreCase(serviceName)) {
+        	if (!kafkaBrokersEnvVar.isEmpty() && !kafkaBrokersEnvVar.get().isBlank()) {
+        	    cassandraContactPoints = kafkaBrokersEnvVar.get();
+        		LOGGER.info(" + Reading broker from KILLRVIDEO_KAFKA_BROKERS");
+        	}
+        	Arrays.asList(kafkaBrokers.split(",")).stream()
+        		  .forEach(ip -> endPointList.add(ip + ":" + kafkaPort));
+
+        } else if (cassandraServiceName.equalsIgnoreCase(serviceName)) {
+        	// Explicit overwriting of contact points from env var
+        	// Better than default spring : simpler
+        	if (!cassandraContactPointsEnvVar.isEmpty() && !cassandraContactPointsEnvVar.get().isBlank()) {
+        		cassandraContactPoints = cassandraContactPointsEnvVar.get();
+        		LOGGER.info(" + Reading contactPoints from KILLRVIDEO_DSE_CONTACTPOINTS");
+        	}
+        	Arrays.asList(cassandraContactPoints.split(","))
+        	      .stream()
+        		  .forEach(ip -> endPointList.add(ip + ":" + cassandraPort));
         }
-        LOGGER.info(" + [OK] Endpoints retrieved '{}':", endPointList);
+        LOGGER.info(" + Endpoints retrieved '{}':", endPointList);
         return endPointList;
     }
     

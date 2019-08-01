@@ -47,6 +47,7 @@ import com.evanlennick.retry4j.config.RetryConfigBuilder;
 import com.killrvideo.discovery.ServiceDiscoveryDao;
 import com.killrvideo.dse.graph.KillrVideoTraversalSource;
 import com.killrvideo.dse.utils.BlobToStringCodec;
+import com.killrvideo.model.CommonConstants;
 
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
@@ -62,7 +63,7 @@ public class DseConfiguration {
 	/** Internal logger. */
     private static final Logger LOGGER = LoggerFactory.getLogger(DseConfiguration.class);
      
-    @Value("${killrvideo.discovery.services.cassandra:cassandra}")
+    @Value("${killrvideo.discovery.service.cassandra: cassandra}")
     private String cassandraServiceName;
     
     @Value("${killrvideo.cassandra.clustername: 'killrvideo'}")
@@ -80,12 +81,6 @@ public class DseConfiguration {
     @Value("#{environment.KILLRVIDEO_DSE_PASSWORD}")
     public Optional < String > dsePassword;
     
-    @Value("${killrvideo.cassandra.keyspace:killrvideo}")
-    private String keyspace;
-    
-    @Value("${killrvideo.cassandra.keyspace-init:killrvideo}")
-    private String keyspaceInit;
-    
     @Value("${killrvideo.cassandra.maxNumberOfTries: 10}")
     private int maxNumberOfTries  = 10;
     
@@ -95,8 +90,14 @@ public class DseConfiguration {
     @Value("${killrvideo.ssl.CACertFileLocation: cassandra.cert}")
     private String sslCACertFileLocation;
     
+    @Value("#{environment.KILLRVIDEO_SSL_CERTIFICATE}")
+    public Optional < String > sslCACertFileLocationEnvVar;
+    
     @Value("${killrvideo.ssl.enable: false}")
     public boolean dseEnableSSL = false;
+    
+    @Value("#{environment.KILLRVIDEO_ENABLE_SSL}")
+    public Optional < Boolean > dseEnableSSLEnvVar;
     
     @Value("${killrvideo.etcd.enabled : true}")
     private boolean etcdLookup = false;
@@ -129,8 +130,7 @@ public class DseConfiguration {
          
          final AtomicInteger atomicCount = new AtomicInteger(1);
          Callable<DseSession> connectionToDse = () -> {
-             clusterConfig.build().connect(keyspaceInit);
-             return clusterConfig.build().connect(keyspace);
+             return clusterConfig.build().connect(CommonConstants.KILLRVIDEO_KEYSPACE);
          };
          
          // Connecting to DSE with a retry mechanism : 
@@ -235,10 +235,12 @@ public class DseConfiguration {
      *      current configuration
      */
      private void populateContactPoints(Builder clusterConfig)  {
-        discoveryDao.lookup(cassandraServiceName.trim()).stream()
+        discoveryDao.lookup(cassandraServiceName).stream()
                     .map(this::asSocketInetAdress)
                     .filter(node -> node.isPresent())
                     .map(node -> node.get())
+                    // Use one node port to setup - they are all the same
+                    .peek(node -> clusterConfig.withPort(node.getPort()))
                     .map(adress -> adress.getHostName())
                     .forEach(clusterConfig::addContactPoint);
     }
@@ -307,6 +309,15 @@ public class DseConfiguration {
      *      current configuration
      */
     private void populateSSL(Builder clusterConfig) {
+    	
+    	// Reading Environment Variables to eventually override default config
+    	if (!dseEnableSSLEnvVar.isEmpty()) {
+    		dseEnableSSL = dseEnableSSLEnvVar.get();
+    		if (!sslCACertFileLocationEnvVar.isEmpty()) {
+    			sslCACertFileLocation = sslCACertFileLocationEnvVar.get();
+    		}
+    	}
+    	
         if (dseEnableSSL) {
             LOGGER.info(" + SSL is enabled, using supplied SSL certificate: '{}'", sslCACertFileLocation);
              try {

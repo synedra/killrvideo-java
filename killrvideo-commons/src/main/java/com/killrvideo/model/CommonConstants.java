@@ -8,5 +8,5 @@ package com.killrvideo.model;
 public interface CommonConstants {
 
     /** Core KeySpace. */
-    String KILLRVIDEO_KEYSPACE = "killrvideo";
+    String KILLRVIDEO_KEYSPACE = "killrvideo"; 
 }

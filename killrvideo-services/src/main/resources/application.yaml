@@ -35,7 +35,7 @@ killrvideo:
     suggestedVideo: true
   
   grpc-server: 
-    port: 8899
+    port: 50101
       
   cassandra:
     clustername: killrvideo

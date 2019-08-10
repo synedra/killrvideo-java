@@ -34,7 +34,7 @@ public class KillrvideoServicesGrpcServer {
     private static final Logger LOGGER = LoggerFactory.getLogger(KillrvideoServicesGrpcServer.class);
     
     /** Listening Port for GRPC. */
-    @Value("${grpc.port: 8899}")
+    @Value("${grpc-server.port: 50101}")
     private int grpcPort;
     
     /** Connectivity to ETCD Service discovery. */

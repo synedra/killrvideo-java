@@ -7,6 +7,8 @@
 A reference application for Java developers looking to learn more about using [Apache Cassandra][cassandra] and
 [DataStax Enterprise][dse] in their applications and services. Learn more at [Killrvideo].
 
+## The latest stable build of KillrVideo Java is [v2.1.0][v2.1.0]. Master is experimental. Please use v2.1.0 if you attempting to follow the instructions in the links below.
+
 ## Running Locally
 
 Use these guides to get started running KillrVideo locally on your development machine:
@@ -48,3 +50,4 @@ limitations under the License.
 [DSE Java driver]: https://docs.datastax.com/en/developer/java-driver-dse/1.6/
 [issues]: https://github.com/KillrVideo/killrvideo-java/issues
 [gremlindsljava]: https://www.datastax.com/dev/blog/gremlin-dsls-in-java-with-dse-graph
+[v2.1.0]: https://github.com/KillrVideo/killrvideo-java/tree/v2.1.0

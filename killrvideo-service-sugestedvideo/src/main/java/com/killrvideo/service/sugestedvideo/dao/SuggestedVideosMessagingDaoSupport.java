@@ -9,7 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import com.killrvideo.utils.GrpcMappingUtils;
+import com.killrvideo.grpc.GrpcMappingUtils;
 
 import killrvideo.ratings.events.RatingsEvents.UserRatedVideo;
 import killrvideo.user_management.events.UserManagementEvents.UserCreated;

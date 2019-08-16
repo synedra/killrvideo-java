@@ -1,5 +1,6 @@
-package com.killrvideo.service.comment.dto;
+package com.killrvideo.service.comment.dao.dto;
 
+import java.io.Serializable;
 import java.util.Date;
 import java.util.UUID;
 
@@ -7,45 +8,40 @@ import javax.validation.constraints.NotNull;
 
 import org.hibernate.validator.constraints.Length;
 
-import com.datastax.driver.mapping.annotations.ClusteringColumn;
-import com.datastax.driver.mapping.annotations.Column;
-import com.datastax.driver.mapping.annotations.Computed;
-import com.killrvideo.dse.dto.AbstractEntity;
+import com.datastax.oss.driver.api.mapper.annotations.ClusteringColumn;
+import com.datastax.oss.driver.api.mapper.annotations.CqlName;
+import com.killrvideo.dse.dao.DseSchema;
+import com.killrvideo.dse.utils.DseUtils;
 
 /**
  * Bean standing for comment on video.
  *
  * @author DataStax Developer Advocates team.
  */
-public class Comment extends AbstractEntity {
+public class Comment implements Serializable, DseSchema {
     
     /** Serial. */
     private static final long serialVersionUID = 7675521710612951368L;
     
-    /** Column names in the DB. */
-    public static final String COLUMN_USERID    = "userid";
-    public static final String COLUMN_VIDEOID   = "videoid";
-    public static final String COLUMN_COMMENTID = "commentid";
-    public static final String COLUMN_COMMENT   = "comment";
-
-    @Column @NotNull
+    @NotNull
+    @CqlName(COMMENTS_COLUMN_USERID)
     protected UUID userid;
     
     @NotNull
-    @Column
+    @CqlName(COMMENTS_COLUMN_VIDEOID)
     protected UUID videoid;
 
     @NotNull
     @ClusteringColumn
+    @CqlName(COMMENTS_COLUMN_COMMENTID)
     protected UUID commentid;
 
     @Length(min = 1, message = "The comment must not be empty")
-    @Column
+    @CqlName(COMMENTS_COLUMN_COMMENT)
     protected String comment;
 
-    @NotNull
-    @Computed("toTimestamp(commentid)")
-    private Date dateOfComment;
+    //@Computed("toTimestamp("+ COMMENTS_COLUMN_COMMENTID+ ")")
+    //private Date dateOfComment;
     
     /**
      * Default constructor.
@@ -123,17 +119,9 @@ public class Comment extends AbstractEntity {
      *       current value of 'dateOfComment'
      */
     public Date getDateOfComment() {
-        return dateOfComment;
+        return new Date(DseUtils.getTimeFromUUID(commentid));
     }
 
-    /**
-     * Setter for attribute 'dateOfComment'.
-     * @param dateOfComment
-     * 		new value for 'dateOfComment '
-     */
-    public void setDateOfComment(Date dateOfComment) {
-        this.dateOfComment = dateOfComment;
-    }
     
     /**
      * Getter for attribute 'userid'.

@@ -28,7 +28,6 @@ import com.google.common.util.concurrent.JdkFutureAdapters;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.protobuf.AbstractMessageLite;
 import com.google.protobuf.InvalidProtocolBufferException;
-import com.killrvideo.conf.KillrVideoConfiguration;
 
 import killrvideo.common.CommonEvents.ErrorEvent;
 
@@ -38,7 +37,7 @@ import killrvideo.common.CommonEvents.ErrorEvent;
  * @author Cedrick LUNVEN (@clunven)
  */
 @Repository("killrvideo.dao.messaging.kafka")
-@Profile(KillrVideoConfiguration.PROFILE_MESSAGING_KAFKA)
+@Profile("messaging_kafka")
 public class MessagingDaoKafka implements MessagingDao {
     
     /** Loger for that class. */

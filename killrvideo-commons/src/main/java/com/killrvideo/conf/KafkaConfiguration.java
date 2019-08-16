@@ -1,4 +1,4 @@
-package com.killrvideo.messaging.conf;
+package com.killrvideo.conf;
 
 import static org.apache.kafka.clients.consumer.ConsumerConfig.GROUP_ID_CONFIG;
 import static org.apache.kafka.clients.consumer.ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG;
@@ -8,7 +8,10 @@ import static org.apache.kafka.clients.producer.ProducerConfig.BOOTSTRAP_SERVERS
 import static org.apache.kafka.clients.producer.ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG;
 import static org.apache.kafka.clients.producer.ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG;
 
+import java.util.Arrays;
+import java.util.Optional;
 import java.util.Properties;
+import java.util.stream.Collectors;
 
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.producer.KafkaProducer;
@@ -16,41 +19,41 @@ import org.apache.kafka.common.serialization.ByteArrayDeserializer;
 import org.apache.kafka.common.serialization.ByteArraySerializer;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 
-import com.killrvideo.conf.KillrVideoConfiguration;
-import com.killrvideo.discovery.ServiceDiscoveryDao;
-
 /**
  * Use Kafka to exchange messages between services. 
  *
- * @author Cedrick LUNVEN (@clunven) *
+ * @author Cedrick LUNVEN (@clunven)
  */
 @Configuration
-@Profile(KillrVideoConfiguration.PROFILE_MESSAGING_KAFKA)
+@Profile("messaging_kafka")
 public class KafkaConfiguration {
     
-    /** Name of service in ETCD. */
-    public static final String SERVICE_KAFKA = "kafka";
+    /** Initialize dedicated connection to ETCD system. */
+    private static final Logger LOGGER = LoggerFactory.getLogger(KafkaConfiguration.class);
+  
+    @Value("${killrvideo.kafka.port: 8082}")
+    private int kafkaPort;
     
-    /** Default CQL listening port. */
-    public static final int DEFAULT_PORT = 8082;
+    @Value("${killrvideo.kafka.brokers:kafka}")
+    private String kafkaBrokers;
     
-    /** Kafka Server to be used. */
-    private String kafkaServer;
+    @Value("#{environment.KILLRVIDEO_KAFKA_BROKERS}")
+    private Optional<String> kafkaBrokersEnvironmentVar;
     
-    @Value("${kafka.ack: 1 }")
-    private String producerAck;
-    
-    @Value("${kafka.consumerGroup: killrvideo }")
+    @Value("${killrvideo.kafka.consumerGroup: killrvideo }")
     private String consumerGroup;
     
-    @Autowired
-    private ServiceDiscoveryDao discoveryDao;
+    @Value("${killrvideo.kafka.ack: 1 }")
+    private String producerAck;
+    
+    private String connectionURL;
     
     /**
      * Should we init connection with ETCD or direct.
@@ -59,10 +62,16 @@ public class KafkaConfiguration {
      *      target kafka adress
      */
     private String getKafkaServerConnectionUrl() {
-        if (null == kafkaServer) {
-            kafkaServer = String.join(",", discoveryDao.lookup(SERVICE_KAFKA));  
-        } 
-        return kafkaServer;
+        if (null == connectionURL ) {
+            if (!kafkaBrokersEnvironmentVar.isEmpty() && !kafkaBrokersEnvironmentVar.get().isBlank()) {
+                kafkaBrokers = kafkaBrokersEnvironmentVar.get();
+                LOGGER.info(" + Reading broker from KILLRVIDEO_KAFKA_BROKERS");
+            }
+            connectionURL = String.join(",", Arrays.asList(kafkaBrokers.split(","))
+                                  .stream().map(ip -> ip + ":" + kafkaPort)
+                                  .collect(Collectors.toList()));
+        }
+        return connectionURL;
     }
     
     @Bean("kafka.producer")

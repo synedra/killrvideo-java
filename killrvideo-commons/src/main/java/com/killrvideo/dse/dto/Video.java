@@ -1,6 +1,7 @@
 package com.killrvideo.dse.dto;
 
 import java.util.Date;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
@@ -8,57 +9,45 @@ import javax.validation.constraints.NotNull;
 
 import org.hibernate.validator.constraints.Length;
 
-import com.datastax.driver.mapping.annotations.Column;
-import com.datastax.driver.mapping.annotations.PartitionKey;
-import com.datastax.driver.mapping.annotations.Table;
-import com.killrvideo.dse.utils.EmptyCollectionIfNull;
-import com.killrvideo.model.CommonConstants;
+import com.datastax.oss.driver.api.mapper.annotations.CqlName;
+import com.datastax.oss.driver.api.mapper.annotations.Entity;
+import com.datastax.oss.driver.api.mapper.annotations.PartitionKey;
 
 /**
  * Pojo representing DTO for table 'videos'.
  *
  * @author DataStax Developer Advocates team.
  */
-@Table(keyspace = CommonConstants.KILLRVIDEO_KEYSPACE, name = Video.TABLENAME_VIDEOS)
+@Entity
 public class Video extends AbstractVideo {
 
     /** Serial. */
     private static final long serialVersionUID = 7035802926837646137L;
     
-    public static final String TABLENAME_VIDEOS = "videos";
-    
-    /** Column names in the DB. */
-    public static final String COLUMN_USERID       = "userid";
-    public static final String COLUMN_VIDEOID      = "videoid";
-    public static final String COLUMN_DESCRIPTION  = "description";
-    public static final String COLUMN_LOCATION     = "location";
-    public static final String COLUMN_LOCATIONTYPE = "location_type";
-    public static final String COLUMN_ADDED_DATE   = "added_date";
-    
     @PartitionKey
+    @CqlName(VIDEOS_COLUMN_VIDEOID)
     private UUID videoid;
 
     @NotNull
-    @Column
+    @CqlName(VIDEOS_COLUMN_USERID)
     private UUID userid;
 
     @Length(min = 1, message = "description must not be empty")
-    @Column
+    @CqlName(VIDEOS_COLUMN_DESCRIPTION)
     private String description;
 
     @Length(min = 1, message = "location must not be empty")
-    @Column
+    @CqlName(VIDEOS_COLUMN_LOCATION)
     private String location;
 
-    @Column(name = COLUMN_LOCATIONTYPE)
+    @CqlName(VIDEOS_COLUMN_LOCATIONTYPE)
     private int locationType;
 
-    @Column
-    @EmptyCollectionIfNull
-    private Set<String> tags;
+    @CqlName(VIDEOS_COLUMN_TAGS)
+    private Set<String> tags = new HashSet<>();
 
     @NotNull
-    @Column(name = COLUMN_ADDED_DATE)
+    @CqlName(VIDEOS_COLUMN_ADDED_DATE)
     private Date addedDate;
 
     /**

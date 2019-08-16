@@ -3,19 +3,18 @@ package com.killrvideo.dse.utils;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Scanner;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
-import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.datastax.driver.core.exceptions.InvalidQueryException;
-import com.datastax.driver.core.querybuilder.QueryBuilder;
-import com.datastax.driver.core.schemabuilder.SchemaBuilder;
-import com.datastax.driver.dse.DseSession;
+import com.datastax.dse.driver.api.core.DseSession;
+import com.datastax.oss.driver.api.core.CqlIdentifier;
+import com.datastax.oss.driver.api.core.servererrors.InvalidQueryException;
+import com.datastax.oss.driver.api.querybuilder.QueryBuilder;
+import com.datastax.oss.driver.api.querybuilder.SchemaBuilder;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -29,14 +28,13 @@ public class DseUtils {
     
     /** Internal logger. */
     private static final Logger LOGGER = LoggerFactory.getLogger(DseUtils.class);
-    
-    /** Replication Strategies. */
-    public static enum ReplicationStrategy { SimpleStrategy, NetworkTopologyStrategy };
-    
-    private static final String KEY_CLASS             = "class";
-    private static final String KEY_REPLICATIONFACTOR = "replication_factor";
     private static final String UTF8_ENCODING         = "UTF-8";
     private static final String NEW_LINE              = System.getProperty("line.separator");
+    private static final long   INT_SINCE_UUID_EPOCH  = 0x01b21dd213814000L;
+    
+    public static long getTimeFromUUID(UUID uuid) {
+      return (uuid.timestamp() - INT_SINCE_UUID_EPOCH) / 10000;
+    }
     
     /**
      * Helper to create a KeySpace.
@@ -45,35 +43,27 @@ public class DseUtils {
      *      target keyspaceName
      */
     public static void createKeySpaceSimpleStrategy(DseSession dseSession, String keyspacename, int replicationFactor) {
-        final Map<String, Object> replication = new HashMap<>();
-        replication.put(KEY_CLASS, ReplicationStrategy.SimpleStrategy.name());
-        replication.put(KEY_REPLICATIONFACTOR, replicationFactor);
-        dseSession.execute(SchemaBuilder.createKeyspace(keyspacename).ifNotExists().with().replication(replication));
+        dseSession.execute(SchemaBuilder.createKeyspace(keyspacename)
+                  .ifNotExists()
+                  .withSimpleStrategy(replicationFactor)
+                  .build());
         useKeySpace(dseSession, keyspacename);
     }
     
-    /**
-     * Setup connection to use keyspace.
-     *
-     * @param dseSession
-     *      current session
-     * @param keyspacename
-     *      target keyspace
-     */
+    public static boolean isTableEmpty(DseSession dseSession, CqlIdentifier keyspace, CqlIdentifier tablename) {
+        return 0 == dseSession.execute(QueryBuilder.selectFrom(keyspace, tablename).all().build()).getAvailableWithoutFetching();
+    }
+    
     public static void useKeySpace(DseSession dseSession, String keyspacename) {
         dseSession.execute("USE " + keyspacename);
     }
     
-    /**
-     * Empty table.
-     *
-     * @param dseSession
-     *      current session
-     * @param tableName
-     *      table name
-     */
-    public static void truncate(DseSession dseSession, String tableName) {
-        dseSession.execute(QueryBuilder.truncate(tableName));
+    public static void dropKeyspace(DseSession dseSession, String keyspacename) {
+        dseSession.executeAsync(SchemaBuilder.dropKeyspace(keyspacename).ifExists().build());
+    }
+    
+    public static void truncateTable(DseSession dseSession, CqlIdentifier keyspace, CqlIdentifier tableName) {
+        dseSession.execute(QueryBuilder.truncate(keyspace, tableName).build());
     }
     
     /**
@@ -155,10 +145,5 @@ public class DseUtils {
             public void onFailure(Throwable t) { completable.completeExceptionally(t);}
         });
         return completable;
-    }
-    
-    @SuppressWarnings("rawtypes")
-    public static <T extends GraphTraversal.Admin> String displayGraphTranserval(T graphTraversal) {
-        return org.apache.tinkerpop.gremlin.groovy.jsr223.GroovyTranslator.of("g").translate(graphTraversal.getBytecode()); 
     }
 }

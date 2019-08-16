@@ -1,22 +1,20 @@
-package com.killrvideo.service.comment.dto;
+package com.killrvideo.service.comment.dao.dto;
 
 import java.util.UUID;
 
-import com.datastax.driver.mapping.annotations.PartitionKey;
-import com.datastax.driver.mapping.annotations.Table;
-import com.killrvideo.model.CommonConstants;
-import com.killrvideo.service.comment.dao.CommentDseDao;
+import com.datastax.oss.driver.api.mapper.annotations.CqlName;
+import com.datastax.oss.driver.api.mapper.annotations.Entity;
+import com.datastax.oss.driver.api.mapper.annotations.PartitionKey;
+import com.killrvideo.dse.dao.DseSchema;
 
 /**
  * Specialization for USER.
  *
  * @author DataStax Developer Advocates team.
  */
-@Table(name=
-           CommentDseDao.TABLENAME_COMMENTS_BY_USER,
-       keyspace=
-           CommonConstants.KILLRVIDEO_KEYSPACE)
-public class CommentByUser extends Comment {
+@Entity
+@CqlName(DseSchema.TABLENAME_COMMENTS_BY_USER)
+public class CommentByUserEntity extends Comment {
     
     /** Serial. */
     private static final long serialVersionUID = 1453554109222565840L;
@@ -24,14 +22,14 @@ public class CommentByUser extends Comment {
     /**
      * Default constructor.
      */
-    public CommentByUser() {}
+    public CommentByUserEntity() {}
     
     /**
      * Copy constructor.
      *
      * @param c
      */
-    public CommentByUser(Comment c) {
+    public CommentByUserEntity(Comment c) {
         this.commentid  = c.getCommentid();
         this.userid     = c.getUserid();
         this.videoid    = c.getVideoid();

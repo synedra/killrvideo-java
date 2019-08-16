@@ -1,4 +1,4 @@
-package com.killrvideo.messaging.conf;
+package com.killrvideo.utils;
 
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicInteger;

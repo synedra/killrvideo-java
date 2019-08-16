@@ -16,9 +16,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import com.killrvideo.grpc.GrpcMappingUtils;
 import com.killrvideo.messaging.dao.MessagingDao;
 import com.killrvideo.service.rating.dao.RatingDseDao;
-import com.killrvideo.utils.GrpcMappingUtils;
 
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;

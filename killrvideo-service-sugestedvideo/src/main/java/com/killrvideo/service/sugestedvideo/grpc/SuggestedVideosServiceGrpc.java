@@ -1,8 +1,8 @@
 package com.killrvideo.service.sugestedvideo.grpc;
 
+import static com.killrvideo.grpc.GrpcMappingUtils.uuidToUuid;
 import static com.killrvideo.service.sugestedvideo.grpc.SuggestedVideosServiceGrpcMapper.validateGrpcRequest_getRelatedVideo;
 import static com.killrvideo.service.sugestedvideo.grpc.SuggestedVideosServiceGrpcMapper.validateGrpcRequest_getUserSuggestedVideo;
-import static com.killrvideo.utils.GrpcMappingUtils.uuidToUuid;
 
 import java.time.Duration;
 import java.time.Instant;

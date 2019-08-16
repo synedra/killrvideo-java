@@ -1,4 +1,4 @@
-package com.killrvideo.service.comment.dto;
+package com.killrvideo.service.comment.grpc.dto;
 
 import java.util.Optional;
 import java.util.UUID;

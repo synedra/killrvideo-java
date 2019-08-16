@@ -30,10 +30,10 @@ import org.springframework.stereotype.Service;
 import com.google.protobuf.Timestamp;
 import com.killrvideo.dse.dto.CustomPagingState;
 import com.killrvideo.dse.dto.Video;
+import com.killrvideo.grpc.GrpcMappingUtils;
 import com.killrvideo.messaging.dao.MessagingDao;
 import com.killrvideo.service.video.dao.VideoCatalogDseDao;
 import com.killrvideo.service.video.dto.LatestVideosPage;
-import com.killrvideo.utils.GrpcMappingUtils;
 
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;

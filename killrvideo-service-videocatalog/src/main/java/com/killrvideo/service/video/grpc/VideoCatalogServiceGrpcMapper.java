@@ -1,7 +1,7 @@
 package com.killrvideo.service.video.grpc;
 
-import static com.killrvideo.utils.GrpcMappingUtils.dateToTimestamp;
-import static com.killrvideo.utils.GrpcMappingUtils.uuidToUuid;
+import static com.killrvideo.grpc.GrpcMappingUtils.dateToTimestamp;
+import static com.killrvideo.grpc.GrpcMappingUtils.uuidToUuid;
 
 import java.util.Optional;
 import java.util.UUID;

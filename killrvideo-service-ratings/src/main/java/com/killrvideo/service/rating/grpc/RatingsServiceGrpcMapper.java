@@ -1,6 +1,6 @@
 package com.killrvideo.service.rating.grpc;
 
-import static com.killrvideo.utils.GrpcMappingUtils.uuidToUuid;
+import static com.killrvideo.grpc.GrpcMappingUtils.uuidToUuid;
 
 import java.util.Optional;
 

@@ -1,4 +1,4 @@
-package com.killrvideo.messaging.conf;
+package com.killrvideo.conf;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -11,7 +11,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 
 import com.google.common.eventbus.EventBus;
-import com.killrvideo.conf.KillrVideoConfiguration;
+import com.killrvideo.utils.KillrVideoThreadFactory;
 
 /**
  * Store all configuration related to Messagging.
@@ -19,8 +19,8 @@ import com.killrvideo.conf.KillrVideoConfiguration;
  * @author DataStax Developer Advocates team.
  */
 @Configuration
-@Profile(KillrVideoConfiguration.PROFILE_MESSAGING_MEMORY)
-public class MessagingConfiguration {
+@Profile("messaging_memory")
+public class MessagingGuavaConfiguration {
     
     /** Event Bus. */
     private static final String EVENT_BUS_KILLRVIODEO = "killrvideo_event_bus";

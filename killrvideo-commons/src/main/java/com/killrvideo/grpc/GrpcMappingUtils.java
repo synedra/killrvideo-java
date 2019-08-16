@@ -1,4 +1,4 @@
-package com.killrvideo.utils;
+package com.killrvideo.grpc;
 
 import java.time.Instant;
 import java.util.Date;

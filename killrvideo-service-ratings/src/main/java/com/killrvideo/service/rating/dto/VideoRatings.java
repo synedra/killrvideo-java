@@ -3,38 +3,28 @@ package com.killrvideo.service.rating.dto;
 import java.io.Serializable;
 import java.util.UUID;
 
-import com.datastax.driver.mapping.annotations.Column;
-import com.datastax.driver.mapping.annotations.PartitionKey;
-import com.datastax.driver.mapping.annotations.Table;
-import com.killrvideo.model.CommonConstants;
-import com.killrvideo.service.rating.dao.RatingDseDao;
+import com.datastax.oss.driver.api.mapper.annotations.CqlName;
+import com.datastax.oss.driver.api.mapper.annotations.Entity;
+import com.datastax.oss.driver.api.mapper.annotations.PartitionKey;
+import com.killrvideo.dse.dao.DseSchema;
 
 /**
  * Pojo representing DTO for table 'video_ratings'.
- *
- * @author DataStax Developer Advocates team.
  */
-@Table(name=
-        RatingDseDao.TABLENAME_VIDEOS_RATINGS,
-       keyspace=
-        CommonConstants.KILLRVIDEO_KEYSPACE)
-public class VideoRating implements Serializable {
+@Entity
+public class VideoRatings implements Serializable, DseSchema {
 
     /** Serial. */
     private static final long serialVersionUID = -8874199914791405808L;
     
-    /** Column names in the DB. */
-    public static final String COLUMN_RATING_COUNTER = "rating_counter";
-    public static final String COLUMN_RATING_TOTAL   = "rating_total";
-    public static final String COLUMN_VIDEOID        = "videoid";
-
     @PartitionKey
+    @CqlName(RATING_COLUMN_VIDEOID)
     private UUID videoid;
 
-    @Column(name = COLUMN_RATING_COUNTER)
+    @CqlName(RATING_COLUMN_RATING_COUNTER)
     private Long ratingCounter;
 
-    @Column(name = COLUMN_RATING_TOTAL)
+    @CqlName(RATING_COLUMN_RATING_TOTAL)
     private Long ratingTotal;
 
     /**

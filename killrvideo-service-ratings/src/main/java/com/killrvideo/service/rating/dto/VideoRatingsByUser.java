@@ -3,45 +3,43 @@ package com.killrvideo.service.rating.dto;
 import java.io.Serializable;
 import java.util.UUID;
 
-import com.datastax.driver.mapping.annotations.ClusteringColumn;
-import com.datastax.driver.mapping.annotations.Column;
-import com.datastax.driver.mapping.annotations.PartitionKey;
-import com.datastax.driver.mapping.annotations.Table;
-import com.killrvideo.model.CommonConstants;
-import com.killrvideo.service.rating.dao.RatingDseDao;
+import com.datastax.oss.driver.api.mapper.annotations.ClusteringColumn;
+import com.datastax.oss.driver.api.mapper.annotations.CqlName;
+import com.datastax.oss.driver.api.mapper.annotations.Entity;
+import com.datastax.oss.driver.api.mapper.annotations.PartitionKey;
+import com.killrvideo.dse.dao.DseSchema;
 
 /**
  * Pojo representing DTO for table 'video_ratings_by_user'.
  *
  * @author DataStax Developer Advocates team.
  */
-@Table(name=
-        RatingDseDao.TABLENAME_VIDEOS_RATINGS_BYUSER,
-       keyspace=
-         CommonConstants.KILLRVIDEO_KEYSPACE)
-public class VideoRatingByUser implements Serializable {
+@Entity
+public class VideoRatingsByUser implements Serializable, DseSchema {
 
     /** Serial. */
     private static final long serialVersionUID = 7124040203261999049L;
 
     @PartitionKey
+    @CqlName(RATING_COLUMN_VIDEOID)
     private UUID videoid;
 
     @ClusteringColumn
+    @CqlName(RATING_COLUMN_USERID)
     private UUID userid;
 
-    @Column
+    @CqlName(RATING_COLUMN_RATING)
     private int rating;
 
     /**
      * Default constructor (reflection)
      */
-    public VideoRatingByUser() {}
+    public VideoRatingsByUser() {}
 
     /**
      * Constructor with all parameters.
      */
-    public VideoRatingByUser(UUID videoid, UUID userid, int rating) {
+    public VideoRatingsByUser(UUID videoid, UUID userid, int rating) {
         this.videoid = videoid;
         this.userid = userid;
         this.rating = rating;

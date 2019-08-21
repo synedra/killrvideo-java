@@ -2,6 +2,9 @@ package com.killrvideo.utils;
 
 import java.io.IOException;
 import java.net.Socket;
+import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,6 +53,29 @@ public class IOUtils {
                 try { s.close();} catch (IOException ex) {}
             }
         }
+    }
+    
+    public static ByteBuffer fromString2ByteBuffer(String str) {
+        return fromString2ByteBuffer(str, StandardCharsets.UTF_8);
+    }
+    
+    public static String fromByteBuffer2String(ByteBuffer bb) {
+        return fromByteBuffer2String(bb, StandardCharsets.UTF_8);
+    }
+            
+    public static ByteBuffer fromString2ByteBuffer(String str, Charset charset) {
+        return ByteBuffer.wrap(str.getBytes(charset));
+    }
+    
+    public static String fromByteBuffer2String(ByteBuffer bb, Charset charset) {
+        byte[] bytes;
+        if (bb.hasArray()) {
+            bytes = bb.array();
+        } else {
+            bytes = new byte[bb.remaining()];
+            bb.get(bytes);
+        }
+        return new String(bytes, charset);
     }
 
 }

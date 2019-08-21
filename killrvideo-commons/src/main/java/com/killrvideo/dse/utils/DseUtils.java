@@ -12,7 +12,12 @@ import org.slf4j.LoggerFactory;
 
 import com.datastax.dse.driver.api.core.DseSession;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
+import com.datastax.oss.driver.api.core.cql.BoundStatement;
+import com.datastax.oss.driver.api.core.cql.BoundStatementBuilder;
+import com.datastax.oss.driver.api.core.cql.PreparedStatement;
 import com.datastax.oss.driver.api.core.servererrors.InvalidQueryException;
+import com.datastax.oss.driver.api.mapper.entity.EntityHelper;
+import com.datastax.oss.driver.api.mapper.entity.saving.NullSavingStrategy;
 import com.datastax.oss.driver.api.querybuilder.QueryBuilder;
 import com.datastax.oss.driver.api.querybuilder.SchemaBuilder;
 import com.google.common.util.concurrent.FutureCallback;
@@ -145,5 +150,11 @@ public class DseUtils {
             public void onFailure(Throwable t) { completable.completeExceptionally(t);}
         });
         return completable;
+    }
+    
+    public static <T> BoundStatement bind(PreparedStatement preparedStatement, T entity, EntityHelper<T> entityHelper) {
+        BoundStatementBuilder boundStatement = preparedStatement.boundStatementBuilder();
+        entityHelper.set(entity, boundStatement, NullSavingStrategy.DO_NOT_SET);
+        return boundStatement.build();
     }
 }

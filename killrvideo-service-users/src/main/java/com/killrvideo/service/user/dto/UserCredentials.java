@@ -7,39 +7,33 @@ import javax.validation.constraints.NotNull;
 
 import org.hibernate.validator.constraints.Length;
 
-import com.datastax.driver.mapping.annotations.Column;
-import com.datastax.driver.mapping.annotations.PartitionKey;
-import com.datastax.driver.mapping.annotations.Table;
-import com.killrvideo.model.CommonConstants;
-import com.killrvideo.service.user.dao.UserDseDao;
+import com.datastax.oss.driver.api.mapper.annotations.CqlName;
+import com.datastax.oss.driver.api.mapper.annotations.Entity;
+import com.datastax.oss.driver.api.mapper.annotations.PartitionKey;
+import com.killrvideo.dse.dao.DseSchema;
 
 /**
  * Pojo representing DTO for table 'user_credentials'
  *
  * @author DataStax Developer Advocates team.
  */
-@Table(keyspace = 
-        CommonConstants.KILLRVIDEO_KEYSPACE, 
-       name = UserDseDao.TABLENAME_USER_CREDENTIALS)
-public class UserCredentials implements Serializable {
+@Entity
+@CqlName(DseSchema.TABLENAME_USER_CREDENTIALS)
+public class UserCredentials implements DseSchema, Serializable {
 
     /** Serial. */
     private static final long serialVersionUID = 2013590265131367178L;
-    
-    /** Column names in the DB. */
-    public static final String COLUMN_USERID    = "userid";
-    public static final String COLUMN_PASSWORD  = "password";
-    public static final String COLUMN_EMAIL     = "email";
 
     @PartitionKey
+    @CqlName(USERCREDENTIAL_COLUMN_EMAIL)
     private String email;
 
     @Length(min = 1, message = "password must not be empty")
-    @Column(name = COLUMN_PASSWORD)
+    @CqlName(USERCREDENTIAL_COLUMN_PASSWORD)
     private String password;
 
     @NotNull
-    @Column
+    @CqlName(USERCREDENTIAL_COLUMN_USERID)
     private UUID userid;
 
     /**

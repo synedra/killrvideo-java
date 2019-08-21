@@ -23,7 +23,7 @@
    </description>
 
 	<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
-	<!-- ~ CHILDREN MODULES ~ -->
+	<!-- ~ CHILDREN MODULES       ~ -->
 	<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 	<modules>
 		<module>killrvideo-commons</module>

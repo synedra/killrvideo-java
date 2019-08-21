@@ -1,5 +1,6 @@
 package com.killrvideo.dse.dto;
 
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -8,6 +9,7 @@ import java.util.stream.IntStream;
 
 import com.datastax.oss.driver.api.core.MappedAsyncPagingIterable;
 import com.datastax.oss.driver.api.core.PagingIterable;
+import com.killrvideo.utils.IOUtils;
 
 /**
  * Ease usage of the paginState.
@@ -42,7 +44,8 @@ public class ResultListPage < ENTITY > {
             IntStream.range(0, rs.getAvailableWithoutFetching())
                      .forEach(item -> listOfResults.add(iterResults.next()));
             if (null != rs.getExecutionInfo().getPagingState()) {
-                nextPage = Optional.ofNullable(rs.getExecutionInfo().getPagingState().toString());
+                ByteBuffer pagingState = rs.getExecutionInfo().getPagingState();
+                nextPage = Optional.ofNullable(IOUtils.fromByteBuffer2String(pagingState));
             }
         }
     }
@@ -50,7 +53,8 @@ public class ResultListPage < ENTITY > {
     public ResultListPage(MappedAsyncPagingIterable<ENTITY> rs) {
         if (null != rs) {
            rs.currentPage().forEach(listOfResults::add);
-           nextPage = Optional.ofNullable(rs.getExecutionInfo().getPagingState().toString());
+           ByteBuffer pagingState = rs.getExecutionInfo().getPagingState();
+           nextPage = Optional.ofNullable(IOUtils.fromByteBuffer2String(pagingState));
         }
     }
     

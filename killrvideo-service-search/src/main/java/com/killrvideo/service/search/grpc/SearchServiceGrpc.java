@@ -6,8 +6,6 @@ import static com.killrvideo.service.search.grpc.SearchServiceGrpcValidator.vali
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Optional;
-import java.util.TreeSet;
-import java.util.concurrent.CompletableFuture;
 
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -101,12 +99,9 @@ public class SearchServiceGrpc extends SearchServiceImplBase {
         int              searchPageSize = grpcReq.getPageSize();
         
         // Invoke Dao (Async)
-        CompletableFuture<TreeSet<String>> futureDao = 
-                dseSearchDao.getQuerySuggestionsAsync(searchQuery, searchPageSize);
-        
-        // Mapping back to GRPC beans
-        futureDao.whenComplete((suggestionSet, error) -> {
-                        
+        dseSearchDao.getQuerySuggestionsAsync(searchQuery, searchPageSize)
+                    // Mapping back to GRPC beans
+                    .whenComplete((suggestionSet, error) -> {
           if (error == null) {
               traceSuccess("getQuerySuggestions", starts);
               final GetQuerySuggestionsResponse.Builder builder = GetQuerySuggestionsResponse.newBuilder();

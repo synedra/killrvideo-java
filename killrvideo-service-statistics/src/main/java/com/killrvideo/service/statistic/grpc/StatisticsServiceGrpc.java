@@ -9,6 +9,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -62,11 +63,8 @@ public class StatisticsServiceGrpc extends StatisticsServiceImplBase {
         // Mapping GRPC => Domain (Dao)
         final UUID videoId = UUID.fromString(grpcReq.getVideoId().getValue());
         
-        // Invoke DAO Async
-        CompletableFuture<Void> futureDao = statisticsDseDao.recordPlaybackStartedAsync(videoId);
-        
         // Map Result back to GRPC
-        futureDao.whenComplete((result, error) -> {
+        statisticsDseDao.recordPlaybackStartedAsync(videoId).whenComplete((result, error) -> {
             if (error != null ) {
                 traceError("recordPlaybackStarted", starts, error);
                 grpcResObserver.onError(Status.INTERNAL.withCause(error).asRuntimeException());
@@ -87,25 +85,22 @@ public class StatisticsServiceGrpc extends StatisticsServiceImplBase {
         // Stands as stopwatch for logging and messaging 
         final Instant starts = Instant.now();
         
-        // Mapping GRPC => Domain (Dao)
-        List <UUID> listOfVideoId = grpcReq.getVideoIdsList()
-                                           .stream()
-                                           .map(Uuid::getValue)
-                                           .map(UUID::fromString)
-                                           .collect(Collectors.toList());
+        List<CompletableFuture<VideoPlaybackStats>> callBackList = 
+                grpcReq.getVideoIdsList().stream()
+                   .map(Uuid::getValue)
+                   .map(UUID::fromString)
+                   .map(statisticsDseDao::getNumberOfPlaysAsync)
+                   .map(CompletionStage::toCompletableFuture)
+                   .collect(Collectors.toList());
         
-        // Invoke DAO Async
-        CompletableFuture<List<VideoPlaybackStats>> futureDao = 
-                statisticsDseDao.getNumberOfPlaysAsync(listOfVideoId);
-        
-        // Map Result back to GRPC
-        futureDao.whenComplete((videoList, error) -> {
+        CompletableFuture
+                .allOf(callBackList.toArray(CompletableFuture[]::new))
+                .thenApply(v -> callBackList.stream().map(CompletableFuture::join).collect(Collectors.toList()))
+                .whenComplete((videoList, error) -> {
             if (error != null ) {
-                 
                 traceError("getNumberOfPlays", starts, error);
                 grpcResObserver.onError(Status.INTERNAL.withCause(error).asRuntimeException());
             } else {
-                
                 traceSuccess("getNumberOfPlays", starts);
                 grpcResObserver.onNext(buildGetNumberOfPlayResponse(grpcReq, videoList));
                 grpcResObserver.onCompleted();

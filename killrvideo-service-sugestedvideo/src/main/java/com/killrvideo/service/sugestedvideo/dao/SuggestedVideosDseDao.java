@@ -1,6 +1,7 @@
 package com.killrvideo.service.sugestedvideo.dao;
 
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletionStage;
 
@@ -42,6 +43,10 @@ public interface SuggestedVideosDseDao {
      *      list of video
      */
     @QueryProvider(providerClass = SuggestedVideosDseDaoQueryProvider.class, entityHelpers = {Video.class})
-    CompletionStage< ResultListPage<Video> > getRelatedVideos(UUID videoId, int fetchSize, Optional<String> pagingState);
+    CompletionStage< ResultListPage<Video> > getRelatedVideos(
+            UUID videoId, 
+            int fetchSize, 
+            Optional<String> pagingState, 
+            Set < String> ignoredWords);
     
 }

@@ -1,4 +1,4 @@
-package com.killrvideo.service.user.dao;
+package com.killrvideo.service.user.bootcamp;
 
 import java.time.Instant;
 import java.util.Date;
@@ -10,13 +10,12 @@ import java.util.concurrent.CompletionStage;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
-import org.springframework.stereotype.Repository;
-
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.cql.AsyncResultSet;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
+import com.killrvideo.service.user.dao.UserDseDao;
 import com.killrvideo.service.user.dto.User;
 import com.killrvideo.service.user.dto.UserCredentials;
 
@@ -33,7 +32,6 @@ import com.killrvideo.service.user.dto.UserCredentials;
  * @author DataStax Curriculum team.
  * @author YOU => wanna be a hero right ? Here is your chance
  */
-@Repository("dao.user.bootcamp")
 public class UserDseDaoBootCamp implements UserDseDao {
 
     /** Connectivity to Cassandra/DSE. */

@@ -4,7 +4,6 @@ import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.bindMarker;
 import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.selectFrom;
 import static com.datastax.oss.driver.api.querybuilder.relation.Relation.column;
 
-import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
@@ -14,14 +13,11 @@ import java.util.regex.Pattern;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
 
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.cql.AsyncResultSet;
 import com.datastax.oss.driver.api.core.cql.BoundStatement;
 import com.datastax.oss.driver.api.core.cql.PreparedStatement;
-import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.api.mapper.MapperContext;
 import com.datastax.oss.driver.api.mapper.annotations.QueryProvider;
@@ -36,20 +32,10 @@ import com.killrvideo.utils.IOUtils;
  *
  * @author DataStax Developer Advocates team.
  */
-@Component
 public class SearchDseDaoQueryProvider implements DseSchema, SearchDseDao {
 
     /** Logger for the class. */
     private static final Logger LOGGER = LoggerFactory.getLogger(SearchDseDao.class);
-    
-    /**
-     * Create a set of sentence conjunctions and other "undesirable"
-     * words we will use later to exclude from search results.
-     * Had to use .split() below because of the following conversation:
-     * https://github.com/spring-projects/spring-boot/issues/501
-     */
-    @Value("#{'${killrvideo.search.ignoredWords}'.split(',')}")
-    private Set<String> ignoredWords = new HashSet<>();
     
     /**
      * Wrap search queries with "paging":"driver" to dynamically enable
@@ -102,12 +88,6 @@ public class SearchDseDaoQueryProvider implements DseSchema, SearchDseDao {
         return dseSession.executeAsync(bs)
                          .thenApply(ars -> ars.map(mapperVideo::get))
                          .thenApply(ResultListPage::new);
-    }
-
-    /** {@inheritDoc} from {@link SearchDseDao} */
-    public TreeSet<String> getQuerySuggestions(String query, int fetchSize) {
-        BoundStatement stmt = _bindStmtSuggestedTags(query, fetchSize);
-        return _mapTagSet(dseSession.execute(stmt), query);
     }
 
     /** {@inheritDoc} from {@link SearchDseDao} */
@@ -205,34 +185,10 @@ public class SearchDseDaoQueryProvider implements DseSchema, SearchDseDao {
         return stmt;
     }
     
-    /**
-     * Here, we are inserting the request from the search bar, maybe something
-     * like "c", "ca", or "cas" as someone starts to type the word "cassandra".
-     *
-     * For each of these cases we are looking for any words in the search data that
-     * start with the values above.
-     *
-     * @param rs
-     *      current resultset
-     * @param requestQuery
-     *      query
-     * @return
-     *      set of tags
-     */
-    private TreeSet < String > _mapTagSet(ResultSet rs, String requestQuery) {
-        final Pattern checkRegex = Pattern.compile("(?i)\\b" + requestQuery + "[a-z]*\\b");
-        TreeSet< String > suggestionSet = new TreeSet<>();
-        _addTagSetCurrentPage(suggestionSet, checkRegex, rs.all());
-        suggestionSet.removeAll(ignoredWords);
-        LOGGER.debug("TagSet resturned are {}", suggestionSet);
-        return suggestionSet;
-    }
-    
     private TreeSet < String > _mapTagSetAsync(AsyncResultSet rs, String requestQuery) {
         final Pattern checkRegex = Pattern.compile("(?i)\\b" + requestQuery + "[a-z]*\\b");
         TreeSet< String > suggestionSet = new TreeSet<>();
         _addTagSetCurrentPage(suggestionSet, checkRegex, rs.currentPage());
-        suggestionSet.removeAll(ignoredWords);
         LOGGER.debug("TagSet resturned are {}", suggestionSet);
         return suggestionSet;
     }

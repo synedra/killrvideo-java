@@ -20,20 +20,26 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.stream.Collectors;
 
+import javax.annotation.PostConstruct;
+
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import com.datastax.dse.driver.api.core.DseSession;
+import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.google.protobuf.Timestamp;
 import com.killrvideo.dse.dto.CustomPagingState;
 import com.killrvideo.dse.dto.Video;
 import com.killrvideo.grpc.GrpcMappingUtils;
 import com.killrvideo.messaging.dao.MessagingDao;
 import com.killrvideo.service.video.dao.VideoCatalogDseDao;
+import com.killrvideo.service.video.dao.VideoCatalogDseDaoMapperBuilder;
 import com.killrvideo.service.video.dto.LatestVideosPage;
 
 import io.grpc.Status;
@@ -67,11 +73,23 @@ public class VideoCatalogServiceGrpc extends VideoCatalogServiceImplBase {
     @Value("${killrvideo.messaging.destinations.youTubeVideoAdded : topic-kv-videoCreation}")
     private String topicVideoCreated;
  
+    /** Definition of services for VideosCatalog. */
+    private VideoCatalogDseDao videoCatalogDao;
+    
     @Autowired
     private MessagingDao messagingDao;
     
     @Autowired
-    private VideoCatalogDseDao videoCatalogDao;
+    private DseSession dseSession;
+    
+    @Autowired
+    @Qualifier("killrvideo.keyspace")
+    private CqlIdentifier dseKeySpace;
+    
+    @PostConstruct
+    public void init() {
+        videoCatalogDao = new VideoCatalogDseDaoMapperBuilder(dseSession).build().videoCatalogDao(dseKeySpace);
+    }
 
     /** {@inheritDoc} */
     @Override

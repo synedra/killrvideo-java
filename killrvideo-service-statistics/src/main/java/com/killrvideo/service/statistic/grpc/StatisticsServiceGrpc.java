@@ -12,13 +12,18 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.stream.Collectors;
 
+import javax.annotation.PostConstruct;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
+import com.datastax.dse.driver.api.core.DseSession;
+import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.killrvideo.service.statistic.dao.StatisticsDseDao;
+import com.killrvideo.service.statistic.dao.StatisticsDseDaoMapperBuilder;
 import com.killrvideo.service.statistic.dto.VideoPlaybackStats;
 
 import io.grpc.Status;
@@ -41,14 +46,20 @@ public class StatisticsServiceGrpc extends StatisticsServiceImplBase {
     /** Loger for that class. */
     private static Logger LOGGER = LoggerFactory.getLogger(StatisticsServiceGrpc.class);
     
-    /** Stast services. */
-    public static final String STATISTICS_SERVICE_NAME = "StatisticsService";
-  
-    @Value("${killrvideo.discovery.services.statistic : StatisticsService}")
-    private String serviceKey;
+    /** Definition of statistics operations. */
+    private StatisticsDseDao statisticsDseDao;
     
     @Autowired
-    private StatisticsDseDao statisticsDseDao;
+    private DseSession dseSession;
+    
+    @Autowired
+    @Qualifier("killrvideo.keyspace")
+    private CqlIdentifier dseKeySpace;
+    
+    @PostConstruct
+    public void init() {
+        statisticsDseDao = new StatisticsDseDaoMapperBuilder(dseSession).build().statisticsDao(dseKeySpace);
+    }
     
     /** {@inheritDoc} */
     @Override
@@ -133,16 +144,5 @@ public class StatisticsServiceGrpc extends StatisticsServiceImplBase {
     private void traceError(String method, Instant starts, Throwable t) {
         LOGGER.error("An error occured in {} after {}", method, Duration.between(starts, Instant.now()), t);
     }
-
-    /**
-     * Getter accessor for attribute 'serviceKey'.
-     *
-     * @return
-     *       current value of 'serviceKey'
-     */
-    public String getServiceKey() {
-        return serviceKey;
-    }
-
     
 }

@@ -12,15 +12,21 @@ import static java.util.UUID.fromString;
 import java.time.Duration;
 import java.time.Instant;
 
+import javax.annotation.PostConstruct;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import com.datastax.dse.driver.api.core.DseSession;
+import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.killrvideo.grpc.GrpcMappingUtils;
 import com.killrvideo.messaging.dao.MessagingDao;
 import com.killrvideo.service.comment.dao.CommentDseDao;
+import com.killrvideo.service.comment.dao.CommentDseDaoMapperBuilder;
 import com.killrvideo.service.comment.dao.dto.Comment;
 import com.killrvideo.service.comment.grpc.dto.QueryCommentByUser;
 import com.killrvideo.service.comment.grpc.dto.QueryCommentByVideo;
@@ -48,14 +54,25 @@ public class CommentsServiceGrpc extends CommentsServiceImplBase {
     private static Logger LOGGER = LoggerFactory.getLogger(CommentsServiceGrpc.class);
     
     /** Communications and queries to DSE (Comment). */
-    @Autowired
     private CommentDseDao dseCommentDao;
+   
+    @Autowired
+    private DseSession dseSession;
+    
+    @Autowired
+    @Qualifier("killrvideo.keyspace")
+    private CqlIdentifier dseKeySpace;
     
     @Autowired
     private MessagingDao messagingDao;
   
-    @Value("${killrvideo.messaging.destinations.commentCreated : topic-kv-commentCreation}")
+    @Value("${killrvideo.kafka.destinations.commentCreated : topic-kv-commentCreation}")
     private String messageDestination;
+    
+    @PostConstruct
+    public void init() {
+        dseCommentDao = new CommentDseDaoMapperBuilder(dseSession).build().commentDao(dseKeySpace);
+    }
     
     /** {@inheritDoc} */
     @Override

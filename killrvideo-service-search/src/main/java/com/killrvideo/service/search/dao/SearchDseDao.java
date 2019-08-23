@@ -46,18 +46,6 @@ public interface SearchDseDao {
     CompletionStage < ResultListPage<Video> > searchVideosAsync(String query, int fetchSize, Optional<String> pagingState);
     
     /**
-     * Search for tags starting with provided query string.
-     *
-     * @param query
-     *      pattern
-     * @param fetchSize
-     *      numbner of results to retrieve
-     * @return
-     */
-    @QueryProvider(providerClass = SearchDseDaoQueryProvider.class, entityHelpers = {Video.class})
-    TreeSet< String > getQuerySuggestions(String query, int fetchSize);
-    
-    /**
      * Search for tags starting with provided query string (ASYNC).
      *
      * @param query
@@ -68,5 +56,4 @@ public interface SearchDseDao {
      */
      @QueryProvider(providerClass = SearchDseDaoQueryProvider.class, entityHelpers = {Video.class})
      CompletionStage < TreeSet< String > > getQuerySuggestionsAsync(String query, int fetchSize);
-     
 }

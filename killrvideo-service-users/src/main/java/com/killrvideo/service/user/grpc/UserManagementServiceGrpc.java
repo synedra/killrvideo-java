@@ -10,18 +10,26 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
+
+import javax.annotation.PostConstruct;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import com.datastax.dse.driver.api.core.DseSession;
+import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.google.protobuf.Timestamp;
 import com.killrvideo.messaging.dao.MessagingDao;
+import com.killrvideo.service.user.bootcamp.UserDseDaoBootCamp;
 import com.killrvideo.service.user.dao.UserDseDao;
+import com.killrvideo.service.user.dao.UserDseDaoMapperBuilder;
 import com.killrvideo.service.user.dto.User;
 import com.killrvideo.utils.HashUtils;
 
@@ -47,17 +55,33 @@ public class UserManagementServiceGrpc extends UserManagementServiceImplBase {
     /** Loger for that class. */
     private static Logger LOGGER = LoggerFactory.getLogger(UserManagementServiceGrpc.class);
     
-    @Value("${killrvideo.messaging.destinations.userCreated : topic-kv-userCreation}")
-    private String topicUserCreated;
+    /** Service Definition for Users. */
+    private UserDseDao userDseDao;
     
-    @Value("${killrvideo.discovery.services.user : UserManagementService}")
-    private String serviceKey;
+    @Value("#{environment.KILLRVIDEO_BOOTCAMP}")
+    private Optional<Boolean> bootcampFlagEnvironmentVar;
     
     @Autowired
-    private UserDseDao userDseDao;
+    private DseSession dseSession;
+    
+    @Autowired
+    @Qualifier("killrvideo.keyspace")
+    private CqlIdentifier dseKeySpace;
     
     @Autowired
     private MessagingDao messagingDao;
+    
+    @Value("${killrvideo.messaging.destinations.userCreated : topic-kv-userCreation}")
+    private String topicUserCreated;
+    
+    @PostConstruct
+    public void init() {
+        if (!bootcampFlagEnvironmentVar.isEmpty() && bootcampFlagEnvironmentVar.get()) {
+            userDseDao = new UserDseDaoBootCamp(dseSession);
+        } else {
+            userDseDao = new UserDseDaoMapperBuilder(dseSession).build().userDao(dseKeySpace);
+        }
+    }
     
      /** {@inheritDoc} */
     @Override
@@ -198,15 +222,5 @@ public class UserManagementServiceGrpc extends UserManagementServiceImplBase {
      */
     private void traceError(String method, Instant starts, Throwable t) {
         LOGGER.error("An error occured in {} after {}", method, Duration.between(starts, Instant.now()), t);
-    }
-
-    /**
-     * Getter accessor for attribute 'serviceKey'.
-     *
-     * @return
-     *       current value of 'serviceKey'
-     */
-    public String getServiceKey() {
-        return serviceKey;
     }
 }

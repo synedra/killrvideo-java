@@ -5,6 +5,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
+import org.apache.tinkerpop.gremlin.structure.util.empty.EmptyGraph;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -20,6 +21,7 @@ import com.datastax.dse.driver.internal.core.auth.DsePlainTextAuthProvider;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.ProgrammaticDriverConfigLoaderBuilder;
+import com.killrvideo.dse.graph.KillrVideoTraversalSource;
 
 /**
  * The DSE (DataStax Enterprise) Driver configuration.
@@ -35,10 +37,10 @@ import com.datastax.oss.driver.api.core.config.ProgrammaticDriverConfigLoaderBui
  * own configuration mechanism:
  *
  * <ol>
- * <li><code>driver.contactPoints</code>: this property will override the driver's {@code
+ * <li><code>killrvideo.dse.contactPoints</code>: this property will override the driver's {@code
  *       datastax-java-driver.basic.contact-points} option; it will default to <code>127.0.0.1
  *       </code> if unspecified;
- * <li><code>driver.port</code>: this property will be combined with the previous one to create initial contact points; it will
+ * <li><code>killrvideo.dse.port</code>: this property will be combined with the previous one to create initial contact points; it will
  * default to <code>9042</code> if unspecified;
  * <li><code>driver.localdc</code>: this property will override the driver's {@code
  *       datastax-java-driver.basic.load-balancing-policy.local-datacenter} option; it has no default value and must be specified;
@@ -71,16 +73,16 @@ public class DseDriverConfiguration {
     @Value("#{'${killrvideo.dse.contactPoints}'.split(',')}")
     private List<String> contactPoints;
     
-    @Value("#{environment.KILLRVIDEO_DSE_CONTACTPOINTS}")
+    @Value("#{environment.KILLRVIDEO_DSE_CONTACT_POINTS}")
     private Optional<String> contactPointsEnvironmentVar;
    
-    @Value("${killrvideo.dse.port: 9042}")
+    @Value("${killrvideo.dse.port:9042}")
     private int port;
 
-    @Value("${killrvideo.dse.keyspace: killrvideo}")
+    @Value("${killrvideo.dse.keyspace:killrvideo}")
     private String keyspaceName;
 
-    @Value("${killrvideo.dse.localdc: dc1}")
+    @Value("${killrvideo.dse.localdc:dc1}")
     private String localDc;
 
     @Value("${killrvideo.dse.username}")
@@ -118,6 +120,7 @@ public class DseDriverConfiguration {
      */
     @Bean
     public ProgrammaticDriverConfigLoaderBuilder configLoaderBuilder() {
+        LOGGER.info("Initializing Connection to DSE Cluster");
         ProgrammaticDriverConfigLoaderBuilder configLoaderBuilder = DseDriverConfigLoader
                 .programmaticBuilder()
                 .withString(DefaultDriverOption.REQUEST_CONSISTENCY, consistency);
@@ -144,12 +147,14 @@ public class DseDriverConfiguration {
         DseSessionBuilder sessionBuilder = new DseSessionBuilder().withConfigLoader(driverConfigLoaderBuilder.build());
         if (!contactPointsEnvironmentVar.isEmpty() && !contactPointsEnvironmentVar.get().isBlank()) {
             contactPoints = Arrays.asList(contactPointsEnvironmentVar.get().split(","));
-            LOGGER.info(" + Reading contactPoints from KILLRVIDEO_DSE_CONTACTPOINTS");
+            LOGGER.info(" + Reading contactPoints from KILLRVIDEO_DSE_CONTACT_POINTS");
         }
+        LOGGER.info("+ Contact Points {}", contactPoints);
         for (String contactPoint : contactPoints) {
             InetSocketAddress address = InetSocketAddress.createUnresolved(contactPoint, port);
             sessionBuilder = sessionBuilder.addContactPoint(address);
         }
+        LOGGER.info("+ Local Data Center '{}'", localDc);
         return sessionBuilder.withLocalDatacenter(localDc);
     }
 
@@ -165,16 +170,23 @@ public class DseDriverConfiguration {
      */
     @Bean
     public DseSession session(@NonNull DseSessionBuilder dseSessionBuilder) {
-        return dseSessionBuilder.withKeyspace(getKeyspaceName()).build();
+        LOGGER.info("+ KeySpace '{}'", keyspaceName);
+        DseSession session = dseSessionBuilder.withKeyspace(keyspaceName).build();
+        LOGGER.info("[OK] Dse Session established on port: '{}'", port);
+        return session;
     }
-
+    
     /**
-     * Getter accessor for attribute 'keyspaceName'.
+     * Graph Traversal for suggested videos.
      *
+     * @param session
+     *      current dse session.
      * @return
-     *       current value of 'keyspaceName'
+     *      traversal
      */
-    public String getKeyspaceName() {
-        return keyspaceName;
+    @Bean
+    public KillrVideoTraversalSource initializeGraphTraversalSource(DseSession dseSession) {
+        return EmptyGraph.instance().traversal(KillrVideoTraversalSource.class);
+        //return new KillrVideoTraversalSource(DseGraph.g.getGraph());
     }
 }

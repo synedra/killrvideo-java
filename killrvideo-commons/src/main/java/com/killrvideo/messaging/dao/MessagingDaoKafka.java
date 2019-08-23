@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.time.Duration;
 import java.util.Collections;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executors;
 import java.util.stream.StreamSupport;
 
 import javax.annotation.PostConstruct;
@@ -25,7 +26,6 @@ import org.springframework.stereotype.Repository;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.JdkFutureAdapters;
-import com.google.common.util.concurrent.ListenableFuture;
 import com.google.protobuf.AbstractMessageLite;
 import com.google.protobuf.InvalidProtocolBufferException;
 
@@ -71,11 +71,11 @@ public class MessagingDaoKafka implements MessagingDao {
             public void onFailure(Throwable ex) { cfv.completeExceptionally(ex); }
             public void onSuccess(RecordMetadata rs) { cfv.complete(rs); } 
         };
-        ListenableFuture<RecordMetadata> listenable = 
+        Futures.addCallback(
                 JdkFutureAdapters.listenInPoolThread(
-                        protobufProducer.send(
-                                new ProducerRecord<>(targetDestination, payload)));
-        Futures.addCallback(listenable, myCallback);
+                        protobufProducer.send(new ProducerRecord<>(targetDestination, payload))), 
+                        myCallback, 
+                        Executors.newSingleThreadExecutor());
         return cfv;
     }
    

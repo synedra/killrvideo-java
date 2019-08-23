@@ -53,9 +53,9 @@
 		<spring-boot.version>2.1.7.RELEASE</spring-boot.version>
 		
 		<!-- Grpc -->
-		<grpc.version>1.22.1</grpc.version>
+		<grpc.version>1.23.0</grpc.version>
 		<protobuf.version>3.9.1</protobuf.version>
-		<protoc-gen-grpc.version>1.22.1</protoc-gen-grpc.version>
+		<guava.version>28.0-jre</guava.version>
 		
 		<!-- Test -->
 		<junit-jupiter.version>5.5.1</junit-jupiter.version>
@@ -79,7 +79,6 @@
 		<commons-codec.version>1.11</commons-codec.version>
 		<commons-collections.version>4.1</commons-collections.version>
 		
-		<guava.version>19.0</guava.version>
 		<netty.version>4.1.23.Final</netty.version>
 		<docker.image.prefix>killrvideo</docker.image.prefix>
 		
@@ -369,7 +368,7 @@
 					<protoSourceRoot>${basedir}/src/main/resources/proto</protoSourceRoot>
 					<protocArtifact>com.google.protobuf:protoc:${protobuf.version}:exe:${os.detected.classifier}</protocArtifact>
 					<pluginId>grpc-java</pluginId>
-					<pluginArtifact>io.grpc:protoc-gen-grpc-java:${protoc-gen-grpc.version}:exe:${os.detected.classifier}</pluginArtifact>
+					<pluginArtifact>io.grpc:protoc-gen-grpc-java:${grpc.version}:exe:${os.detected.classifier}</pluginArtifact>
 				</configuration>
 				<executions>
 					<execution>

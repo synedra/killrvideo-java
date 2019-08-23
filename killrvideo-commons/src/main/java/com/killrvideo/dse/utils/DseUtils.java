@@ -5,7 +5,6 @@ import java.io.InputStream;
 import java.util.Arrays;
 import java.util.Scanner;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,9 +19,6 @@ import com.datastax.oss.driver.api.mapper.entity.EntityHelper;
 import com.datastax.oss.driver.api.mapper.entity.saving.NullSavingStrategy;
 import com.datastax.oss.driver.api.querybuilder.QueryBuilder;
 import com.datastax.oss.driver.api.querybuilder.SchemaBuilder;
-import com.google.common.util.concurrent.FutureCallback;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
 
 /**
  * Utility class for DSE.
@@ -135,21 +131,6 @@ public class DseUtils {
             }
         }
         return strBuilder.toString();
-    }
-    
-    /**
-     * From Future<ResultSet> to completableFuture<ResultSet>, also useful for 
-     * 
-     * @param listenableFuture
-     * @return
-     */
-    public static <T> CompletableFuture<T> buildCompletableFuture(final ListenableFuture<T> listenableFuture) {
-        CompletableFuture<T> completable = new CompletableFuture<T>();
-        Futures.addCallback(listenableFuture, new FutureCallback<T>() {
-            public void onSuccess(T result)    { completable.complete(result); }
-            public void onFailure(Throwable t) { completable.completeExceptionally(t);}
-        });
-        return completable;
     }
     
     public static <T> BoundStatement bind(PreparedStatement preparedStatement, T entity, EntityHelper<T> entityHelper) {

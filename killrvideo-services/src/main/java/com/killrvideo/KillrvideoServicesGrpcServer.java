@@ -38,43 +38,43 @@ public class KillrvideoServicesGrpcServer {
     @Autowired
     private CommentsServiceGrpc commentService;
     
-    @Value("${killrvideo.services.comment: true}")
+    @Value("${killrvideo.grpc-server.services.comment: true}")
     private boolean commentServiceEnabled = true;
     
     @Autowired
     private RatingsServiceGrpc ratingService;
     
-    @Value("${killrvideo.services.rating: true}")
+    @Value("${killrvideo.grpc-server.services.rating: true}")
     private boolean ratingServiceEnabled = true;
     
     @Autowired
     private SearchServiceGrpc searchService;
     
-    @Value("${killrvideo.services.search: true}")
+    @Value("${killrvideo.grpc-server.services.search: true}")
     private boolean searchServiceEnabled = true;
     
     @Autowired
     private StatisticsServiceGrpc statisticsService;
     
-    @Value("${killrvideo.services.statistic: true}")
+    @Value("${killrvideo.grpc-server.services.statistic: true}")
     private boolean statisticServiceEnabled = true;
     
     @Autowired
     private VideoCatalogServiceGrpc videoCatalogService;
  
-    @Value("${killrvideo.services.videoCatalog: true}")
+    @Value("${killrvideo.grpc-server.services.videoCatalog: true}")
     private boolean videoCatalogServiceEnabled = true;
     
     @Autowired
     private UserManagementServiceGrpc userService;
     
-    @Value("${killrvideo.services.user: true}")
+    @Value("${killrvideo.grpc-server.services.user: true}")
     private boolean userServiceEnabled = true;
     
     @Autowired
     private SuggestedVideosServiceGrpc suggestedVideosService;
     
-    @Value("${killrvideo.services.suggestedVideo: true}")
+    @Value("${killrvideo.grpc-server.services.suggestedVideo: true}")
     private boolean suggestedVideoServiceEnabled = true;
   
     /**
@@ -90,24 +90,31 @@ public class KillrvideoServicesGrpcServer {
         ServerBuilder<?> builder = ServerBuilder.forPort(grpcPort);
         if (commentServiceEnabled) {
             builder.addService(this.commentService.bindService());
+            LOGGER.info(" + Starting service 'Comment");
         }
         if (ratingServiceEnabled) {
             builder.addService(this.ratingService.bindService());
+            LOGGER.info(" + Starting service 'Rating'");
         }
         if (searchServiceEnabled) {
             builder.addService(this.searchService.bindService());
+            LOGGER.info(" + Starting service 'Search'");
         }
         if (statisticServiceEnabled) {
             builder.addService(this.statisticsService.bindService());
+            LOGGER.info(" + Starting service 'Statistics'");
         }
         if (videoCatalogServiceEnabled) {
             builder.addService(this.videoCatalogService.bindService());
+            LOGGER.info(" + Starting service 'VideoCatalog'");
         }
         if (suggestedVideoServiceEnabled) {
             builder.addService(this.suggestedVideosService.bindService());
+            LOGGER.info(" + Starting service 'SuggestedVideo'");
         }
         if (userServiceEnabled) {
             builder.addService(this.userService.bindService());
+            LOGGER.info(" + Service 'User'");
         }
         grpcServer = builder.build();
         

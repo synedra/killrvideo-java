@@ -15,8 +15,6 @@ import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
 
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.cql.BoundStatement;
@@ -34,20 +32,10 @@ import com.killrvideo.utils.IOUtils;
  *
  * @author DataStax Developer Advocates team.
  */
-@Component
 public class SuggestedVideosDseDaoQueryProvider implements DseSchema {
     
     /** Logger for the class. */
     private static final Logger LOGGER = LoggerFactory.getLogger(SuggestedVideosDseDaoQueryProvider.class);
-    
-    /**
-     * Create a set of sentence conjunctions and other "undesirable"
-     * words we will use later to exclude from search results.
-     * Had to use .split() below because of the following conversation:
-     * https://github.com/spring-projects/spring-boot/issues/501
-     */
-    @Value("#{'${killrvideo.search.ignoredWords}'.split(',')}")
-    private Set<String> ignoredWords = new HashSet<>();
     
     /**
      * Wrap search queries with "paging":"driver" to dynamically enable
@@ -84,11 +72,11 @@ public class SuggestedVideosDseDaoQueryProvider implements DseSchema {
     
     /** {@inheritDoc} from {@link SuggestedVideosDseDao} */
     public CompletionStage< ResultListPage<Video> > getRelatedVideos(
-            UUID videoId, int fetchSize, Optional<String> pagingState) {
+            UUID videoId, int fetchSize, Optional<String> pagingState, Set < String> ignoredWords) {
         return dseSession
                   .executeAsync(psSelectVideoById.bind(COLUMN_PLAYBACK_VIDEOID_, videoId))
                   .thenApply(ars -> ars.map(entityHelperVideo::get).currentPage().iterator().next())
-                  .thenCompose(video -> dseSession.executeAsync(_bindStmtSearchVideos(video, fetchSize, pagingState)))
+                  .thenCompose(video -> dseSession.executeAsync(_bindStmtSearchVideos(video, fetchSize, pagingState, ignoredWords)))
                   .thenApply(ars -> ars.map(entityHelperVideo::get))
                   .thenApply(ResultListPage::new);
     }
@@ -103,7 +91,8 @@ public class SuggestedVideosDseDaoQueryProvider implements DseSchema {
      * We can then use the end result termSet to query across the name, tags, and
      * description columns to find similar videos.
      */
-    private BoundStatement _bindStmtSearchVideos(Video video, int fetchSize, Optional<String> pagingState) {
+    private BoundStatement _bindStmtSearchVideos(Video video, int fetchSize, 
+            Optional<String> pagingState, Set < String> ignoredWords) {
         final String space = " ";
         final String eachWordRegEx = "[^\\w]";
         final String eachWordPattern = Pattern.compile(eachWordRegEx).pattern();

@@ -6,17 +6,25 @@ import static com.killrvideo.service.sugestedvideo.grpc.SuggestedVideosServiceGr
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.HashSet;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
+
+import javax.annotation.PostConstruct;
 
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import com.datastax.dse.driver.api.core.DseSession;
+import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.killrvideo.service.sugestedvideo.dao.SuggestedVideosDseDao;
+import com.killrvideo.service.sugestedvideo.dao.SuggestedVideosDseDaoMapperBuilder;
 import com.killrvideo.service.sugestedvideo.dao.SuggestedVideosGraphDao;
 
 import io.grpc.Status;
@@ -39,14 +47,32 @@ public class SuggestedVideosServiceGrpc extends SuggestedVideoServiceImplBase {
     /** Loger for that class. */
     private static Logger LOGGER = LoggerFactory.getLogger(SuggestedVideosServiceGrpc.class);
      
-    @Value("${killrvideo.discovery.services.suggestedVideo : SuggestedVideoService}")
-    private String serviceKey;
-    
-    @Autowired
+    /** Services related to videos suggestions. */
     private SuggestedVideosDseDao suggestedVideosDseDao;
     
     @Autowired
+    private DseSession dseSession;
+    
+    @Autowired
+    @Qualifier("killrvideo.keyspace")
+    private CqlIdentifier dseKeySpace;
+    
+    @Autowired
     private SuggestedVideosGraphDao suggestedVideosGraphDao;
+    
+    /**
+     * Create a set of sentence conjunctions and other "undesirable"
+     * words we will use later to exclude from search results.
+     * Had to use .split() below because of the following conversation:
+     * https://github.com/spring-projects/spring-boot/issues/501
+     */
+    @Value("#{'${killrvideo.dse.search.ignoredWords}'.split(',')}")
+    private Set<String> ignoredWords = new HashSet<>();
+    
+    @PostConstruct
+    public void init() {
+        suggestedVideosDseDao = new SuggestedVideosDseDaoMapperBuilder(dseSession).build().suggestedVideosDao(dseKeySpace);
+    }
     
     /** {@inheritDoc} */
     @Override
@@ -65,7 +91,7 @@ public class SuggestedVideosServiceGrpc extends SuggestedVideoServiceImplBase {
         
         // Map Result back to GRPC
         suggestedVideosDseDao
-                .getRelatedVideos(videoId, videoPageSize, videoPagingState)
+                .getRelatedVideos(videoId, videoPageSize, videoPagingState, ignoredWords)
                 .whenComplete((resultPage, error) -> {
             
             if (error != null ) {
@@ -144,15 +170,5 @@ public class SuggestedVideosServiceGrpc extends SuggestedVideoServiceImplBase {
      */
     private void traceError(String method, Instant starts, Throwable t) {
         LOGGER.error("An error occured in {} after {}", method, Duration.between(starts, Instant.now()), t);
-    }
-
-    /**
-     * Getter accessor for attribute 'serviceKey'.
-     *
-     * @return
-     *       current value of 'serviceKey'
-     */
-    public String getServiceKey() {
-        return serviceKey;
     }
 }

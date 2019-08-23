@@ -25,10 +25,10 @@ public class MessagingGuavaConfiguration {
     /** Event Bus. */
     private static final String EVENT_BUS_KILLRVIODEO = "killrvideo_event_bus";
     
-    @Value("${killrvideo.messaging.inmemory.threadpool.min.threads:5}")
+    @Value("${killrvideo.messaging.inmemory.minThreads:5}")
     private int minThreads;
     
-    @Value("${killrvideo.messaging.inmemory.max.threads:10}")
+    @Value("${killrvideo.messaging.inmemory.maxThreads:10}")
     private int maxThreads;
     
     @Value("${killrvideo.messaging.inmemory.ttlThreads:60}")

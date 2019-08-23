@@ -23,6 +23,6 @@ public interface SuggestedVideosDseDaoMapper {
      *      instanciation with the mappers
      */
     @DaoFactory
-    SuggestedVideosDseDao searchDao(@DaoKeyspace CqlIdentifier keyspace);
+    SuggestedVideosDseDao suggestedVideosDao(@DaoKeyspace CqlIdentifier keyspace);
     
 }

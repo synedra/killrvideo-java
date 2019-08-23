@@ -92,23 +92,36 @@ public class VideoCatalogDseDaoQueryProvider implements DseSchema {
                 selectFrom(TABLENAME_LATEST_VIDEO_).all()
                 .where(column(LATESTVIDEOS_COLUMN_YYYYMMDD_).isEqualTo(bindMarker(LATESTVIDEOS_COLUMN_YYYYMMDD_)))
                 .build());
+   
+        // => QueryBuilder is KO here
+        //psSelectLatestVideoPageX = dseSession.prepare(
+        //        selectFrom(TABLENAME_LATEST_VIDEO_).all()
+        //        .where(column(LATESTVIDEOS_COLUMN_YYYYMMDD_).isEqualTo(bindMarker(LATESTVIDEOS_COLUMN_YYYYMMDD_)),
+        //               column(VIDEOS_COLUMN_ADDED_DATE_).isLessThanOrEqualTo(bindMarker(VIDEOS_COLUMN_ADDED_DATE_)),
+        //               column(LATESTVIDEOS_COLUMN_VIDEOID_).isLessThanOrEqualTo(bindMarker(LATESTVIDEOS_COLUMN_VIDEOID_)))
+        //       .build());
         psSelectLatestVideoPageX = dseSession.prepare(
-                selectFrom(TABLENAME_LATEST_VIDEO_).all()
-                .where(column(LATESTVIDEOS_COLUMN_YYYYMMDD_).isEqualTo(bindMarker(LATESTVIDEOS_COLUMN_YYYYMMDD_)),
-                       column(VIDEOS_COLUMN_ADDED_DATE_).isLessThanOrEqualTo(bindMarker(VIDEOS_COLUMN_ADDED_DATE_)),
-                       column(LATESTVIDEOS_COLUMN_VIDEOID_).isLessThanOrEqualTo(bindMarker(LATESTVIDEOS_COLUMN_VIDEOID_)))
-                .build()); 
+                "SELECT * FROM " + TABLENAME_LATEST_VIDEO_.asInternal() + " " +
+                "WHERE yyyymmdd = :"+ LATESTVIDEOS_COLUMN_YYYYMMDD_.asInternal() + " " +
+                "AND (added_date, videoid) <= (:"+VIDEOS_COLUMN_ADDED_DATE_+", :"+ LATESTVIDEOS_COLUMN_VIDEOID_+")");
         
         psSelectUserVideoDefault = dseSession.prepare(
                 selectFrom(TABLENAME_USERS_VIDEO_).all()
                 .where(column(VIDEOS_COLUMN_USERID_).isEqualTo(bindMarker(VIDEOS_COLUMN_USERID_)))
                 .build());
+        
+        // => QueryBuilder is KO here
+        // psSelectUserVideoPageX = dseSession.prepare(
+        //        selectFrom(TABLENAME_USERS_VIDEO_).all()
+        //        .where(column(VIDEOS_COLUMN_USERID_).isEqualTo(bindMarker(VIDEOS_COLUMN_USERID_)),
+        //                column(VIDEOS_COLUMN_ADDED_DATE_).isLessThanOrEqualTo(bindMarker(VIDEOS_COLUMN_ADDED_DATE_)),
+        //                column(VIDEOS_COLUMN_VIDEOID_).isLessThanOrEqualTo(bindMarker(VIDEOS_COLUMN_VIDEOID_)))
+        //        .build());
         psSelectUserVideoPageX = dseSession.prepare(
-                selectFrom(TABLENAME_USERS_VIDEO_).all()
-                .where(column(VIDEOS_COLUMN_USERID_).isEqualTo(bindMarker(VIDEOS_COLUMN_USERID_)),
-                        column(VIDEOS_COLUMN_ADDED_DATE_).isLessThanOrEqualTo(bindMarker(VIDEOS_COLUMN_ADDED_DATE_)),
-                        column(VIDEOS_COLUMN_VIDEOID_).isLessThanOrEqualTo(bindMarker(VIDEOS_COLUMN_VIDEOID_)))
-                .build());     
+                "SELECT * FROM " + TABLENAME_USERS_VIDEO_.asInternal() + " " +
+                "WHERE userid = :"+ VIDEOS_COLUMN_USERID_.asInternal() + " " +
+                "AND (added_date, videoid) <= (:"+VIDEOS_COLUMN_ADDED_DATE_+", :"+ LATESTVIDEOS_COLUMN_VIDEOID_+")");
+        
     }
     
     /** Javadoc in {@link VideoCatalogDseDao} */

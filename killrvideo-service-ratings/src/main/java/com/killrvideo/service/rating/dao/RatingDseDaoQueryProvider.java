@@ -24,7 +24,6 @@ import com.killrvideo.service.rating.dto.VideoRatingsByUser;
  *
  * @author DataStax Developer Advocates team.
  */
-
 public class RatingDseDaoQueryProvider implements DseSchema {
 
     private final CqlSession dseSession;

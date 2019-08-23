@@ -1,4 +1,4 @@
-package com.killrvideo.service.statistic.dao;
+package com.killrvideo.service.video.dao;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.mapper.annotations.Dao;
@@ -12,10 +12,10 @@ import com.datastax.oss.driver.api.mapper.annotations.Mapper;
  * @author DataStax Developer Advocates team.
  */
 @Mapper
-public interface StatisticsDseDaoMapper {
-
+public interface VideoCatalogDseDaoMapper {
+    
     /**
-     * Initialization of Dao {@link StatisticsDseDao}
+     * Initialization of Dao {@link VideoCatalogDseDao}
      *
      * @param keyspace
      *      working keyspace name
@@ -23,6 +23,6 @@ public interface StatisticsDseDaoMapper {
      *      instanciation with the mappers
      */
     @DaoFactory
-    StatisticsDseDao statisticsDao(@DaoKeyspace CqlIdentifier keyspace);
-    
+    VideoCatalogDseDao videoCatalogDao(@DaoKeyspace CqlIdentifier keyspace);
+
 }

@@ -1,10 +1,9 @@
-package com.killrvideo.service.sugestedvideo.dao;
+package com.killrvideo.service.sugestedvideo.messaging;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Repository;
 
 import com.google.common.eventbus.Subscribe;
-import com.killrvideo.conf.KillrVideoConfiguration;
 
 import killrvideo.ratings.events.RatingsEvents.UserRatedVideo;
 import killrvideo.user_management.events.UserManagementEvents.UserCreated;
@@ -17,7 +16,7 @@ import killrvideo.video_catalog.events.VideoCatalogEvents.YouTubeVideoAdded;
  * @author Cedrick LUNVEN (@clunven)
  */
 @Repository("killrvideo.rating.dao.messaging")
-@Profile(KillrVideoConfiguration.PROFILE_MESSAGING_MEMORY)
+@Profile("messaging_memory")
 public class SuggestedVideosMessagingMemoryDao extends SuggestedVideosMessagingDaoSupport {
     
     /** {@inheritDoc} */

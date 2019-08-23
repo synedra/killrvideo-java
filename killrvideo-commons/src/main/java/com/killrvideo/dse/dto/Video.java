@@ -12,6 +12,7 @@ import org.hibernate.validator.constraints.Length;
 import com.datastax.oss.driver.api.mapper.annotations.CqlName;
 import com.datastax.oss.driver.api.mapper.annotations.Entity;
 import com.datastax.oss.driver.api.mapper.annotations.PartitionKey;
+import com.killrvideo.dse.dao.DseSchema;
 
 /**
  * Pojo representing DTO for table 'videos'.
@@ -19,6 +20,7 @@ import com.datastax.oss.driver.api.mapper.annotations.PartitionKey;
  * @author DataStax Developer Advocates team.
  */
 @Entity
+@CqlName(DseSchema.TABLENAME_VIDEOS)
 public class Video extends AbstractVideo {
 
     /** Serial. */

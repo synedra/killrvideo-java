@@ -11,7 +11,9 @@ import com.killrvideo.service.rating.dto.VideoRatings;
 import com.killrvideo.service.rating.dto.VideoRatingsByUser;
 
 /**
- * Operations against DSE (Cassandra Part) to implements ratings 
+ * Operations against DSE (Cassandra Part) to implements ratings
+ * 
+ * @author DataStax Developer Advocates team.
  */
 @Dao
 public interface RatingDseDao {

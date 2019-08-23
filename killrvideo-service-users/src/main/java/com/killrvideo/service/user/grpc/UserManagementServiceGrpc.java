@@ -11,7 +11,6 @@ import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.slf4j.Logger;
@@ -24,7 +23,6 @@ import com.google.protobuf.Timestamp;
 import com.killrvideo.messaging.dao.MessagingDao;
 import com.killrvideo.service.user.dao.UserDseDao;
 import com.killrvideo.service.user.dto.User;
-import com.killrvideo.service.user.dto.UserCredentials;
 import com.killrvideo.utils.HashUtils;
 
 import io.grpc.Status;
@@ -112,11 +110,8 @@ public class UserManagementServiceGrpc extends UserManagementServiceImplBase {
         // Mapping GRPC => Domain (Dao)
         String email = grpcReq.getEmail();
         
-        // Invoke Async
-        CompletableFuture<UserCredentials> futureCredential = userDseDao.getUserCredentialAsync(email);
-        
         // Map back as GRPC (if correct invalid credential otherwize)
-        futureCredential.whenComplete((credential, error) -> {
+        userDseDao.getUserCredentialAsync(email).whenComplete((credential, error) -> {
             if (error != null ) {
                 traceError("verifyCredentials", starts, error);
                 if (!HashUtils.isPasswordValid(grpcReq.getPassword(), credential.getPassword())) {
@@ -162,11 +157,8 @@ public class UserManagementServiceGrpc extends UserManagementServiceImplBase {
                     .map(uuid -> UUID.fromString(uuid.getValue()))
                     .toArray(size -> new UUID[size]));
             
-            // Execute Async
-            CompletableFuture<List<User>> userListFuture = userDseDao.getUserProfilesAsync(listOfUserId);
-            
             // Mapping back to GRPC objects
-            userListFuture.whenComplete((users, error) -> {
+            userDseDao.getUserProfilesAsync(listOfUserId).whenComplete((users, error) -> {
                 if (error != null ) {
                     traceError("getUserProfile", starts, error);
                     grpcResObserver.onError(Status.INTERNAL.withCause(error).asRuntimeException());

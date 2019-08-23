@@ -1,4 +1,4 @@
-package com.killrvideo.service.sugestedvideo.dao;
+package com.killrvideo.service.sugestedvideo.messaging;
 
 import static com.killrvideo.service.sugestedvideo.grpc.SuggestedVideosServiceGrpcMapper.mapVideoAddedtoVideoDTO;
 
@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import com.killrvideo.grpc.GrpcMappingUtils;
+import com.killrvideo.service.sugestedvideo.dao.SuggestedVideosGraphDao;
 
 import killrvideo.ratings.events.RatingsEvents.UserRatedVideo;
 import killrvideo.user_management.events.UserManagementEvents.UserCreated;
@@ -26,7 +27,7 @@ public abstract class SuggestedVideosMessagingDaoSupport {
     private static Logger LOGGER = LoggerFactory.getLogger(SuggestedVideosMessagingDaoSupport.class);
     
     @Autowired
-    protected SuggestedVideosDseDao sugestedVideoDseDao;
+    protected SuggestedVideosGraphDao sugestedVideoDseDao;
     
     /**
      * Message is consumed from specialized class but treatment is the same, updating graph.

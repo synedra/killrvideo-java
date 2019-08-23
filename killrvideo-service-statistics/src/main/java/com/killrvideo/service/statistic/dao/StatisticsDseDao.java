@@ -8,6 +8,11 @@ import com.datastax.oss.driver.api.mapper.annotations.Query;
 import com.datastax.oss.driver.api.mapper.annotations.Select;
 import com.killrvideo.service.statistic.dto.VideoPlaybackStats;
 
+/**
+ * Service Definitions for Statistic Microservice.
+ *
+ * @author DataStax Developer Advocates team.
+ */
 @Dao
 public interface StatisticsDseDao {
     

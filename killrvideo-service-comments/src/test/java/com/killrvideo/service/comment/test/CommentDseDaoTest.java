@@ -1,10 +1,9 @@
 package com.killrvideo.service.comment.test;
 
+import static com.datastax.oss.driver.api.querybuilder.SchemaBuilder.createTable;
 import static com.killrvideo.dse.utils.DseUtils.createKeySpaceSimpleStrategy;
 import static com.killrvideo.dse.utils.DseUtils.isTableEmpty;
 import static com.killrvideo.dse.utils.DseUtils.truncateTable;
-import static com.killrvideo.service.comment.dao.CommentDseDaoUtils.stmtCreateTableCommentByUser;
-import static com.killrvideo.service.comment.dao.CommentDseDaoUtils.stmtCreateTableCommentByVideo;
 
 import java.net.InetSocketAddress;
 import java.util.UUID;
@@ -19,6 +18,9 @@ import org.testcontainers.containers.GenericContainer;
 
 import com.datastax.dse.driver.api.core.DseSession;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
+import com.datastax.oss.driver.api.core.cql.SimpleStatement;
+import com.datastax.oss.driver.api.core.metadata.schema.ClusteringOrder;
+import com.datastax.oss.driver.api.core.type.DataTypes;
 import com.datastax.oss.driver.internal.core.metadata.DefaultEndPoint;
 import com.killrvideo.dse.dao.DseSchema;
 import com.killrvideo.dse.dto.ResultListPage;
@@ -188,4 +190,26 @@ public class CommentDseDaoTest implements DseSchema {
         Assertions.assertEquals(1, res.getResults().size());
         Assertions.assertEquals(UUID.fromString("6fd4df0a-74ca-4891-ae3b-0c16e37880ed"), res.getResults().get(0).getVideoid());
     }*/
+    
+    public static SimpleStatement stmtCreateTableCommentByUser(CqlIdentifier kspace) {
+        return createTable(kspace, TABLENAME_COMMENTS_BY_USER_).ifNotExists()
+                .withPartitionKey(COMMENTS_COLUMN_USERID, DataTypes.UUID)
+                .withClusteringColumn(COMMENTS_COLUMN_COMMENTID, DataTypes.TIMEUUID)
+                .withColumn(COMMENTS_COLUMN_COMMENT, DataTypes.TEXT)
+                .withColumn(COMMENTS_COLUMN_VIDEOID, DataTypes.UUID)
+                .withClusteringOrder(COMMENTS_COLUMN_COMMENTID, ClusteringOrder.DESC)
+                .withComment("List comments on user page")
+                .build();
+    }
+    
+    public static SimpleStatement stmtCreateTableCommentByVideo(CqlIdentifier kspace) {
+        return createTable(kspace, TABLENAME_COMMENTS_BY_VIDEO_).ifNotExists()
+                .withPartitionKey(COMMENTS_COLUMN_VIDEOID, DataTypes.UUID)
+                .withClusteringColumn(COMMENTS_COLUMN_COMMENTID, DataTypes.TIMEUUID)
+                .withColumn(COMMENTS_COLUMN_COMMENT, DataTypes.TEXT)
+                .withColumn(COMMENTS_COLUMN_USERID, DataTypes.UUID)
+                .withClusteringOrder(COMMENTS_COLUMN_COMMENTID, ClusteringOrder.DESC)
+                .withComment("List comments on user page")
+                .build();
+    }
 }

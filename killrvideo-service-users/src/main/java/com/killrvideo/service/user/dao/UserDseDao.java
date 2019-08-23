@@ -10,6 +10,11 @@ import com.datastax.oss.driver.api.mapper.annotations.Select;
 import com.killrvideo.service.user.dto.User;
 import com.killrvideo.service.user.dto.UserCredentials;
 
+/**
+ * Definition of operations for Microservice USER
+ *
+ * @author DataStax Developer Advocates team.
+ */
 @Dao
 public interface UserDseDao {
 
@@ -33,10 +38,22 @@ public interface UserDseDao {
      *      hashed Password
      * @return
      */
-    @QueryProvider(providerClass = UserDseDaoQueryProvider.class, 
-                   entityHelpers = { User.class, UserCredentials.class })
+    @QueryProvider(
+            providerClass = UserDseDaoQueryProvider.class, 
+            entityHelpers = { User.class, UserCredentials.class })
     CompletionStage<Void> createUserAsync(User user, String hashedPassword);
     
+    /**
+     * Search users based on user id.
+     * 
+     * @param userids
+     *      list of user ids
+     * @return
+     *      list of user beans
+     */
+    @QueryProvider(
+            providerClass = UserDseDaoQueryProvider.class, 
+            entityHelpers = { User.class, UserCredentials.class })
     CompletionStage < List < User > > getUserProfilesAsync(List < UUID > userids);
     
 }

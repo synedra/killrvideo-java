@@ -13,7 +13,7 @@ import killrvideo.user_management.UserManagementServiceOuterClass.VerifyCredenti
 /**
  * Mapping from interfaces GRPC to DTO
  *
- * @author Cedrick LUNVEN (@clunven)
+ * @author DataStax advocates Team
  */
 public class UserManagementServiceGrpcMapper {
     

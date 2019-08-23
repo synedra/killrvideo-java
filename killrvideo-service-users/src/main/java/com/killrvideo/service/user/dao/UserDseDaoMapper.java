@@ -8,6 +8,8 @@ import com.datastax.oss.driver.api.mapper.annotations.Mapper;
 
 /**
  * Annotated as {@link Mapper} will generate working {@link Dao}.
+ * 
+ * @author DataStax Developer Advocates team.
  */
 @Mapper
 public interface UserDseDaoMapper {

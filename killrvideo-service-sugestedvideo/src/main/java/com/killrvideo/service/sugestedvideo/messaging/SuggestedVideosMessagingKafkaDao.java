@@ -1,4 +1,4 @@
-package com.killrvideo.service.sugestedvideo.dao;
+package com.killrvideo.service.sugestedvideo.messaging;
 
 import java.time.Duration;
 import java.util.Collections;
@@ -17,14 +17,13 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Repository;
 
 import com.google.protobuf.InvalidProtocolBufferException;
-import com.killrvideo.conf.KillrVideoConfiguration;
 
 import killrvideo.ratings.events.RatingsEvents.UserRatedVideo;
 import killrvideo.user_management.events.UserManagementEvents.UserCreated;
 import killrvideo.video_catalog.events.VideoCatalogEvents.YouTubeVideoAdded;
 
 @Repository("killrvideo.rating.dao.messaging")
-@Profile(KillrVideoConfiguration.PROFILE_MESSAGING_KAFKA)
+@Profile("messaging_kafka")
 public class SuggestedVideosMessagingKafkaDao extends SuggestedVideosMessagingDaoSupport {
     
     /** Loger for that class. */

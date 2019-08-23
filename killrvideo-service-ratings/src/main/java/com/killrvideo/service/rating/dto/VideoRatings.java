@@ -10,6 +10,8 @@ import com.killrvideo.dse.dao.DseSchema;
 
 /**
  * Pojo representing DTO for table 'video_ratings'.
+ * 
+ * @author DataStax Developer Advocates team.
  */
 @Entity
 public class VideoRatings implements Serializable, DseSchema {

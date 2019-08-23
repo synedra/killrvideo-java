@@ -3,11 +3,16 @@ package com.killrvideo.service.video.grpc;
 import static com.killrvideo.grpc.GrpcMappingUtils.dateToTimestamp;
 import static com.killrvideo.grpc.GrpcMappingUtils.uuidToUuid;
 
+import java.time.Instant;
+import java.time.ZoneId;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import java.util.stream.LongStream;
 
 import com.google.common.collect.Sets;
+import com.killrvideo.dse.dao.DseSchema;
+import com.killrvideo.dse.dto.CustomPagingState;
 import com.killrvideo.dse.dto.Video;
 import com.killrvideo.service.video.dto.LatestVideo;
 import com.killrvideo.service.video.dto.LatestVideosPage;
@@ -106,6 +111,21 @@ public class VideoCatalogServiceGrpcMapper {
                 .setVideoId(uuidToUuid(v.getVideoid()))
                 .addAllTags(v.getTags())
                 .build();
+    }
+    
+    /**
+     * Build the first paging state if one does not already exist and return an object containing 3 elements
+     * representing the initial state (List<String>, Integer, String).
+     * @return CustomPagingState
+     */
+    public static CustomPagingState buildFirstCustomPagingState() {
+        return new CustomPagingState()
+                .currentBucket(0)
+                .cassandraPagingState(null)
+                .listOfBuckets(LongStream.rangeClosed(0L, 7L).boxed()
+                        .map(Instant.now().atZone(ZoneId.systemDefault())::minusDays)
+                        .map(x -> x.format(DseSchema.DATEFORMATTER))
+                        .collect(Collectors.toList()));
     }
 
    

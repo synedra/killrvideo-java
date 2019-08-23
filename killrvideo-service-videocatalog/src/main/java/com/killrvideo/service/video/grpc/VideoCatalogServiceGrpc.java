@@ -8,7 +8,6 @@ import static com.killrvideo.service.video.grpc.VideoCatalogServiceGrpcValidator
 import static com.killrvideo.service.video.grpc.VideoCatalogServiceGrpcValidator.validateGrpcRequest_getVideo;
 import static com.killrvideo.service.video.grpc.VideoCatalogServiceGrpcValidator.validateGrpcRequest_getVideoPreviews;
 import static com.killrvideo.service.video.grpc.VideoCatalogServiceGrpcValidator.validateGrpcRequest_submitYoutubeVideo;
-import static java.util.stream.Collectors.toList;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -18,6 +17,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
+import java.util.stream.Collectors;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -65,10 +66,7 @@ public class VideoCatalogServiceGrpc extends VideoCatalogServiceImplBase {
     /** Send new videos. */
     @Value("${killrvideo.messaging.destinations.youTubeVideoAdded : topic-kv-videoCreation}")
     private String topicVideoCreated;
-
-    @Value("${killrvideo.discovery.services.videoCatalog : VideoCatalogService}")
-    private String serviceKey;
-    
+ 
     @Autowired
     private MessagingDao messagingDao;
     
@@ -92,10 +90,10 @@ public class VideoCatalogServiceGrpc extends VideoCatalogServiceImplBase {
         }
         
         // Execute query (ASYNC)
-        CompletableFuture<Void> futureDse = videoCatalogDao.insertVideoAsync(video);
+        CompletionStage<Void> futureDse = videoCatalogDao.insertVideoAsync(video);
         
         // If OK, then send Message to Kafka
-        CompletableFuture<Object> futureAndKafka = futureDse.thenCompose(rs -> {
+        CompletionStage<Object> futureAndKafka = futureDse.thenCompose(rs -> {
             return messagingDao.sendEvent(topicVideoCreated, YouTubeVideoAdded.newBuilder()
                             .setAddedDate(Timestamp.newBuilder().build())
                             .setDescription(video.getDescription())
@@ -160,7 +158,7 @@ public class VideoCatalogServiceGrpc extends VideoCatalogServiceImplBase {
         // GRPC Parameters Mappings
         CustomPagingState pageState = 
                 CustomPagingState.parse(Optional.ofNullable(grpcReq.getPagingState()))
-                                 .orElse(videoCatalogDao.buildFirstCustomPagingState());
+                                 .orElse(VideoCatalogServiceGrpcMapper.buildFirstCustomPagingState());
         final Optional<Date> startDate = Optional.ofNullable(grpcReq.getStartingAddedDate())
                 .filter(x -> StringUtils.isNotBlank(x.toString()))
                 .map(x -> Instant.ofEpochSecond(x.getSeconds(), x.getNanos()))
@@ -200,7 +198,7 @@ public class VideoCatalogServiceGrpc extends VideoCatalogServiceImplBase {
         final UUID videoId = UUID.fromString(grpcReq.getVideoId().getValue());
 
         // Invoke Async
-        CompletableFuture<Video> futureVideo = videoCatalogDao.getVideoById(videoId);
+        CompletionStage<Video> futureVideo = videoCatalogDao.getVideoByIdAsync(videoId);
         
         // Map back as GRPC (if correct invalid credential otherwize)
         futureVideo.whenComplete((video, error) -> {
@@ -244,13 +242,19 @@ public class VideoCatalogServiceGrpc extends VideoCatalogServiceImplBase {
         } else {
             
             // GRPC Parameters Mappings
-            List <UUID> listOfVideoIds = grpcReq.getVideoIdsList().stream().map(Uuid::getValue).map(UUID::fromString).collect(toList());
-            
-            // Execute Async
-            CompletableFuture<List<Video>> futureVideoList = videoCatalogDao.getVideoPreview(listOfVideoIds);
-            
+            List<CompletableFuture<Video>> callBackList = 
+                    grpcReq.getVideoIdsList().stream()
+                       .map(Uuid::getValue)
+                       .map(UUID::fromString)
+                       .map(videoCatalogDao::getVideoByIdAsync)
+                       .map(CompletionStage::toCompletableFuture)
+                       .collect(Collectors.toList());
+               
             // Mapping back as GRPC
-            futureVideoList.whenComplete((videos, error) -> {
+            CompletableFuture
+                    .allOf(callBackList.toArray(CompletableFuture[]::new))
+                    .thenApply(v -> callBackList.stream().map(CompletableFuture::join).collect(Collectors.toList()))
+                    .whenComplete((videos, error) -> {
                 if (error != null ) {
                     traceError("getVideoPreviews", starts, error);
                     grpcResObserver.onError(Status.INTERNAL.withCause(error).asRuntimeException());
@@ -341,15 +345,5 @@ public class VideoCatalogServiceGrpc extends VideoCatalogServiceImplBase {
      */
     private void traceError(String method, Instant starts, Throwable t) {
         LOGGER.error("An error occured in {} after {}", method, Duration.between(starts, Instant.now()), t);
-    }
-
-    /**
-     * Getter accessor for attribute 'serviceKey'.
-     *
-     * @return
-     *       current value of 'serviceKey'
-     */
-    public String getServiceKey() {
-        return serviceKey;
     }
 }

@@ -100,7 +100,7 @@ public class SearchDseDaoQueryProvider implements DseSchema, SearchDseDao {
     public CompletionStage<ResultListPage<Video>> searchVideosAsync(String query, int fetchSize, Optional<String> pagingState) {
         BoundStatement bs = _bindStmtSearchVideos(query, fetchSize, pagingState);
         return dseSession.executeAsync(bs)
-                         .thenApply(ars  -> ars.map(mapperVideo::get))
+                         .thenApply(ars -> ars.map(mapperVideo::get))
                          .thenApply(ResultListPage::new);
     }
 

@@ -1,10 +1,9 @@
 package com.killrvideo.service.comment.dao;
 
-import static com.killrvideo.service.comment.dao.CommentDseDaoUtils.bind;
-import static com.killrvideo.service.comment.dao.CommentDseDaoUtils.stmtFindCommentsForUser;
-import static com.killrvideo.service.comment.dao.CommentDseDaoUtils.stmtFindCommentsForUserWithCommentId;
-import static com.killrvideo.service.comment.dao.CommentDseDaoUtils.stmtFindCommentsForVideo;
-import static com.killrvideo.service.comment.dao.CommentDseDaoUtils.stmtFindCommentsForVideoWithCommentId;
+import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.bindMarker;
+import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.selectFrom;
+import static com.datastax.oss.driver.api.querybuilder.relation.Relation.column;
+import static com.killrvideo.dse.utils.DseUtils.bind;
 
 import java.nio.ByteBuffer;
 import java.util.concurrent.CompletionStage;
@@ -17,6 +16,7 @@ import com.datastax.oss.driver.api.core.cql.PreparedStatement;
 import com.datastax.oss.driver.api.mapper.MapperContext;
 import com.datastax.oss.driver.api.mapper.annotations.QueryProvider;
 import com.datastax.oss.driver.api.mapper.entity.EntityHelper;
+import com.datastax.oss.driver.api.querybuilder.select.Selector;
 import com.killrvideo.dse.dao.DseSchema;
 import com.killrvideo.dse.dto.ResultListPage;
 import com.killrvideo.service.comment.dao.dto.Comment;
@@ -25,6 +25,11 @@ import com.killrvideo.service.comment.dao.dto.CommentByVideoEntity;
 import com.killrvideo.service.comment.grpc.dto.QueryCommentByUser;
 import com.killrvideo.service.comment.grpc.dto.QueryCommentByVideo;
 
+/**
+ * Query implementation for Comment Dse and Mapper.
+ *
+ * @author DataStax Developer Advocates team.
+ */
 public class CommentDseDaoQueryProvider implements CommentDseDao, DseSchema {
 
     private final CqlSession dseSession;
@@ -62,10 +67,42 @@ public class CommentDseDaoQueryProvider implements CommentDseDao, DseSchema {
         this.entityHelperCommentsByUser    = helperUser;
         this.entityHelperCommentsByVideo   = helperVideo;
         
-        this.psFindCommentsByUser          = dseSession.prepare(stmtFindCommentsForUser());
-        this.psFindCommentsByUserPageable  = dseSession.prepare(stmtFindCommentsForUserWithCommentId());
-        this.psFindCommentsByVideo         = dseSession.prepare(stmtFindCommentsForVideo());
-        this.psFindCommentsByVideoPageable = dseSession.prepare(stmtFindCommentsForVideoWithCommentId());
+        this.psFindCommentsByUser          = dseSession.prepare(
+                selectFrom(TABLENAME_COMMENTS_BY_USER_)
+                .column(COMMENTS_COLUMN_USERID).column(COMMENTS_COLUMN_COMMENTID)
+                .column(COMMENTS_COLUMN_VIDEOID).column(COMMENTS_COLUMN_COMMENT)
+                .function("toTimestamp", Selector.column(COMMENTS_COLUMN_COMMENTID)).as("comment_timestamp")
+                .where(column(COMMENTS_COLUMN_USERID).isEqualTo(bindMarker(COMMENTS_COLUMN_USERID)))
+                .build());
+        
+        this.psFindCommentsByUserPageable  = dseSession.prepare(
+                selectFrom(TABLENAME_COMMENTS_BY_VIDEO)
+                .column(COMMENTS_COLUMN_USERID).column(COMMENTS_COLUMN_USERID)
+                .column(COMMENTS_COLUMN_VIDEOID).column(COMMENTS_COLUMN_COMMENT)
+                .column(COMMENTS_COLUMN_COMMENTID)
+                .function("toTimestamp", Selector.column(COMMENTS_COLUMN_COMMENTID)).as("comment_timestamp")
+                .where(column(COMMENTS_COLUMN_VIDEOID).isEqualTo(bindMarker(COMMENTS_COLUMN_VIDEOID)))
+                .build());
+        
+        this.psFindCommentsByVideo         = dseSession.prepare(
+                selectFrom(TABLENAME_COMMENTS_BY_VIDEO)
+                .column(COMMENTS_COLUMN_USERID).column(COMMENTS_COLUMN_USERID)
+                .column(COMMENTS_COLUMN_VIDEOID).column(COMMENTS_COLUMN_COMMENT)
+                .column(COMMENTS_COLUMN_COMMENTID)
+                .function("toTimestamp", Selector.column(COMMENTS_COLUMN_COMMENTID)).as("comment_timestamp")
+                .where(column(COMMENTS_COLUMN_VIDEOID).isEqualTo(bindMarker(COMMENTS_COLUMN_VIDEOID)))
+                .build());
+        
+        this.psFindCommentsByVideoPageable = dseSession.prepare(
+                selectFrom(TABLENAME_COMMENTS_BY_VIDEO)
+                .column(COMMENTS_COLUMN_USERID).column(COMMENTS_COLUMN_USERID)
+                .column(COMMENTS_COLUMN_VIDEOID).column(COMMENTS_COLUMN_COMMENT)
+                .column(COMMENTS_COLUMN_COMMENTID)
+                .function("toTimestamp", Selector.column(COMMENTS_COLUMN_COMMENTID)).as("comment_timestamp")
+                .where(column(COMMENTS_COLUMN_VIDEOID).isEqualTo(bindMarker(COMMENTS_COLUMN_VIDEOID)),
+                       column(COMMENTS_COLUMN_COMMENTID).isLessThanOrEqualTo(bindMarker(COMMENTS_COLUMN_COMMENTID)))
+                .build());
+        
         this.psInsertCommentUser  = dseSession.prepare(helperUser.insert().asCql());
         this.psDeleteCommentUser  = dseSession.prepare(helperUser.deleteByPrimaryKey().asCql());
         this.psInsertCommentVideo = dseSession.prepare(helperVideo.insert().asCql());
@@ -198,7 +235,7 @@ public class CommentDseDaoQueryProvider implements CommentDseDao, DseSchema {
     
     private BatchStatement _buildStatementInsertComment(Comment comment) {
         return BatchStatement.builder(DefaultBatchType.LOGGED)
-                .addStatement(bind(psInsertCommentUser,  new CommentByUserEntity(comment),   entityHelperCommentsByUser))
+                .addStatement(bind(psInsertCommentUser,  new CommentByUserEntity(comment),  entityHelperCommentsByUser))
                 .addStatement(bind(psInsertCommentVideo, new CommentByVideoEntity(comment), entityHelperCommentsByVideo))
                 .build();
     }

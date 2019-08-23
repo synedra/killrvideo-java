@@ -14,6 +14,8 @@ import com.killrvideo.service.comment.grpc.dto.QueryCommentByVideo;
 /**
  * Implementation of Services to work with Comments in Killrvideo. We work with 
  * 2 tables 'comments_by_user' and 'comments_by_video'.
+ * 
+ * @author DataStax Developer Advocates team.
  */
 @Dao
 public interface CommentDseDao {

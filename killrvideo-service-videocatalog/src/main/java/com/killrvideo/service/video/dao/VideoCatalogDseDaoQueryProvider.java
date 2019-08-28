@@ -47,7 +47,7 @@ import com.killrvideo.utils.IOUtils;
 public class VideoCatalogDseDaoQueryProvider implements DseSchema {
 
     /** Logger for this class. */
-    private static Logger LOGGER = LoggerFactory.getLogger(VideoCatalogDseDao.class);
+    private static Logger LOGGER = LoggerFactory.getLogger(VideoCatalogDseDaoQueryProvider.class);
     
     /** Formatting date. */
     public static final DateTimeFormatter DATEFORMATTER = DateTimeFormatter.ofPattern("yyyyMMdd");
@@ -88,6 +88,11 @@ public class VideoCatalogDseDaoQueryProvider implements DseSchema {
         this.entityHelperVideoLatest = helperVideoLatest;
         this.entityHelperVideoUser   = helperVideoUser;
         
+        // Leveraging EntityHelper for insert queries
+        psInsertVideo       = dseSession.prepare(entityHelperVideo.insert().asCql());
+        psInsertVideoLatest = dseSession.prepare(entityHelperVideoLatest.insert().asCql());
+        psInsertVideoUser   = dseSession.prepare(entityHelperVideoUser.insert().asCql());
+        
         psSelectLatestVideoDefault = dseSession.prepare(
                 selectFrom(TABLENAME_LATEST_VIDEO_).all()
                 .where(column(LATESTVIDEOS_COLUMN_YYYYMMDD_).isEqualTo(bindMarker(LATESTVIDEOS_COLUMN_YYYYMMDD_)))
@@ -121,12 +126,12 @@ public class VideoCatalogDseDaoQueryProvider implements DseSchema {
                 "SELECT * FROM " + TABLENAME_USERS_VIDEO_.asInternal() + " " +
                 "WHERE userid = :"+ VIDEOS_COLUMN_USERID_.asInternal() + " " +
                 "AND (added_date, videoid) <= (:"+VIDEOS_COLUMN_ADDED_DATE_+", :"+ LATESTVIDEOS_COLUMN_VIDEOID_+")");
-        
     }
     
     /** Javadoc in {@link VideoCatalogDseDao} */
     public CompletionStage<Void> insertVideoAsync(Video video) {
-        video.setAddedDate(new Date());
+        video.setAddedDate(Instant.now());
+        LOGGER.info("Insert video '{}' : " + video.getName());
         return dseSession.executeAsync(BatchStatement.builder(DefaultBatchType.LOGGED)
                 .addStatement(bind(psInsertVideo,       video,                   entityHelperVideo))
                 .addStatement(bind(psInsertVideoLatest, new LatestVideo(video),  entityHelperVideoLatest))

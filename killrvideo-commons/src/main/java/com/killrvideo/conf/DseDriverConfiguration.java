@@ -1,9 +1,12 @@
 package com.killrvideo.conf;
 
 import java.net.InetSocketAddress;
+import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.tinkerpop.gremlin.structure.util.empty.EmptyGraph;
 import org.slf4j.Logger;
@@ -21,6 +24,9 @@ import com.datastax.dse.driver.internal.core.auth.DsePlainTextAuthProvider;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.ProgrammaticDriverConfigLoaderBuilder;
+import com.evanlennick.retry4j.CallExecutor;
+import com.evanlennick.retry4j.config.RetryConfig;
+import com.evanlennick.retry4j.config.RetryConfigBuilder;
 import com.killrvideo.dse.graph.KillrVideoTraversalSource;
 
 /**
@@ -69,6 +75,9 @@ public class DseDriverConfiguration {
 
     /** Initialize dedicated connection to ETCD system. */
     private static final Logger LOGGER = LoggerFactory.getLogger(DseDriverConfiguration.class);
+    
+    /** Execution Profile. */
+    public static final String EXECUTION_PROFILE_SEARCH = "search";
   
     @Value("#{'${killrvideo.dse.contactPoints}'.split(',')}")
     private List<String> contactPoints;
@@ -76,6 +85,9 @@ public class DseDriverConfiguration {
     @Value("#{environment.KILLRVIDEO_DSE_CONTACT_POINTS}")
     private Optional<String> contactPointsEnvironmentVar;
    
+    @Value("${killrvideo.application.name:killrvideo}")
+    private String applicationName;
+    
     @Value("${killrvideo.dse.port:9042}")
     private int port;
 
@@ -90,9 +102,38 @@ public class DseDriverConfiguration {
 
     @Value("${killrvideo.dse.password}")
     public Optional<String> dsePassword;
-
+    
+    // --- Retries ---
+    
+    @Value("${killrvideo.dse.maxNumberOfTries:50}")
+    protected int maxNumberOfTries;
+    
+    @Value("${killrvideo.dse.delayBetweenTries:5}")
+    protected int delayBetweenTries;
+    
+    // --- Request ---
+    
     @Value("${killrvideo.dse.consistency:LOCAL_QUORUM}")
     protected String consistency;
+    
+    @Value("${killrvideo.dse.timeout:5 seconds}")
+    protected String timeout;
+    
+    // --- Search Request ---
+    
+    @Value("${killrvideo.dse.search.consistency:LOCAL_ONE}")
+    protected String searchConsistency;
+    
+    @Value("${killrvideo.dse.search.timeout:5 seconds}")
+    protected String searchTimeout;
+    
+    // -- Graph --
+    
+    @Value("${killrvideo.dse.graph.timeout:5 seconds}")
+    protected String graphTimeout;
+    
+    @Value("${killrvideo.dse.graph.recommendation.name:5}")
+    protected String graphName;
 
     /**
      * Returns the keyspace to connect to. The keyspace specified here must exist.
@@ -120,16 +161,29 @@ public class DseDriverConfiguration {
      */
     @Bean
     public ProgrammaticDriverConfigLoaderBuilder configLoaderBuilder() {
-        LOGGER.info("Initializing Connection to DSE Cluster");
-        ProgrammaticDriverConfigLoaderBuilder configLoaderBuilder = DseDriverConfigLoader
-                .programmaticBuilder()
-                .withString(DefaultDriverOption.REQUEST_CONSISTENCY, consistency);
+        LOGGER.info("Initializing Connection to Cassandra/Dse Cluster");
+        ProgrammaticDriverConfigLoaderBuilder configLoaderBuilder = DseDriverConfigLoader.programmaticBuilder();
+        
+        // Set BASICS
+        configLoaderBuilder.withString(DefaultDriverOption.REQUEST_TIMEOUT, timeout);
+        configLoaderBuilder.withString(DefaultDriverOption.REQUEST_CONSISTENCY, consistency);
+
+        // Set Search Consistency with a 'Profile'  
+        configLoaderBuilder.withString(KillrvideoDriverOption.SEARCH_CONSISTENCY, searchConsistency);
+        configLoaderBuilder.withString(KillrvideoDriverOption.SEARCH_TIMEOUT, searchTimeout);
+        
+        // Graph
+        configLoaderBuilder.withString(KillrvideoDriverOption.GRAPH_NAME, graphName);
+        configLoaderBuilder.withString(KillrvideoDriverOption.GRAPH_TIMEOUT, graphTimeout);
+        
+        // Authentication
         if (!dseUsername.isEmpty() && !dsePassword.isEmpty()) {
             configLoaderBuilder = configLoaderBuilder
                     .withString(DefaultDriverOption.AUTH_PROVIDER_CLASS, DsePlainTextAuthProvider.class.getName())
                     .withString(DefaultDriverOption.AUTH_PROVIDER_USER_NAME, dseUsername.get())
                     .withString(DefaultDriverOption.AUTH_PROVIDER_PASSWORD, dsePassword.get());
         }
+        
         return configLoaderBuilder;
     }
 
@@ -149,13 +203,21 @@ public class DseDriverConfiguration {
             contactPoints = Arrays.asList(contactPointsEnvironmentVar.get().split(","));
             LOGGER.info(" + Reading contactPoints from KILLRVIDEO_DSE_CONTACT_POINTS");
         }
+        
+        //sessionBuilder.withAuthCredentials(dseUsername.get(), dsePassword.get());
+        //sessionBuilder.withAuthProvider(new DsePlainTextAuthProvider()); 
+        
         LOGGER.info("+ Contact Points {}", contactPoints);
         for (String contactPoint : contactPoints) {
             InetSocketAddress address = InetSocketAddress.createUnresolved(contactPoint, port);
             sessionBuilder = sessionBuilder.addContactPoint(address);
         }
+        LOGGER.info("+ Port '{}'", port);
         LOGGER.info("+ Local Data Center '{}'", localDc);
-        return sessionBuilder.withLocalDatacenter(localDc);
+        sessionBuilder.withLocalDatacenter(localDc);
+        LOGGER.info("+ Application name '{}'", applicationName);
+        sessionBuilder.withApplicationName(applicationName);
+        return sessionBuilder;
     }
 
     /**
@@ -171,9 +233,32 @@ public class DseDriverConfiguration {
     @Bean
     public DseSession session(@NonNull DseSessionBuilder dseSessionBuilder) {
         LOGGER.info("+ KeySpace '{}'", keyspaceName);
-        DseSession session = dseSessionBuilder.withKeyspace(keyspaceName).build();
-        LOGGER.info("[OK] Dse Session established on port: '{}'", port);
-        return session;
+        
+        final AtomicInteger atomicCount = new AtomicInteger(1);
+        Callable<DseSession> connectionToDse = () -> {
+            return dseSessionBuilder.withKeyspace(keyspaceName).build();
+        };
+        
+        RetryConfig config = new RetryConfigBuilder()
+                .retryOnAnyException()
+                .withMaxNumberOfTries(maxNumberOfTries)
+                .withDelayBetweenTries(delayBetweenTries, ChronoUnit.SECONDS)
+                .withFixedBackoff()
+                .build();
+        long top = System.currentTimeMillis();
+        return new CallExecutor<DseSession>(config)
+                .afterFailedTry(s -> { 
+                    LOGGER.info("Attempt #{}/{} failed.. trying in {} seconds, waiting Dse to Start", atomicCount.getAndIncrement(),
+                            maxNumberOfTries,  delayBetweenTries); })
+                .onFailure(s -> {
+                    LOGGER.error("Cannot connection to CLUSTER after {} attempts, exiting", maxNumberOfTries);
+                    System.err.println("Can not conenction to Cluster after " + maxNumberOfTries + " attempts, exiting");
+                    System.exit(500);
+                 })
+                .onSuccess(s -> {   
+                    long timeElapsed = System.currentTimeMillis() - top;
+                    LOGGER.info("[OK] Connection etablished to Cluster in {} millis.", timeElapsed);})
+                .execute(connectionToDse).getResult();
     }
     
     /**

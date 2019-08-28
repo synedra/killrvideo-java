@@ -68,6 +68,7 @@ public class IOUtils {
     }
     
     public static String fromByteBuffer2String(ByteBuffer bb, Charset charset) {
+        if (bb == null) return null;
         byte[] bytes;
         if (bb.hasArray()) {
             bytes = bb.array();

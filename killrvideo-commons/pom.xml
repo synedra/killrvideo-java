@@ -28,6 +28,10 @@
 			<groupId>com.datastax.dse</groupId>
 			<artifactId>dse-java-driver-mapper-runtime</artifactId>
 		</dependency>
+		<dependency>
+		   <groupId>com.evanlennick</groupId>
+		   <artifactId>retry4j</artifactId>
+		</dependency>
 
 		<!-- Spring, inversion of control -->
 		<dependency>

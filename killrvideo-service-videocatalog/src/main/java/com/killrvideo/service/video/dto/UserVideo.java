@@ -1,6 +1,6 @@
 package com.killrvideo.service.video.dto;
 
-import java.util.Date;
+import java.time.Instant;
 import java.util.UUID;
 
 import com.datastax.oss.driver.api.mapper.annotations.CqlName;
@@ -41,14 +41,14 @@ public class UserVideo extends VideoPreview {
     /**
      * Constructor without preview.
      */
-    public UserVideo(UUID userid, UUID videoid, String name, Date addedDate) {
+    public UserVideo(UUID userid, UUID videoid, String name, Instant addedDate) {
         this(userid, videoid, name, null, addedDate);
     }
 
     /**
      * Full set constructor.
      */
-    public UserVideo(UUID userid, UUID videoid, String name, String previewImageLocation, Date addedDate) {
+    public UserVideo(UUID userid, UUID videoid, String name, String previewImageLocation, Instant addedDate) {
         super(name, previewImageLocation, addedDate, videoid);
         this.userid = userid;
     }

@@ -22,6 +22,7 @@ import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.api.mapper.MapperContext;
 import com.datastax.oss.driver.api.mapper.annotations.QueryProvider;
 import com.datastax.oss.driver.api.mapper.entity.EntityHelper;
+import com.killrvideo.conf.DseDriverConfiguration;
 import com.killrvideo.dse.dao.DseSchema;
 import com.killrvideo.dse.dto.ResultListPage;
 import com.killrvideo.dse.dto.Video;
@@ -93,6 +94,9 @@ public class SearchDseDaoQueryProvider implements DseSchema, SearchDseDao {
     /** {@inheritDoc} from {@link SearchDseDao} */
     public CompletionStage<TreeSet<String>> getQuerySuggestionsAsync(String query, int fetchSize) {
         BoundStatement stmt = _bindStmtSuggestedTags(query, fetchSize);
+        // Search required different consistency level as QUORUM.
+        // Only ONE and LOCAL_ONE are available
+        stmt.setExecutionProfileName(DseDriverConfiguration.EXECUTION_PROFILE_SEARCH);
         return dseSession.executeAsync(stmt)
                          .thenApplyAsync(rs -> _mapTagSetAsync(rs, query));
     }
@@ -159,6 +163,7 @@ public class SearchDseDaoQueryProvider implements DseSchema, SearchDseDao {
                 .append(pagingDriverEnd);
         
         BoundStatement stmt = psFindVideosByTags.bind().setString(SOLR_QUERY, solrQuery.toString());
+        stmt.setExecutionProfileName(DseDriverConfiguration.EXECUTION_PROFILE_SEARCH);
         pagingState.ifPresent(x -> stmt.setPagingState(IOUtils.fromString2ByteBuffer(x)));
         stmt.setPageSize(fetchSize);
         LOGGER.debug("Executed query is {} with solr_query: {}", stmt.getPreparedStatement().getQuery(), solrQuery);
@@ -180,6 +185,7 @@ public class SearchDseDaoQueryProvider implements DseSchema, SearchDseDao {
         solrQuery.append(query);
         solrQuery.append("*\", \"paging\":\"driver\"}");
         BoundStatement stmt =  psFindSuggestedTags.bind().setString(SOLR_QUERY, solrQuery.toString());
+        stmt.setExecutionProfileName(DseDriverConfiguration.EXECUTION_PROFILE_SEARCH);
         stmt.setPageSize(fetchSize);
         LOGGER.debug("Executed query is {} with solr_query: {}", stmt.getPreparedStatement().getQuery(), solrQuery);
         return stmt;

@@ -41,7 +41,7 @@ public class SuggestedVideosServiceGrpcMapper {
         // Convert Stub to Dto, dao must not be related to interface GRPC
         Video video = new Video();
         video.setVideoid(UUID.fromString(videoAdded.getVideoId().toString()));
-        video.setAddedDate(GrpcMappingUtils.timestampToDate(videoAdded.getAddedDate()));
+        video.setAddedDate(GrpcMappingUtils.timestampToInstant(videoAdded.getAddedDate()));
         video.setUserid(UUID.fromString(videoAdded.getUserId().toString()));
         video.setName(videoAdded.getName());
         video.setTags(new HashSet<String>(videoAdded.getTagsList()));
@@ -80,7 +80,7 @@ public class SuggestedVideosServiceGrpcMapper {
                 .setVideoId(uuidToUuid(v.getVideoid()))
                 .setUserId(uuidToUuid(v.getUserid()))
                 .setPreviewImageLocation(v.getPreviewImageLocation())
-                .setAddedDate(GrpcMappingUtils.dateToTimestamp(v.getAddedDate()))
+                .setAddedDate(GrpcMappingUtils.instantToTimeStamp(v.getAddedDate()))
                 .build();
     }
     

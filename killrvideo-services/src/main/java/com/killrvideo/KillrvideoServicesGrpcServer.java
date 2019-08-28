@@ -84,37 +84,36 @@ public class KillrvideoServicesGrpcServer {
     
     @PostConstruct
     public void start() throws Exception {
-        LOGGER.info("Initializing Grpc Server...");
-        
+        LOGGER.info("Starting Grpc Server...");
         // Create GRPC server referencing only enabled services
         ServerBuilder<?> builder = ServerBuilder.forPort(grpcPort);
         if (commentServiceEnabled) {
             builder.addService(this.commentService.bindService());
-            LOGGER.info(" + Starting service 'Comment");
+            LOGGER.info(" + Enable service 'Comment");
         }
         if (ratingServiceEnabled) {
             builder.addService(this.ratingService.bindService());
-            LOGGER.info(" + Starting service 'Rating'");
+            LOGGER.info(" + Enable service 'Rating'");
         }
         if (searchServiceEnabled) {
             builder.addService(this.searchService.bindService());
-            LOGGER.info(" + Starting service 'Search'");
+            LOGGER.info(" + Enable service 'Search'");
         }
         if (statisticServiceEnabled) {
             builder.addService(this.statisticsService.bindService());
-            LOGGER.info(" + Starting service 'Statistics'");
+            LOGGER.info(" + Enable service 'Statistics'");
         }
         if (videoCatalogServiceEnabled) {
             builder.addService(this.videoCatalogService.bindService());
-            LOGGER.info(" + Starting service 'VideoCatalog'");
+            LOGGER.info(" + Enable service 'VideoCatalog'");
         }
         if (suggestedVideoServiceEnabled) {
             builder.addService(this.suggestedVideosService.bindService());
-            LOGGER.info(" + Starting service 'SuggestedVideo'");
+            LOGGER.info(" + Enable service 'SuggestedVideo'");
         }
         if (userServiceEnabled) {
             builder.addService(this.userService.bindService());
-            LOGGER.info(" + Service 'User'");
+            LOGGER.info(" + Enable Service 'User'");
         }
         grpcServer = builder.build();
         

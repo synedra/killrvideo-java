@@ -29,7 +29,7 @@ public class MessagingDaoInMemory implements MessagingDao {
     @Override
     public CompletableFuture<Object> sendEvent(String targetDestination, Object event) {
         if (event != null) {
-            LOGGER.info("Publishing eventtype{} to destination {} ", event.getClass().getName(), targetDestination);
+            LOGGER.debug("Publishing '{}' to '{}' ", event.getClass().getSimpleName(), targetDestination);
             eventBus.post(event);
         }
         return CompletableFuture.supplyAsync(() -> { 

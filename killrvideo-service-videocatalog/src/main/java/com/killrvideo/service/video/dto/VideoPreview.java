@@ -1,6 +1,6 @@
 package com.killrvideo.service.video.dto;
 
-import java.util.Date;
+import java.time.Instant;
 import java.util.UUID;
 
 import com.datastax.oss.driver.api.mapper.annotations.ClusteringColumn;
@@ -19,7 +19,7 @@ public abstract class VideoPreview extends AbstractVideo {
     
     @ClusteringColumn
     @CqlName(VIDEOS_COLUMN_ADDED_DATE)
-    private Date addedDate;
+    private Instant addedDate;
 
     @ClusteringColumn(1)
     @CqlName(VIDEOS_COLUMN_VIDEOID)
@@ -33,7 +33,7 @@ public abstract class VideoPreview extends AbstractVideo {
     /**
      * Constructor used by sub entities.
      */
-    protected VideoPreview(String name, String preview, Date addedDate, UUID videoid) {
+    protected VideoPreview(String name, String preview, Instant addedDate, UUID videoid) {
         super(name, preview);
         this.addedDate = addedDate;
         this.videoid   = videoid;
@@ -45,7 +45,7 @@ public abstract class VideoPreview extends AbstractVideo {
      * @return
      *       current value of 'addedDate'
      */
-    public Date getAddedDate() {
+    public Instant getAddedDate() {
         return addedDate;
     }
 
@@ -54,7 +54,7 @@ public abstract class VideoPreview extends AbstractVideo {
      * @param addedDate
      *      new value for 'addedDate '
      */
-    public void setAddedDate(Date addedDate) {
+    public void setAddedDate(Instant addedDate) {
         this.addedDate = addedDate;
     }
 

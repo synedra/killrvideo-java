@@ -1,7 +1,7 @@
 package com.killrvideo.service.user.grpc;
 
-import static com.killrvideo.service.user.grpc.UserManagementServiceGrpcMapper.mapResponseVerifyCredentials;
 import static com.killrvideo.service.user.grpc.UserManagementServiceGrpcMapper.mapUserRequest2User;
+import static com.killrvideo.service.user.grpc.UserManagementServiceGrpcMapper.mapResponseVerifyCredentials;
 import static com.killrvideo.service.user.grpc.UserManagementServiceGrpcValidator.validateGrpcRequest_VerifyCredentials;
 import static com.killrvideo.service.user.grpc.UserManagementServiceGrpcValidator.validateGrpcRequest_createUser;
 import static com.killrvideo.service.user.grpc.UserManagementServiceGrpcValidator.validateGrpcRequest_getUserProfile;
@@ -10,7 +10,6 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 import javax.annotation.PostConstruct;
@@ -27,9 +26,7 @@ import com.datastax.dse.driver.api.core.DseSession;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.google.protobuf.Timestamp;
 import com.killrvideo.messaging.dao.MessagingDao;
-import com.killrvideo.service.user.bootcamp.UserDseDaoBootCamp;
 import com.killrvideo.service.user.dao.UserDseDao;
-import com.killrvideo.service.user.dao.UserDseDaoMapperBuilder;
 import com.killrvideo.service.user.dto.User;
 import com.killrvideo.utils.HashUtils;
 
@@ -58,9 +55,6 @@ public class UserManagementServiceGrpc extends UserManagementServiceImplBase {
     /** Service Definition for Users. */
     private UserDseDao userDseDao;
     
-    @Value("#{environment.KILLRVIDEO_BOOTCAMP}")
-    private Optional<Boolean> bootcampFlagEnvironmentVar;
-    
     @Autowired
     private DseSession dseSession;
     
@@ -76,11 +70,7 @@ public class UserManagementServiceGrpc extends UserManagementServiceImplBase {
     
     @PostConstruct
     public void init() {
-        if (!bootcampFlagEnvironmentVar.isEmpty() && bootcampFlagEnvironmentVar.get()) {
-            userDseDao = new UserDseDaoBootCamp(dseSession);
-        } else {
-            userDseDao = new UserDseDaoMapperBuilder(dseSession).build().userDao(dseKeySpace);
-        }
+        userDseDao = new UserDseDao(dseSession);
     }
     
      /** {@inheritDoc} */

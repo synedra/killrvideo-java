@@ -215,7 +215,7 @@ public class SuggestedVideosGraphDao implements KillrVideoTraversalConstants {
         Vertex u = node.getByKey(VERTEX_USER).asVertex();
         VertexProperty<UUID>    pUserId    = u.property("userid");
         Video video = new Video();
-        video.setAddedDate(Date.from(pAddedDate.value()));
+        video.setAddedDate(pAddedDate.value());
         video.setName(pName.value());
         video.setPreviewImageLocation(pImgLoca.value());
         video.setVideoid(pVideoId.value());

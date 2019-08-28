@@ -12,7 +12,7 @@ public class GrpcConfiguration {
     private Optional<Integer> grpcPortEnvironmentVar;
     
     /** Listening Port for GRPC. */
-    @Value("${killrvideo.grpc-server.port: 50101}")
+    @Value("${killrvideo.grpc-server.port:50101}")
     private int grpcPort;
     
     public int getGrpcPort() {

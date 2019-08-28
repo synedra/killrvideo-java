@@ -1,0 +1,34 @@
+version: '3'
+services:
+
+  studio:  # Datastax Studio provides convenient web interface to work directly with the Apache Cassandra or DataStax Enterprise
+    image: datastax/dse-studio:6.7.0
+    ports:
+      - "9091:9091" # Exposes port to be available externally
+    depends_on:
+      - dse # Needs DSE to be running
+    environment:
+      DS_LICENSE: accept
+
+  dse-config: # One-Time Bootstrap Container, configures DSE to have required keyspaces etc.
+    image: killrvideo/killrvideo-dse-config:3.0.0
+    depends_on:
+      - dse # Needs DSE to be running
+    restart: on-failure # Kompose needs that to create dse-config as a pod, not a deployment. DSE-Config deployment is not needed as we run it only once.
+ 
+  dse: # DataStax Enterprise Database
+    image: datastax/dse-server:6.7.0
+    command: [ -s -g ] # Run with Search and Graph capabilities enabled
+    ports: # Exposes ports to be available. Kompose tool needs that to create a k8s service and make backend available for other services.
+      - "9042:9042" # Exposes DSE port
+      - "8983:8983" # Exposes DSE Search port
+      - "8182:8182" # Exposes DSE Graph port
+    environment:
+      DS_LICENSE: accept # Accept licence on start
+      DC: dc1
+    cap_add:
+      - IPC_LOCK # Allow DSE to lock memory with mlock
+    ulimits:
+      memlock: -1
+
+  

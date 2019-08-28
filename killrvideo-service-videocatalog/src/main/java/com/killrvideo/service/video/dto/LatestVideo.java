@@ -1,5 +1,6 @@
 package com.killrvideo.service.video.dto;
 
+import java.time.Instant;
 import java.util.Date;
 import java.util.UUID;
 
@@ -42,13 +43,13 @@ public class LatestVideo extends VideoPreview {
     public LatestVideo(Video v) {
         super(v.getName(), v.getPreviewImageLocation(), v.getAddedDate(), v.getVideoid());
         this.userid = v.getUserid();
-        this.yyyymmdd = FORMATTER_DAY.format(v.getAddedDate());
+        this.yyyymmdd = FORMATTER_DAY.format(Date.from(v.getAddedDate()));
     }
     
     /**
      * Constructor with all parameters.
      */
-    public LatestVideo(String yyyymmdd, UUID userid, UUID videoid, String name, String previewImageLocation, Date addedDate) {
+    public LatestVideo(String yyyymmdd, UUID userid, UUID videoid, String name, String previewImageLocation, Instant addedDate) {
         super(name, previewImageLocation, addedDate, videoid);
         this.yyyymmdd = yyyymmdd;
         this.userid = userid;

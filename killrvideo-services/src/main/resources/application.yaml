@@ -7,8 +7,9 @@ spring:
       enabled: ALWAYS
   profiles:
    active:
-    #- messaging_kafka
+    # Messaging profiles are exclusive : Enable either messaging_memory or messaging_kafka, not both
     - messaging_memory
+    #- messaging_kafka
     
 # ----------------------------------------------------------------------
 # KillrVideo Backend Services
@@ -35,39 +36,43 @@ killrvideo:
   # DataStax Enterprise
   # ----------------------------------------------------------------------
   dse:
-    # You can override this value by defining env var: §KILLRVIDEO_DSE_CONTACT_POINTSs
+    # You can override this value by defining env var: KILLRVIDEO_DSE_CONTACT_POINTS
     contactPoints: localhost
     port: 9042
     localdc: dc1
     keyspace: killrvideo
     username:
     password:
+    timeout: 5 seconds
     consistency: LOCAL_QUORUM
-    
     maxNumberOfTries: 50
     delayBetweenTries: 5
-    
     ssl:
-      # You can override this value by defining env var: §KILLRVIDEO_ENABLE_SSL
+      # You can override this value by defining env var: KILLRVIDEO_ENABLE_SSL
       enable: false
-      # You can override this value by defining env var: §KILLRVIDEO_SSL_CERTIFICATE
+      # You can override this value by defining env var: KILLRVIDEO_SSL_CERTIFICATE
       CACertFileLocation: cassandra.cert
     search:
+      timeout: 5 seconds
+      consistency: LOCAL_ONE
       ignoredWords: and,or,but,nor,so,for,yet,after,as,till,to,the,at,in,not,now,of,if,this,an,are,all,about,along,by,is,it,on,why,be,can,com,get,out,see,some,new,these,that,thing,things,wish,known,say,they,had,here,like,live,let,do,with,what,when,www,watch,will,http,https,us,you,your,more,his,her,they,them,their,me,we,near,bit,ly,back,meet,know,key,video,various,find,only,from,kind,channel,comments,below,check,right,full,while,gets,up,each,no,buy,a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z
     graph:
-      timeout: 3000
+      timeout: 5 seconds
       recommendation.name: killrvideo_video_recommendations
     mutation-error-log: /tmp/killrvideo-mutation-errors.log
     
   # ----------------------------------------------------------------------
-  # Messaging
+  #   # Used only if profile 'messaging_memory' is enabled
   # ----------------------------------------------------------------------
   messaging.memory:
     minThreads: 5
     maxThreads: 10
     ttlThreads: 60
     queueSize: 1000
-    
+  
+  # ----------------------------------------------------------------------
+  # Used only if profile 'messaging_kafka' is enabled
+  # ----------------------------------------------------------------------  
   kafka:
      brokers: kafka
      port: 8082

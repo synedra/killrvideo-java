@@ -1,6 +1,6 @@
 package com.killrvideo.service.video.grpc;
 
-import static com.killrvideo.grpc.GrpcMappingUtils.dateToTimestamp;
+import static com.killrvideo.grpc.GrpcMappingUtils.instantToTimeStamp;
 import static com.killrvideo.grpc.GrpcMappingUtils.uuidToUuid;
 
 import java.time.Instant;
@@ -53,7 +53,7 @@ public class VideoCatalogServiceGrpcMapper {
      */
     public static VideoPreview mapLatestVideotoVideoPreview(LatestVideo lv) {
         return VideoPreview.newBuilder()
-                .setAddedDate(dateToTimestamp(lv.getAddedDate()))
+                .setAddedDate(instantToTimeStamp(lv.getAddedDate()))
                 .setName(lv.getName())
                 .setPreviewImageLocation(Optional.ofNullable(lv.getPreviewImageLocation()).orElse("N/A"))
                 .setUserId(uuidToUuid(lv.getUserid()))
@@ -76,7 +76,7 @@ public class VideoCatalogServiceGrpcMapper {
      */
     public static VideoPreview mapFromVideotoVideoPreview(Video v) {
         return VideoPreview.newBuilder()
-                .setAddedDate(dateToTimestamp(v.getAddedDate()))
+                .setAddedDate(instantToTimeStamp(v.getAddedDate()))
                 .setName(v.getName())
                 .setPreviewImageLocation(Optional.ofNullable(v.getPreviewImageLocation()).orElse("N/A"))
                 .setUserId(uuidToUuid(v.getUserid()))
@@ -89,7 +89,7 @@ public class VideoCatalogServiceGrpcMapper {
      */
     public static VideoPreview mapFromUserVideotoVideoPreview(UserVideo v) {
         return VideoPreview.newBuilder()
-                .setAddedDate(dateToTimestamp(v.getAddedDate()))
+                .setAddedDate(instantToTimeStamp(v.getAddedDate()))
                 .setName(v.getName())
                 .setPreviewImageLocation(Optional.ofNullable(v.getPreviewImageLocation()).orElse("N/A"))
                 .setUserId(uuidToUuid(v.getUserid()))
@@ -102,7 +102,7 @@ public class VideoCatalogServiceGrpcMapper {
      */
     public static GetVideoResponse mapFromVideotoVideoResponse(Video v) {
         return GetVideoResponse.newBuilder()
-                .setAddedDate(dateToTimestamp(v.getAddedDate()))
+                .setAddedDate(instantToTimeStamp(v.getAddedDate()))
                 .setDescription(v.getDescription())
                 .setLocation(v.getLocation())
                 .setLocationType(VideoLocationType.forNumber(v.getLocationType()))

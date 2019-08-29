@@ -76,12 +76,13 @@ public class CommentDseDaoQueryProvider implements CommentDseDao, DseSchema {
                 .build());
         
         this.psFindCommentsByUserPageable  = dseSession.prepare(
-                selectFrom(TABLENAME_COMMENTS_BY_VIDEO)
+                selectFrom(TABLENAME_COMMENTS_BY_USER_)
                 .column(COMMENTS_COLUMN_USERID).column(COMMENTS_COLUMN_USERID)
                 .column(COMMENTS_COLUMN_VIDEOID).column(COMMENTS_COLUMN_COMMENT)
                 .column(COMMENTS_COLUMN_COMMENTID)
                 .function("toTimestamp", Selector.column(COMMENTS_COLUMN_COMMENTID)).as("comment_timestamp")
-                .where(column(COMMENTS_COLUMN_VIDEOID).isEqualTo(bindMarker(COMMENTS_COLUMN_VIDEOID)))
+                .where(column(COMMENTS_COLUMN_USERID).isEqualTo(bindMarker(COMMENTS_COLUMN_USERID)),
+                       column(COMMENTS_COLUMN_COMMENTID).isLessThanOrEqualTo(bindMarker(COMMENTS_COLUMN_COMMENTID)))
                 .build());
         
         this.psFindCommentsByVideo         = dseSession.prepare(
@@ -185,20 +186,20 @@ public class CommentDseDaoQueryProvider implements CommentDseDao, DseSchema {
      *      statement
      */
     private BoundStatement _buildStatementVideoComments(final QueryCommentByVideo query) {
-        BoundStatement statement = null;
+        BoundStatement bs = null;
         if (query.getCommentId().isPresent()) {
-            statement = psFindCommentsByVideoPageable.bind()
+            bs = psFindCommentsByVideoPageable.bind()
                         .setUuid(COMMENTS_COLUMN_VIDEOID, query.getVideoId())
                         .setUuid(COMMENTS_COLUMN_COMMENTID, query.getCommentId().get());
         } else {
-            statement = psFindCommentsByVideo.bind()
+            bs = psFindCommentsByVideo.bind()
                         .setUuid(COMMENTS_COLUMN_VIDEOID, query.getVideoId());
         }
         if (query.getPageState().isPresent() && query.getPageState().get().length() > 0) {
-            statement.setPagingState(ByteBuffer.wrap(query.getPageState().get().getBytes()));
+            bs = bs.setPagingState(ByteBuffer.wrap(query.getPageState().get().getBytes()));
         }
-        statement.setPageSize(query.getPageSize());
-        return statement;
+        bs = bs.setPageSize(query.getPageSize());
+        return bs;
     }
     
     /**
@@ -217,20 +218,20 @@ public class CommentDseDaoQueryProvider implements CommentDseDao, DseSchema {
      *      statement to retrieve comments
      */
     private BoundStatement _buildStatementUserComments(final QueryCommentByUser query) {
-        BoundStatement statement = null;
+        BoundStatement bs = null;
         if (query.getCommentId().isPresent()) {
-            statement = psFindCommentsByUserPageable.bind()
+            bs = psFindCommentsByUserPageable.bind()
                         .setUuid(COMMENTS_COLUMN_USERID, query.getUserId())
                         .setUuid(COMMENTS_COLUMN_COMMENTID, query.getCommentId().get());
         } else {
-            statement = psFindCommentsByUser.bind()
+            bs = psFindCommentsByUser.bind()
                         .setUuid(COMMENTS_COLUMN_USERID, query.getUserId());
         }
         if (query.getPageState().isPresent() && query.getPageState().get().length() > 0) {
-            statement.setPagingState(ByteBuffer.wrap(query.getPageState().get().getBytes()));
+            bs = bs.setPagingState(ByteBuffer.wrap(query.getPageState().get().getBytes()));
         }
-        statement.setPageSize(query.getPageSize());
-        return statement;
+        bs = bs.setPageSize(query.getPageSize());
+        return bs;
     }
     
     private BatchStatement _buildStatementInsertComment(Comment comment) {

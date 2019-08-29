@@ -168,21 +168,16 @@ public class DseDriverConfiguration {
         configLoaderBuilder.withString(DefaultDriverOption.REQUEST_TIMEOUT, timeout);
         configLoaderBuilder.withString(DefaultDriverOption.REQUEST_CONSISTENCY, consistency);
 
-        // Set Search Consistency with a 'Profile'  
-        configLoaderBuilder.withString(KillrvideoDriverOption.SEARCH_CONSISTENCY, searchConsistency);
-        configLoaderBuilder.withString(KillrvideoDriverOption.SEARCH_TIMEOUT, searchTimeout);
+        // Set Search Consistency with a 'Profile'
+        configLoaderBuilder
+         .startProfile(EXECUTION_PROFILE_SEARCH)
+           .withString(DefaultDriverOption.REQUEST_CONSISTENCY, searchConsistency)
+           .withString(DefaultDriverOption.REQUEST_TIMEOUT, searchTimeout)
+         .endProfile();
         
         // Graph
         configLoaderBuilder.withString(KillrvideoDriverOption.GRAPH_NAME, graphName);
         configLoaderBuilder.withString(KillrvideoDriverOption.GRAPH_TIMEOUT, graphTimeout);
-        
-        // Authentication
-        if (!dseUsername.isEmpty() && !dsePassword.isEmpty()) {
-            configLoaderBuilder = configLoaderBuilder
-                    .withString(DefaultDriverOption.AUTH_PROVIDER_CLASS, DsePlainTextAuthProvider.class.getName())
-                    .withString(DefaultDriverOption.AUTH_PROVIDER_USER_NAME, dseUsername.get())
-                    .withString(DefaultDriverOption.AUTH_PROVIDER_PASSWORD, dsePassword.get());
-        }
         
         return configLoaderBuilder;
     }
@@ -204,8 +199,18 @@ public class DseDriverConfiguration {
             LOGGER.info(" + Reading contactPoints from KILLRVIDEO_DSE_CONTACT_POINTS");
         }
         
-        //sessionBuilder.withAuthCredentials(dseUsername.get(), dsePassword.get());
-        //sessionBuilder.withAuthProvider(new DsePlainTextAuthProvider()); 
+        // @Since 2.2
+        // Authentication
+        if (!dseUsername.isEmpty() && !dsePassword.isEmpty()) {
+            sessionBuilder.withAuthCredentials(dseUsername.get(), dsePassword.get());
+            //configLoaderBuilder = configLoaderBuilder
+            //        .withString(DefaultDriverOption.AUTH_PROVIDER_CLASS, DsePlainTextAuthProvider.class.getName())
+            //        .withString(DefaultDriverOption.AUTH_PROVIDER_USER_NAME, dseUsername.get())
+            //        .withString(DefaultDriverOption.AUTH_PROVIDER_PASSWORD, dsePassword.get());
+        }
+        
+        // Caas on Constellation
+        //sessionBuilder.withCloudSecureConnectBundle("constellation-jar-file");
         
         LOGGER.info("+ Contact Points {}", contactPoints);
         for (String contactPoint : contactPoints) {
@@ -248,10 +253,10 @@ public class DseDriverConfiguration {
         long top = System.currentTimeMillis();
         return new CallExecutor<DseSession>(config)
                 .afterFailedTry(s -> { 
-                    LOGGER.info("Attempt #{}/{} failed.. trying in {} seconds, waiting Dse to Start", atomicCount.getAndIncrement(),
+                    LOGGER.info("Attempt #{}/{} [KO] -> waiting {} seconds for Cluster to start", atomicCount.getAndIncrement(),
                             maxNumberOfTries,  delayBetweenTries); })
                 .onFailure(s -> {
-                    LOGGER.error("Cannot connection to CLUSTER after {} attempts, exiting", maxNumberOfTries);
+                    LOGGER.error("Cannot connection to Cluster after {} attempts, exiting", maxNumberOfTries);
                     System.err.println("Can not conenction to Cluster after " + maxNumberOfTries + " attempts, exiting");
                     System.exit(500);
                  })

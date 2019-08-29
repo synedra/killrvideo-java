@@ -193,6 +193,7 @@ public class VideoCatalogServiceGrpc extends VideoCatalogServiceImplBase {
             LatestVideosPage returnedPage = 
                     videoCatalogDao.getLatestVideoPreviews(pageState, pageSize, startDate, startVideoId);
             traceSuccess("getLatestVideoPreviews", starts);
+            
             grpcResObserver.onNext(mapLatestVideoToGrpcResponse(returnedPage));
             grpcResObserver.onCompleted();
         } catch(Exception error) {

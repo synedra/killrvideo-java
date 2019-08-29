@@ -201,13 +201,15 @@ public class VideoCatalogDseDaoQueryProvider implements DseSchema {
               bsSelectLatestVideo = psSelectLatestVideoDefault.bind()
                        .setString(LATESTVIDEOS_COLUMN_YYYYMMDD_, cpState.getCurrentBucketValue());
           }
-          LOGGER.debug("searchLatestVideo query: {}", bsSelectLatestVideo.getPreparedStatement().getQuery());
-          bsSelectLatestVideo.setPageSize(pageSize);
-          pagingState.ifPresent(x -> {
-              bsSelectLatestVideo.setPagingState(IOUtils.fromString2ByteBuffer(x));
+          LOGGER.debug("searchLatestVideo query: {} with {} ", 
+                  bsSelectLatestVideo.getPreparedStatement().getQuery(),
+                  cpState.getCurrentBucketValue());
+          bsSelectLatestVideo = bsSelectLatestVideo.setPageSize(pageSize);
+          if (pagingState.isPresent()) {
+              bsSelectLatestVideo = bsSelectLatestVideo.setPagingState(IOUtils.fromString2ByteBuffer(pagingState.get()));
               isCassandraPageState.compareAndSet(false, true);
-              LOGGER.debug("searchLatestVideo pagingState:{}", x);
-          });
+              LOGGER.debug("searchLatestVideo pagingState:{}", pagingState.get());
+          };
           
           // (3) - Execute Query Asynchronously
           LatestVideosPage currentPage = new LatestVideosPage();

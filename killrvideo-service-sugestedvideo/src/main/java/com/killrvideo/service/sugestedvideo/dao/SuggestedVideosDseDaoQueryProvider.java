@@ -22,6 +22,7 @@ import com.datastax.oss.driver.api.core.cql.PreparedStatement;
 import com.datastax.oss.driver.api.mapper.MapperContext;
 import com.datastax.oss.driver.api.mapper.annotations.QueryProvider;
 import com.datastax.oss.driver.api.mapper.entity.EntityHelper;
+import com.killrvideo.conf.DseDriverConfiguration;
 import com.killrvideo.dse.dao.DseSchema;
 import com.killrvideo.dse.dto.ResultListPage;
 import com.killrvideo.dse.dto.Video;
@@ -70,15 +71,21 @@ public class SuggestedVideosDseDaoQueryProvider implements DseSchema {
                 .where(column(SOLR_QUERY).isEqualTo(bindMarker(SOLR_QUERY))).build());
     }
     
+    public CompletionStage<Video> findVideoById(UUID videoId) {
+        BoundStatement bs = psSelectVideoById.bind().setUuid(COLUMN_PLAYBACK_VIDEOID_, videoId);
+        LOGGER.debug("Find video by its id {} in table 'videos'", videoId);
+        return dseSession.executeAsync(bs)
+                         .thenApply(ars -> ars.map(entityHelperVideo::get).currentPage().iterator().next());
+    }
+    
     /** {@inheritDoc} from {@link SuggestedVideosDseDao} */
     public CompletionStage< ResultListPage<Video> > getRelatedVideos(
             UUID videoId, int fetchSize, Optional<String> pagingState, Set < String> ignoredWords) {
-        return dseSession
-                  .executeAsync(psSelectVideoById.bind(COLUMN_PLAYBACK_VIDEOID_, videoId))
-                  .thenApply(ars -> ars.map(entityHelperVideo::get).currentPage().iterator().next())
-                  .thenCompose(video -> dseSession.executeAsync(_bindStmtSearchVideos(video, fetchSize, pagingState, ignoredWords)))
-                  .thenApply(ars -> ars.map(entityHelperVideo::get))
-                  .thenApply(ResultListPage::new);
+        LOGGER.debug("Find videos related to id {}", videoId);
+        return this.findVideoById(videoId)
+                   .thenCompose(video -> dseSession.executeAsync(_bindStmtSearchVideos(video, fetchSize, pagingState, ignoredWords)))
+                   .thenApply(ars -> ars.map(entityHelperVideo::get))
+                   .thenApply(ResultListPage::new);
     }
     
     /**
@@ -113,9 +120,13 @@ public class SuggestedVideosDseDaoQueryProvider implements DseSchema {
         solrQuery.append("tags:(").append(delimitedTermList).append(")^4").append(space);
         solrQuery.append("description:").append(delimitedTermList);
         solrQuery.append(pagingDriverEnd);
-        BoundStatement stmt = psSearchRelatedVideos.bind().setString(SOLR_QUERY, solrQuery.toString());
-        pagingState.ifPresent(x -> stmt.setPagingState(IOUtils.fromString2ByteBuffer(x)));
-        stmt.setPageSize(fetchSize);
+        BoundStatement stmt = psSearchRelatedVideos.bind()
+                    .setString(SOLR_QUERY, solrQuery.toString())
+                    .setPageSize(fetchSize)
+                    .setExecutionProfileName(DseDriverConfiguration.EXECUTION_PROFILE_SEARCH);
+        if (pagingState.isPresent()) {
+            stmt = stmt.setPagingState(IOUtils.fromString2ByteBuffer(pagingState.get()));
+        }
         return stmt;
     }
 

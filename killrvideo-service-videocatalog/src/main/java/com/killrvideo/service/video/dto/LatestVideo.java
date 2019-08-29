@@ -26,7 +26,7 @@ public class LatestVideo extends VideoPreview {
     @CqlName(LATESTVIDEOS_COLUMN_YYYYMMDD)
     private String yyyymmdd;
 
-    @CqlName(LATESTVIDEOS_COLUMN_VIDEOID)
+    @CqlName(LATESTVIDEOS_COLUMN_USERID)
     private UUID userid;
 
     /**

@@ -11,12 +11,9 @@ import edu.umd.cs.findbugs.annotations.NonNull;
  */
 public enum KillrvideoDriverOption implements DriverOption {
     
-    SEARCH_CONSISTENCY("profiles."+ DseDriverConfiguration.EXECUTION_PROFILE_SEARCH + ".basic.request.consistency"),
-    SEARCH_TIMEOUT("profiles."+     DseDriverConfiguration.EXECUTION_PROFILE_SEARCH + ".basic.request.timeout"),
-    
     GRAPH_NAME("basic.graph.name"),
     GRAPH_TIMEOUT("basic.graph.timeout"),
-    
+
     ;
     
     private final String path;

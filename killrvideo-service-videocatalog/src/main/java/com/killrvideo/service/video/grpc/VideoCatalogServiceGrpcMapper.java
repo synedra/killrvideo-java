@@ -52,13 +52,17 @@ public class VideoCatalogServiceGrpcMapper {
      * Mapping to GRPC generated classes.
      */
     public static VideoPreview mapLatestVideotoVideoPreview(LatestVideo lv) {
-        return VideoPreview.newBuilder()
+        VideoPreview.Builder builder = VideoPreview.newBuilder()
                 .setAddedDate(instantToTimeStamp(lv.getAddedDate()))
                 .setName(lv.getName())
-                .setPreviewImageLocation(Optional.ofNullable(lv.getPreviewImageLocation()).orElse("N/A"))
-                .setUserId(uuidToUuid(lv.getUserid()))
-                .setVideoId(uuidToUuid(lv.getVideoid()))
-                .build();
+                .setPreviewImageLocation(Optional.ofNullable(lv.getPreviewImageLocation()).orElse("N/A"));
+        if (null != lv.getUserid()) {
+            builder.setUserId(uuidToUuid(lv.getUserid()));
+        }
+        if (null != lv.getVideoid()) {
+            builder.setVideoId(uuidToUuid(lv.getVideoid()));
+        }
+        return builder.build();
     }
     
     public static GetLatestVideoPreviewsResponse mapLatestVideoToGrpcResponse(LatestVideosPage returnedPage) {

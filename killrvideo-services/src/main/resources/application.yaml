@@ -43,6 +43,7 @@ killrvideo:
     keyspace: killrvideo
     username:
     password:
+    
     timeout: 5 seconds
     consistency: LOCAL_QUORUM
     maxNumberOfTries: 50

@@ -94,9 +94,6 @@ public class SearchDseDaoQueryProvider implements DseSchema, SearchDseDao {
     /** {@inheritDoc} from {@link SearchDseDao} */
     public CompletionStage<TreeSet<String>> getQuerySuggestionsAsync(String query, int fetchSize) {
         BoundStatement stmt = _bindStmtSuggestedTags(query, fetchSize);
-        // Search required different consistency level as QUORUM.
-        // Only ONE and LOCAL_ONE are available
-        stmt.setExecutionProfileName(DseDriverConfiguration.EXECUTION_PROFILE_SEARCH);
         return dseSession.executeAsync(stmt)
                          .thenApplyAsync(rs -> _mapTagSetAsync(rs, query));
     }
@@ -162,11 +159,15 @@ public class SearchDseDaoQueryProvider implements DseSchema, SearchDseDao {
                 .append("description:(").append(requestQuery).append("*)")
                 .append(pagingDriverEnd);
         
-        BoundStatement stmt = psFindVideosByTags.bind().setString(SOLR_QUERY, solrQuery.toString());
-        stmt.setExecutionProfileName(DseDriverConfiguration.EXECUTION_PROFILE_SEARCH);
-        pagingState.ifPresent(x -> stmt.setPagingState(IOUtils.fromString2ByteBuffer(x)));
-        stmt.setPageSize(fetchSize);
-        LOGGER.debug("Executed query is {} with solr_query: {}", stmt.getPreparedStatement().getQuery(), solrQuery);
+        BoundStatement stmt = psFindVideosByTags.bind()
+                    .setString(SOLR_QUERY, solrQuery.toString())
+                    .setPageSize(fetchSize)
+                    .setExecutionProfileName(DseDriverConfiguration.EXECUTION_PROFILE_SEARCH);
+        if (pagingState.isPresent()) {
+            stmt = stmt.setPagingState(IOUtils.fromString2ByteBuffer(pagingState.get()));
+        }
+        LOGGER.debug("searchVideos() executed query is : " + stmt.getPreparedStatement().getQuery());
+        LOGGER.debug("searchVideos() solr_query ? is : "   + solrQuery);
         return stmt;
     }
     
@@ -180,14 +181,20 @@ public class SearchDseDaoQueryProvider implements DseSchema, SearchDseDao {
      * https://docs.datastax.com/en/dse/5.1/dse-dev/datastax_enterprise/search/cursorsDeepPaging.html#cursorsDeepPaging__srchCursorCQL
      */
     private BoundStatement _bindStmtSuggestedTags(String query, int fetchSize) {
-        final StringBuilder solrQuery = new StringBuilder();
-        solrQuery.append("{\"q\":\"search_suggestions:");
-        solrQuery.append(query);
-        solrQuery.append("*\", \"paging\":\"driver\"}");
-        BoundStatement stmt =  psFindSuggestedTags.bind().setString(SOLR_QUERY, solrQuery.toString());
-        stmt.setExecutionProfileName(DseDriverConfiguration.EXECUTION_PROFILE_SEARCH);
-        stmt.setPageSize(fetchSize);
-        LOGGER.debug("Executed query is {} with solr_query: {}", stmt.getPreparedStatement().getQuery(), solrQuery);
+        
+        final StringBuilder solrQuery = new StringBuilder()
+                 .append(pagingDriverStart)
+                 .append("name:(").append(query).append("*) OR ")
+                 .append("tags:(").append(query).append("*) OR ")
+                 .append("description:(").append(query).append("*)")
+                 .append(pagingDriverEnd);        
+        LOGGER.debug("getQuerySuggestions() solr_query is : {}", solrQuery.toString());
+        
+        BoundStatement stmt =  psFindSuggestedTags.bind()
+                .setString(SOLR_QUERY, solrQuery.toString())
+                .setPageSize(fetchSize)
+                .setExecutionProfileName(DseDriverConfiguration.EXECUTION_PROFILE_SEARCH);
+        LOGGER.debug("getQuerySuggestions() full query is : {}", stmt.getPreparedStatement().getQuery());
         return stmt;
     }
     

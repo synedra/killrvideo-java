@@ -19,17 +19,22 @@ import com.killrvideo.dse.dto.Video;
 @Dao
 public interface SuggestedVideosDseDao {
     
+    @Select
+    CompletionStage<Video> findVideo(UUID videoId);
+    
     /**
-     * Retrieve a record in table 'video' based on its PRIMARY KEY
+     * Retrieve a record in table 'video' based on its PRIMARY KEY. Use query provider
+     * as use in second query as well.
      *
      * @param videoId
      *      unique video identifier
      * @return
      *      expected bean
      */
-    @Select
+    @QueryProvider(providerClass = SuggestedVideosDseDaoQueryProvider.class, 
+                   entityHelpers = {Video.class})
     CompletionStage<Video> findVideoById(UUID videoId);
-   
+    
     /**
      * List related videos based on tag search.
      * 
@@ -42,7 +47,9 @@ public interface SuggestedVideosDseDao {
      * @return
      *      list of video
      */
-    @QueryProvider(providerClass = SuggestedVideosDseDaoQueryProvider.class, entityHelpers = {Video.class})
+    @QueryProvider(
+            providerClass = SuggestedVideosDseDaoQueryProvider.class, 
+            entityHelpers = {Video.class})
     CompletionStage< ResultListPage<Video> > getRelatedVideos(
             UUID videoId, 
             int fetchSize, 

@@ -73,9 +73,12 @@ public interface DseSchema {
     String TABLENAME_LATEST_VIDEO               = "latest_videos";
     String LATESTVIDEOS_COLUMN_YYYYMMDD         = "yyyymmdd";
     String LATESTVIDEOS_COLUMN_VIDEOID          = "videoid";
+    String LATESTVIDEOS_COLUMN_USERID           = "userid";
     CqlIdentifier TABLENAME_LATEST_VIDEO_       = CqlIdentifier.fromCql(TABLENAME_LATEST_VIDEO);
     CqlIdentifier LATESTVIDEOS_COLUMN_YYYYMMDD_ = CqlIdentifier.fromCql(LATESTVIDEOS_COLUMN_YYYYMMDD);
     CqlIdentifier LATESTVIDEOS_COLUMN_VIDEOID_  = CqlIdentifier.fromCql(LATESTVIDEOS_COLUMN_VIDEOID);
+    CqlIdentifier LATESTVIDEOS_COLUMN_USERID_   = CqlIdentifier.fromCql(LATESTVIDEOS_COLUMN_USERID);
+    
     
     // comments_by_video + comments_by_user
     String TABLENAME_COMMENTS_BY_USER           = "comments_by_user";

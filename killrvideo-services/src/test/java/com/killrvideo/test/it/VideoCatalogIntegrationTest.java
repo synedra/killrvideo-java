@@ -2,14 +2,15 @@ package com.killrvideo.test.it;
 
 import com.killrvideo.KillrvideoServicesGrpcClient;
 
-import killrvideo.user_management.UserManagementServiceOuterClass.VerifyCredentialsRequest;
-import killrvideo.user_management.UserManagementServiceOuterClass.VerifyCredentialsResponse;
+import killrvideo.video_catalog.VideoCatalogServiceOuterClass.GetLatestVideoPreviewsRequest;
+import killrvideo.video_catalog.VideoCatalogServiceOuterClass.GetLatestVideoPreviewsResponse;
 
 public class VideoCatalogIntegrationTest {
     
-    public static void main(String[] args) {
-        KillrvideoServicesGrpcClient client = 
-                new KillrvideoServicesGrpcClient("localhost", 8899);
+    public static void main(String[] args) throws Exception {
+        
+        KillrvideoServicesGrpcClient client = new KillrvideoServicesGrpcClient("localhost", 50101);
+        callLastestVideos(client);
         
         /*
         SubmitYouTubeVideoRequest myNewVideoYoutube = SubmitYouTubeVideoRequest.newBuilder()
@@ -21,7 +22,7 @@ public class VideoCatalogIntegrationTest {
                 .setYouTubeVideoId("EBMriswzd94")
                 .build();
         client.videoCatalogServiceGrpcClient.submitYouTubeVideo(myNewVideoYoutube);
-        */
+       
         
         VerifyCredentialsRequest creRequest = VerifyCredentialsRequest.newBuilder()
                 .setEmail("a.a@a.com")
@@ -30,8 +31,18 @@ public class VideoCatalogIntegrationTest {
                
         VerifyCredentialsResponse res = client.userServiceGrpcClient.verifyCredentials(creRequest);
         System.out.println(res.getUserId());
+        */
         
-        
+    }
+    
+    private static void callLastestVideos(KillrvideoServicesGrpcClient client)
+    throws Exception {
+        GetLatestVideoPreviewsRequest req = GetLatestVideoPreviewsRequest.newBuilder()
+                .setPageSize(8)
+                .build();
+        GetLatestVideoPreviewsResponse res = client.videoCatalogServiceGrpcClient.getLatestVideoPreviews(req);
+        Thread.sleep(1000);
+        System.out.println(res.getVideoPreviewsList());
     }
 
 }

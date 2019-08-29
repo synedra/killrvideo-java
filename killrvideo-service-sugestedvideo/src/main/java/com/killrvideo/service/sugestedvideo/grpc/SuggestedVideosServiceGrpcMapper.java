@@ -34,8 +34,7 @@ public class SuggestedVideosServiceGrpcMapper {
     /**
      * Hide constructor of utility class.
      */
-    private SuggestedVideosServiceGrpcMapper() {
-    }
+    private SuggestedVideosServiceGrpcMapper() {}
     
     public static Video mapVideoAddedtoVideoDTO(YouTubeVideoAdded videoAdded) {
         // Convert Stub to Dto, dao must not be related to interface GRPC

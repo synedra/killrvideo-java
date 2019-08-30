@@ -44,7 +44,7 @@ public class ServiceDiscoveryDaoStatic implements ServiceDiscoveryDao {
     
     @Value("${killrvideo.discovery.static.cassandra.contactPoints}")
     private String cassandraContactPoints;
-    @Value("#{environment.KILLRVIDEO_DSE_CONTACTPOINTS}")
+    @Value("#{environment.KILLRVIDEO_DSE_CONTACT_POINTS}")
     private Optional<String> cassandraContactPointsEnvVar;
    
     /** {@inheritDoc} */
@@ -65,7 +65,7 @@ public class ServiceDiscoveryDaoStatic implements ServiceDiscoveryDao {
         	// Better than default spring : simpler
         	if (!cassandraContactPointsEnvVar.isEmpty() && !cassandraContactPointsEnvVar.get().isBlank()) {
         		cassandraContactPoints = cassandraContactPointsEnvVar.get();
-        		LOGGER.info(" + Reading contactPoints from KILLRVIDEO_DSE_CONTACTPOINTS");
+        		LOGGER.info(" + Reading contactPoints from KILLRVIDEO_DSE_CONTACT_POINTS");
         	}
         	Arrays.asList(cassandraContactPoints.split(","))
         	      .stream()

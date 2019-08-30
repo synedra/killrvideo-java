@@ -84,7 +84,7 @@ killrvideo:
       kafka: 
         brokers: kafka
         port: 8082
-      # You can override this value by defining env var: §KILLRVIDEO_DSE_CONTACTPOINTS
+      # You can override this value by defining env var: §KILLRVIDEO_DSE_CONTACT_POINTS
       cassandra:
         contactPoints: dse
         port: 9042

@@ -40,8 +40,8 @@ killrvideo:
   cassandra:
     clustername: killrvideo
     mutation-error-log: /tmp/killrvideo-mutation-errors.log
-    maxNumberOfTries: 10
-    delayBetweenTries: 2
+    maxNumberOfTries: 50
+    delayBetweenTries: 5
   
   ssl:
     # You can override this value by defining env var: §KILLRVIDEO_ENABLE_SSL
@@ -86,7 +86,7 @@ killrvideo:
         port: 8082
       # You can override this value by defining env var: §KILLRVIDEO_DSE_CONTACT_POINTS
       cassandra:
-        contactPoints: dse
+        contactPoints: localhost
         port: 9042
 
   ############################################################################################

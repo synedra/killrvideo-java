@@ -147,12 +147,14 @@ public class SearchDseDao extends DseDaoSupport {
      * https://docs.datastax.com/en/dse/5.1/dse-dev/datastax_enterprise/search/cursorsDeepPaging.html#cursorsDeepPaging__srchCursorCQL
      */
     private BoundStatement createStatementToQuerySuggestions(String query, int fetchSize) {
-        
-        final StringBuilder solrQuery = new StringBuilder();
-        solrQuery.append("{\"q\":\"search_suggestions:");
-        solrQuery.append(query);
-        solrQuery.append("*\", \"paging\":\"driver\"}");
-
+        final StringBuilder solrQuery = new StringBuilder()
+                .append(pagingDriverStart)
+                .append("name:(").append(query).append("*) OR ")
+                .append("tags:(").append(query).append("*) OR ")
+                .append("description:(").append(query).append("*)")
+                .append(pagingDriverEnd);    
+       LOGGER.debug("getQuerySuggestions() solr_query is : {}", solrQuery.toString());
+      
         BoundStatement stmt = findSuggestedTags.bind().setString("solr_query", solrQuery.toString());
         stmt.setFetchSize(fetchSize);
         LOGGER.debug("getQuerySuggestions: {} with solr_query: {}", stmt.preparedStatement().getQueryString(), solrQuery);

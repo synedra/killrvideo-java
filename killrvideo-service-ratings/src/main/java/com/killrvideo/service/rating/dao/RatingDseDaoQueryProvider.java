@@ -51,7 +51,7 @@ public class RatingDseDaoQueryProvider implements DseSchema {
         this.entityHelperVideoRatingByUser = helperVideoByUser;
         this.psInsertVideoRatingsByUser    = dseSession.prepare(helperVideoByUser.insert().asCql());
         this.psIncVideoRatingsCounters = dseSession.prepare(update(TABLENAME_VIDEO_RATINGS)
-                .increment(RATING_COLUMN_RATING_COUNTER_, QueryBuilder.bindMarker(RATING_COLUMN_RATING_COUNTER_))
+                .increment(RATING_COLUMN_RATING_COUNTER_)
                 .increment(RATING_COLUMN_RATING_TOTAL_, QueryBuilder.bindMarker(RATING_COLUMN_RATING_TOTAL_))
                 .where(column(RATING_COLUMN_VIDEOID_).isEqualTo(bindMarker(RATING_COLUMN_VIDEOID_)))
                 .build());
@@ -63,7 +63,7 @@ public class RatingDseDaoQueryProvider implements DseSchema {
                    // (1) Increments counters in video_ratings
                   .executeAsync(psIncVideoRatingsCounters
                     .bind()
-                    .setLong(RATING_COLUMN_RATING_COUNTER_, rating)
+                    .setLong(RATING_COLUMN_RATING_TOTAL_, rating)
                     .setUuid(RATING_COLUMN_VIDEOID_, videoId))
                    // (2) Then, add record in video_ratings_by_user
                   .thenApply(rs -> dseSession.executeAsync(

@@ -35,7 +35,8 @@ public interface MessagingDao {
      * @param t
      */
     default CompletableFuture<Object> sendErrorEvent(String serviceName, Throwable t) {
-        return sendEvent(getErrorDestination(), MessagingUtils.mapError(t));
+        return sendEvent(getErrorDestination(), MessagingUtils.mapError(t));  
+        
     }
    
     /**

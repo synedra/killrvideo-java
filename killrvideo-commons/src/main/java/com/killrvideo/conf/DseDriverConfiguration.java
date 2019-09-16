@@ -276,6 +276,7 @@ public class DseDriverConfiguration {
      */
     @Bean
     public KillrVideoTraversalSource initializeGraphTraversalSource(DseSession dseSession) {
+        System.out.println(dseSession.getMetadata().getNodes().values().iterator().next().getExtras().get("DSE_WORKLOADS"));
         return EmptyGraph.instance().traversal(KillrVideoTraversalSource.class);
         //return new KillrVideoTraversalSource(DseGraph.g.getGraph());
     }

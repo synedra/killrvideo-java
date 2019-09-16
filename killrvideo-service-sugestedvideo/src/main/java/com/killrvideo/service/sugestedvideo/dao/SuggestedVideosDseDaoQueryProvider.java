@@ -22,11 +22,11 @@ import com.datastax.oss.driver.api.core.cql.PreparedStatement;
 import com.datastax.oss.driver.api.mapper.MapperContext;
 import com.datastax.oss.driver.api.mapper.annotations.QueryProvider;
 import com.datastax.oss.driver.api.mapper.entity.EntityHelper;
+import com.datastax.oss.protocol.internal.util.Bytes;
 import com.killrvideo.conf.DseDriverConfiguration;
 import com.killrvideo.dse.dao.DseSchema;
 import com.killrvideo.dse.dto.ResultListPage;
 import com.killrvideo.dse.dto.Video;
-import com.killrvideo.utils.IOUtils;
 
 /**
  * Implementation of specific queries for {@link SuggestedVideosDseDaos} interface.
@@ -125,9 +125,8 @@ public class SuggestedVideosDseDaoQueryProvider implements DseSchema {
                     .setPageSize(fetchSize)
                     .setExecutionProfileName(DseDriverConfiguration.EXECUTION_PROFILE_SEARCH);
         if (pagingState.isPresent()) {
-            stmt = stmt.setPagingState(IOUtils.fromString2ByteBuffer(pagingState.get()));
+            stmt = stmt.setPagingState(Bytes.fromHexString(pagingState.get()));
         }
         return stmt;
     }
-
 }

@@ -9,7 +9,7 @@ import java.util.stream.IntStream;
 
 import com.datastax.oss.driver.api.core.MappedAsyncPagingIterable;
 import com.datastax.oss.driver.api.core.PagingIterable;
-import com.killrvideo.utils.IOUtils;
+import com.datastax.oss.protocol.internal.util.Bytes;
 
 /**
  * Ease usage of the paginState.
@@ -40,12 +40,13 @@ public class ResultListPage < ENTITY > {
     public ResultListPage(PagingIterable<ENTITY> rs) {
         if (null != rs) {
             Iterator<ENTITY> iterResults = rs.iterator();
-            // rs.getAvailableWithoutFetching() all to parse only current page without fecthing all
             IntStream.range(0, rs.getAvailableWithoutFetching())
                      .forEach(item -> listOfResults.add(iterResults.next()));
             if (null != rs.getExecutionInfo().getPagingState()) {
                 ByteBuffer pagingState = rs.getExecutionInfo().getPagingState();
-                nextPage = Optional.ofNullable(IOUtils.fromByteBuffer2String(pagingState));
+                if (pagingState != null && pagingState.hasArray()) {
+                    nextPage = Optional.ofNullable(Bytes.toHexString(pagingState));
+                }
             }
         }
     }
@@ -54,7 +55,9 @@ public class ResultListPage < ENTITY > {
         if (null != rs) {
            rs.currentPage().forEach(listOfResults::add);
            ByteBuffer pagingState = rs.getExecutionInfo().getPagingState();
-           nextPage = Optional.ofNullable(IOUtils.fromByteBuffer2String(pagingState));
+           if (pagingState != null && pagingState.hasArray()) {
+               nextPage = Optional.ofNullable(Bytes.toHexString(pagingState));
+           }
         }
     }
     

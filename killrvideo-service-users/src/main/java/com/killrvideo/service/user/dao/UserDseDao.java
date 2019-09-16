@@ -153,7 +153,7 @@ public class UserDseDao {
 
         return resultInsertUser.thenAccept(rs -> {
             if (rs != null && !rs.wasApplied()) {
-                String errMsg = "Error Cannot insert user";
+                String errMsg = "Exception creating user because it already exists";
                 throw new CompletionException(errMsg, new IllegalArgumentException(errMsg));
             }
         });

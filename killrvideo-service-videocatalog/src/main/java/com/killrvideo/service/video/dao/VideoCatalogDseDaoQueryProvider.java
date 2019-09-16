@@ -30,6 +30,7 @@ import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.mapper.MapperContext;
 import com.datastax.oss.driver.api.mapper.annotations.QueryProvider;
 import com.datastax.oss.driver.api.mapper.entity.EntityHelper;
+import com.datastax.oss.protocol.internal.util.Bytes;
 import com.killrvideo.dse.dao.DseSchema;
 import com.killrvideo.dse.dto.CustomPagingState;
 import com.killrvideo.dse.dto.ResultListPage;
@@ -37,7 +38,6 @@ import com.killrvideo.dse.dto.Video;
 import com.killrvideo.service.video.dto.LatestVideo;
 import com.killrvideo.service.video.dto.LatestVideosPage;
 import com.killrvideo.service.video.dto.UserVideo;
-import com.killrvideo.utils.IOUtils;
 
 /**
  * Implementation of specific queries for {@link VideoCatalogDseDao} interface.
@@ -131,7 +131,7 @@ public class VideoCatalogDseDaoQueryProvider implements DseSchema {
     /** Javadoc in {@link VideoCatalogDseDao} */
     public CompletionStage<Void> insertVideoAsync(Video video) {
         video.setAddedDate(Instant.now());
-        LOGGER.info("Insert video '{}' : " + video.getName());
+        LOGGER.info("Insert video '{}' : ", video.getName());
         return dseSession.executeAsync(BatchStatement.builder(DefaultBatchType.LOGGED)
                 .addStatement(bind(psInsertVideo,       video,                   entityHelperVideo))
                 .addStatement(bind(psInsertVideoLatest, new LatestVideo(video),  entityHelperVideoLatest))
@@ -158,11 +158,15 @@ public class VideoCatalogDseDaoQueryProvider implements DseSchema {
                     .setUuid(VIDEOS_COLUMN_USERID_, userId);
         }
         LOGGER.debug("searchUserVideo query: {}", bsSelectUserVideo.getPreparedStatement().getQuery());
-        pageSize.ifPresent(bsSelectUserVideo::setPageSize);
-        pagingState.ifPresent(x -> {
-            bsSelectUserVideo.setPagingState(IOUtils.fromString2ByteBuffer(x));
-            LOGGER.debug("searchUserVideo pagingState:{}", x);
-        });
+        if(pageSize.isPresent()) {
+            bsSelectUserVideo = bsSelectUserVideo.setPageSize(pageSize.get());
+            LOGGER.debug("searchUserVideo pagingSize:{}", pageSize.get());
+        }
+        if (pagingState.isPresent()) {
+            bsSelectUserVideo = bsSelectUserVideo.setPagingState(Bytes.fromHexString(pagingState.get()));
+            //bsSelectUserVideo = bsSelectUserVideo.setPagingState(IOUtils.fromString2ByteBuffer(pagingState.get()));
+            LOGGER.debug("searchUserVideo pagingState:{}", pagingState.get());
+        };
         
         // Execute Query Asynchronously
         return dseSession.executeAsync(bsSelectUserVideo)
@@ -204,11 +208,14 @@ public class VideoCatalogDseDaoQueryProvider implements DseSchema {
           LOGGER.debug("searchLatestVideo query: {} with {} ", 
                   bsSelectLatestVideo.getPreparedStatement().getQuery(),
                   cpState.getCurrentBucketValue());
+          
           bsSelectLatestVideo = bsSelectLatestVideo.setPageSize(pageSize);
+          LOGGER.debug("searchLatestVideo pageSize:{}", pageSize);
+          
           if (pagingState.isPresent()) {
-              bsSelectLatestVideo = bsSelectLatestVideo.setPagingState(IOUtils.fromString2ByteBuffer(pagingState.get()));
-              isCassandraPageState.compareAndSet(false, true);
               LOGGER.debug("searchLatestVideo pagingState:{}", pagingState.get());
+              bsSelectLatestVideo = bsSelectLatestVideo.setPagingState(Bytes.fromHexString(pagingState.get()));
+              isCassandraPageState.compareAndSet(false, true);
           };
           
           // (3) - Execute Query Asynchronously
@@ -216,7 +223,8 @@ public class VideoCatalogDseDaoQueryProvider implements DseSchema {
           ResultSet resultSet = dseSession.execute(bsSelectLatestVideo);
           ByteBuffer pState = resultSet.getExecutionInfo().getPagingState();
           if (null != pState) {
-              currentPage.setCassandraPagingState(IOUtils.fromByteBuffer2String(pState));
+              currentPage.setCassandraPagingState(Bytes.toHexString(pState));
+              LOGGER.debug("Paging State read from Cassandra:{}", currentPage.getCassandraPagingState());
           }
           PagingIterable<LatestVideo> plv = resultSet.map(entityHelperVideoLatest::get);
           int remaining = plv.getAvailableWithoutFetching();
@@ -255,7 +263,6 @@ public class VideoCatalogDseDaoQueryProvider implements DseSchema {
         
         return returnedPage;
     }
-    
     
     /**
      * Create a paging state string from the passed in parameters

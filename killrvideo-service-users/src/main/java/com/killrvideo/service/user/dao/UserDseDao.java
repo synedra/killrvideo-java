@@ -101,7 +101,7 @@ public class UserDseDao {
      *      expected statement
      */
     private SimpleStatement createStatementToSearchUsers(List<UUID> listOfUserIds) {
-        return SimpleStatement.builder("statement_exercice_4#").build()
+        return SimpleStatement.builder("statement_exercice_4#").build();
     }
     
     /* Execute Synchronously */

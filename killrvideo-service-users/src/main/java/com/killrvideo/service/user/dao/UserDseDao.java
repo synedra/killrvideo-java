@@ -1,6 +1,5 @@
 package com.killrvideo.service.user.dao;
 
-import java.time.Instant;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
@@ -10,14 +9,11 @@ import java.util.concurrent.CompletionStage;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
-import org.apache.commons.lang3.NotImplementedException;
-
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.cql.AsyncResultSet;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
-import com.killrvideo.service.user.dao.UserDseDao;
 import com.killrvideo.service.user.dto.User;
 import com.killrvideo.service.user.dto.UserCredentials;
 
@@ -55,9 +51,7 @@ public class UserDseDao {
      *      expected statement
      */
     private SimpleStatement createStatemenToFindUserCredentials(String email) {
-        // SOLUTION
-        return SimpleStatement.builder("select * from user_credentials where email=?")
-                              .addPositionalValues(email).build();
+        return SimpleStatement.builder("statement_exercice_1#").build();
     }
     
     /**
@@ -75,13 +69,7 @@ public class UserDseDao {
      *      expected statement
      */
     private SimpleStatement createStatementToInsertUserCredentials(UUID userid, String email, String password) {
-        // SOLUTION
-        //throw new NotImplementedException("WahWah this is your work");
-        return SimpleStatement.builder(""
-             + "INSERT INTO user_credentials (userid,email,\"password\") "
-             + "VALUES (?,?,?) IF NOT EXISTS")
-                            .addPositionalValues(userid, email, password)
-                            .build();
+        return SimpleStatement.builder("statement_exercice_2#").build();
     }
     
     /**
@@ -97,15 +85,7 @@ public class UserDseDao {
      *      expected statement
      */
     private SimpleStatement createStatementToInserUser(User user) {
-        // SOLUTION
-        return SimpleStatement
-                .builder("INSERT INTO users (userid,firstname,lastname,email,created_date) "
-                        + "VALUES (?,?,?,?,?) "
-                        + "IF NOT EXISTS")
-                .addPositionalValues(
-                        user.getUserid(), user.getFirstname(), user.getLastname(), 
-                        user.getEmail(), Instant.now())
-                .build();
+        return SimpleStatement.builder("statement_exercice_3#").build();
     }
     
     /**
@@ -119,10 +99,7 @@ public class UserDseDao {
      *      expected statement
      */
     private SimpleStatement createStatementToSearchUsers(List<UUID> listOfUserIds) {
-         return SimpleStatement
-                .builder("SELECT * FROM users WHERE userid IN ?")
-                .addPositionalValues(listOfUserIds)
-                .build();
+        return SimpleStatement.builder("statement_exercice_4#").build();
     }
     
     /* Execute Synchronously */
@@ -191,3 +168,4 @@ public class UserDseDao {
     }
     
 }
+

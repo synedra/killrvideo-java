@@ -83,7 +83,7 @@
 
 	<dependencyManagement>
 		<dependencies>
-
+		
 			<!-- DSE Driver v2 -->
 			<dependency>
 				<groupId>com.datastax.dse</groupId>

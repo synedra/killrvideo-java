@@ -10,6 +10,8 @@ import java.util.concurrent.CompletionStage;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
+import org.apache.commons.lang3.NotImplementedException;
+
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.cql.AsyncResultSet;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
@@ -74,6 +76,7 @@ public class UserDseDao {
      */
     private SimpleStatement createStatementToInsertUserCredentials(UUID userid, String email, String password) {
         // SOLUTION
+        //throw new NotImplementedException("WahWah this is your work");
         return SimpleStatement.builder(""
              + "INSERT INTO user_credentials (userid,email,\"password\") "
              + "VALUES (?,?,?) IF NOT EXISTS")

@@ -5,8 +5,10 @@ import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 import org.apache.tinkerpop.gremlin.structure.util.empty.EmptyGraph;
 import org.slf4j.Logger;
@@ -68,6 +70,7 @@ import com.killrvideo.dse.graph.KillrVideoTraversalSource;
  * The above properties should be typically declared in an {@code application.yml} file.
  * 
  * @author DataStax Developer Advocates team.
+ * @param <RegularImmutableSet>
  */
 @Configuration
 @Profile("!unit-test & !integration-test")
@@ -178,7 +181,7 @@ public class DseDriverConfiguration {
         // Graph
         configLoaderBuilder.withString(KillrvideoDriverOption.GRAPH_NAME, graphName);
         configLoaderBuilder.withString(KillrvideoDriverOption.GRAPH_TIMEOUT, graphTimeout);
-        
+         
         return configLoaderBuilder;
     }
 
@@ -276,8 +279,26 @@ public class DseDriverConfiguration {
      */
     @Bean
     public KillrVideoTraversalSource initializeGraphTraversalSource(DseSession dseSession) {
-        System.out.println(dseSession.getMetadata().getNodes().values().iterator().next().getExtras().get("DSE_WORKLOADS"));
-        return EmptyGraph.instance().traversal(KillrVideoTraversalSource.class);
+        //System.out.println(dseSession.getMetadata().getNodes().values().iterator().next().getExtras().get("DSE_WORKLOADS"));
         //return new KillrVideoTraversalSource(DseGraph.g.getGraph());
+        return EmptyGraph.instance().traversal(KillrVideoTraversalSource.class);
     }
+    
+    /** 
+     * Active workloads on DSE Nodes. 
+     * Each node can have different workloads, as such we would need to return a Map<nodeId, dseWorkloads>
+     * FOR KILLRVIDEO we assume all nodes have same Workloads as such we use the first.
+     */
+    @Bean
+    @SuppressWarnings("unchecked")
+    public Set< DseWorkload> dseWorkloads(DseSession dseSession) {
+        return ((Set<String>) dseSession.getMetadata().getNodes()  // Access Nodes
+                  .values().iterator().next()               // Pick First Node
+                  .getExtras().get("DSE_WORKLOADS"))        // Set <String>
+                  .stream().map(DseWorkload::valueOf)       // Valid and convert to enum
+                  .collect(Collectors.toSet());
+    }
+    
+    public static enum DseWorkload { Graph, Search, Cassandra, Analytics, SearchAnalytics };
+     
 }

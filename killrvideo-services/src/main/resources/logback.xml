@@ -10,10 +10,11 @@
         <appender-ref ref="STDOUT" />
     </logger>
     
-    <logger name="com.killrvideo.service.video.dao" level="debug">
+     <logger name="ch.qos.logback.classic" level="error">
     	<appender-ref ref="STDOUT" />
     </logger>
-  
+    
+    
     <root level="ERROR">
         <appender-ref ref="STDOUT" />
     </root>

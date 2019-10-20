@@ -137,7 +137,24 @@ public class DseDriverConfiguration {
     
     @Value("${killrvideo.dse.graph.recommendation.name:5}")
     protected String graphName;
+    
+    // -- Apollo Specifics --
+    
+    @Value("${killrvideo.apollo.override-local-dse:false}")
+    private boolean connectApollo = false;
+    
+    @Value("${killrvideo.apollo.keyspace:killrvideo}")
+    private String apolloKeyspace;
 
+    @Value("${killrvideo.apollo.username:KVUser}")
+    private String apolloUserName;
+
+    @Value("${killrvideo.apollo.password:KVPassword}")
+    public String apolloPassword;
+    
+    @Value("${killrvideo.apollo.secure-connect-bundle:/tmp/creds.zip}")
+    public String apolloSecureConnectoBundleZipPath;
+    
     /**
      * Returns the keyspace to connect to. The keyspace specified here must exist.
      *
@@ -164,24 +181,12 @@ public class DseDriverConfiguration {
      */
     @Bean
     public ProgrammaticDriverConfigLoaderBuilder configLoaderBuilder() {
-        LOGGER.info("Initializing Connection to Cassandra/Dse Cluster");
+        LOGGER.info("Initializing connectivity to Apollo or DDAC or DSE or OSS Cassandra");
         ProgrammaticDriverConfigLoaderBuilder configLoaderBuilder = DseDriverConfigLoader.programmaticBuilder();
         
         // Set BASICS
         configLoaderBuilder.withString(DefaultDriverOption.REQUEST_TIMEOUT, timeout);
-        configLoaderBuilder.withString(DefaultDriverOption.REQUEST_CONSISTENCY, consistency);
-
-        // Set Search Consistency with a 'Profile'
-        configLoaderBuilder
-         .startProfile(EXECUTION_PROFILE_SEARCH)
-           .withString(DefaultDriverOption.REQUEST_CONSISTENCY, searchConsistency)
-           .withString(DefaultDriverOption.REQUEST_TIMEOUT, searchTimeout)
-         .endProfile();
-        
-        // Graph
-        configLoaderBuilder.withString(KillrvideoDriverOption.GRAPH_NAME, graphName);
-        configLoaderBuilder.withString(KillrvideoDriverOption.GRAPH_TIMEOUT, graphTimeout);
-         
+        configLoaderBuilder.withString(DefaultDriverOption.REQUEST_CONSISTENCY, consistency);         
         return configLoaderBuilder;
     }
 
@@ -196,35 +201,56 @@ public class DseDriverConfiguration {
      */
     @Bean
     public DseSessionBuilder sessionBuilder(@NonNull ProgrammaticDriverConfigLoaderBuilder driverConfigLoaderBuilder) {
-        DseSessionBuilder sessionBuilder = new DseSessionBuilder().withConfigLoader(driverConfigLoaderBuilder.build());
-        if (!contactPointsEnvironmentVar.isEmpty() && !contactPointsEnvironmentVar.get().isBlank()) {
-            contactPoints = Arrays.asList(contactPointsEnvironmentVar.get().split(","));
-            LOGGER.info(" + Reading contactPoints from KILLRVIDEO_DSE_CONTACT_POINTS");
+        DseSessionBuilder sessionBuilder;
+         // Appollo ?
+        if (connectApollo) {
+            LOGGER.info("+ Connecting to Apollo using {}", apolloSecureConnectoBundleZipPath);
+            LOGGER.info("+ Apollo username {}", apolloUserName);
+            LOGGER.info("+ Apollo password {}", new String(apolloPassword).replaceAll(".?", "x"));
+            LOGGER.info("+ Apollo Keyspace {}", apolloKeyspace);
+            sessionBuilder = DseSession.builder()
+                    .withConfigLoader(driverConfigLoaderBuilder.build())
+                    .withCloudSecureConnectBundle(apolloSecureConnectoBundleZipPath)
+                    .withAuthCredentials(apolloUserName, apolloPassword)
+                    .withKeyspace(apolloKeyspace);
+        } else {
+            LOGGER.info("+ Connecting to Dse {}", apolloSecureConnectoBundleZipPath);
+            
+            // Set Search Consistency with a 'Profile'
+            driverConfigLoaderBuilder
+             .startProfile(EXECUTION_PROFILE_SEARCH)
+               .withString(DefaultDriverOption.REQUEST_CONSISTENCY, searchConsistency)
+               .withString(DefaultDriverOption.REQUEST_TIMEOUT, searchTimeout)
+             .endProfile();
+            
+            // Graph
+            driverConfigLoaderBuilder.withString(KillrvideoDriverOption.GRAPH_NAME, graphName);
+            driverConfigLoaderBuilder.withString(KillrvideoDriverOption.GRAPH_TIMEOUT, graphTimeout);
+            
+            sessionBuilder = new DseSessionBuilder().withConfigLoader(driverConfigLoaderBuilder.build());
+            if (!contactPointsEnvironmentVar.isEmpty() && !contactPointsEnvironmentVar.get().isBlank()) {
+                contactPoints = Arrays.asList(contactPointsEnvironmentVar.get().split(","));
+                LOGGER.info(" + Reading contactPoints from KILLRVIDEO_DSE_CONTACT_POINTS");
+            }
+            
+            // Authentication
+            if (!dseUsername.isEmpty() && !dsePassword.isEmpty()) {
+                sessionBuilder.withAuthCredentials(dseUsername.get(), dsePassword.get());
+            }
+            
+            LOGGER.info("+ Contact Points {}", contactPoints);
+            for (String contactPoint : contactPoints) {
+                InetSocketAddress address = InetSocketAddress.createUnresolved(contactPoint, port);
+                sessionBuilder = sessionBuilder.addContactPoint(address);
+            }
+            LOGGER.info("+ Port '{}'", port);
+            LOGGER.info("+ Local Data Center '{}'", localDc);
+            sessionBuilder.withLocalDatacenter(localDc);
+            LOGGER.info("+ Application name '{}'", applicationName);
+            sessionBuilder.withApplicationName(applicationName);
+            LOGGER.info("+ KeySpace name '{}'", keyspaceName);
+            sessionBuilder.withKeyspace(keyspaceName);
         }
-        
-        // @Since 2.2
-        // Authentication
-        if (!dseUsername.isEmpty() && !dsePassword.isEmpty()) {
-            sessionBuilder.withAuthCredentials(dseUsername.get(), dsePassword.get());
-            //configLoaderBuilder = configLoaderBuilder
-            //        .withString(DefaultDriverOption.AUTH_PROVIDER_CLASS, DsePlainTextAuthProvider.class.getName())
-            //        .withString(DefaultDriverOption.AUTH_PROVIDER_USER_NAME, dseUsername.get())
-            //        .withString(DefaultDriverOption.AUTH_PROVIDER_PASSWORD, dsePassword.get());
-        }
-        
-        // Caas on Constellation
-        //sessionBuilder.withCloudSecureConnectBundle("constellation-jar-file");
-        
-        LOGGER.info("+ Contact Points {}", contactPoints);
-        for (String contactPoint : contactPoints) {
-            InetSocketAddress address = InetSocketAddress.createUnresolved(contactPoint, port);
-            sessionBuilder = sessionBuilder.addContactPoint(address);
-        }
-        LOGGER.info("+ Port '{}'", port);
-        LOGGER.info("+ Local Data Center '{}'", localDc);
-        sessionBuilder.withLocalDatacenter(localDc);
-        LOGGER.info("+ Application name '{}'", applicationName);
-        sessionBuilder.withApplicationName(applicationName);
         return sessionBuilder;
     }
 
@@ -240,11 +266,10 @@ public class DseDriverConfiguration {
      */
     @Bean
     public DseSession session(@NonNull DseSessionBuilder dseSessionBuilder) {
-        LOGGER.info("+ KeySpace '{}'", keyspaceName);
         
         final AtomicInteger atomicCount = new AtomicInteger(1);
         Callable<DseSession> connectionToDse = () -> {
-            return dseSessionBuilder.withKeyspace(keyspaceName).build();
+            return dseSessionBuilder.build();
         };
         
         RetryConfig config = new RetryConfigBuilder()

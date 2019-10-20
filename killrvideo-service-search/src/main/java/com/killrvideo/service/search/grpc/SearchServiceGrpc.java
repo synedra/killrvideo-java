@@ -24,6 +24,7 @@ import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.killrvideo.dse.dto.ResultListPage;
 import com.killrvideo.dse.dto.Video;
 import com.killrvideo.service.search.dao.SearchDseDao;
+import com.killrvideo.service.search.dao.SearchDseDaoApollo;
 import com.killrvideo.service.search.dao.SearchDseDaoMapperBuilder;
 
 import io.grpc.Status;
@@ -55,6 +56,9 @@ public class SearchServiceGrpc extends SearchServiceImplBase {
     @Qualifier("killrvideo.keyspace")
     private CqlIdentifier dseKeySpace;
     
+    @Value("${killrvideo.apollo.override-local-dse:false}")
+    private boolean connectApollo = false;
+    
     /**
      * Create a set of sentence conjunctions and other "undesirable"
      * words we will use later to exclude from search results.
@@ -66,7 +70,12 @@ public class SearchServiceGrpc extends SearchServiceImplBase {
     
     @PostConstruct
     public void init() {
-        dseSearchDao = new SearchDseDaoMapperBuilder(dseSession).build().searchDao(dseKeySpace);
+        if (connectApollo) {
+            LOGGER.info("Search service will use Apollo");
+            dseSearchDao = new SearchDseDaoApollo();
+        } else {
+            dseSearchDao = new SearchDseDaoMapperBuilder(dseSession).build().searchDao(dseKeySpace);
+        }
     }
     
     /** {@inheritDoc} */

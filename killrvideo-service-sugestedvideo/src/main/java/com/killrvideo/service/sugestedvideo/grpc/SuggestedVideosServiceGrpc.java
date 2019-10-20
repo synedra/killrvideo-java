@@ -7,9 +7,12 @@ import static com.killrvideo.service.sugestedvideo.grpc.SuggestedVideosServiceGr
 import java.time.Duration;
 import java.time.Instant;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 
 import javax.annotation.PostConstruct;
 
@@ -23,7 +26,9 @@ import org.springframework.stereotype.Service;
 
 import com.datastax.dse.driver.api.core.DseSession;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
+import com.killrvideo.dse.dto.Video;
 import com.killrvideo.service.sugestedvideo.dao.SuggestedVideosDseDao;
+import com.killrvideo.service.sugestedvideo.dao.SuggestedVideosDseDaoApollo;
 import com.killrvideo.service.sugestedvideo.dao.SuggestedVideosDseDaoMapperBuilder;
 import com.killrvideo.service.sugestedvideo.dao.SuggestedVideosGraphDao;
 
@@ -57,6 +62,9 @@ public class SuggestedVideosServiceGrpc extends SuggestedVideoServiceImplBase {
     @Qualifier("killrvideo.keyspace")
     private CqlIdentifier dseKeySpace;
     
+    @Value("${killrvideo.apollo.override-local-dse:false}")
+    private boolean connectApollo = false;
+    
     @Autowired
     private SuggestedVideosGraphDao suggestedVideosGraphDao;
     
@@ -71,7 +79,16 @@ public class SuggestedVideosServiceGrpc extends SuggestedVideoServiceImplBase {
     
     @PostConstruct
     public void init() {
-        suggestedVideosDseDao = new SuggestedVideosDseDaoMapperBuilder(dseSession).build().suggestedVideosDao(dseKeySpace);
+        
+        if (connectApollo) {
+            LOGGER.info("Suggested Video service will use Apollo");
+            suggestedVideosDseDao = new SuggestedVideosDseDaoApollo();
+        } else {
+            suggestedVideosDseDao = 
+                    new SuggestedVideosDseDaoMapperBuilder(dseSession).build().suggestedVideosDao(dseKeySpace);
+        }
+        
+        
     }
     
     /** {@inheritDoc} */
@@ -128,9 +145,14 @@ public class SuggestedVideosServiceGrpc extends SuggestedVideoServiceImplBase {
         // Mapping GRPC => Domain (Dao)
         final UUID userid = UUID.fromString(grpcReq.getUserId().getValue());
         
-        suggestedVideosGraphDao
-            .getSuggestedVideosForUser(userid)
-            .whenComplete((videos, error) -> {
+        CompletionStage< List<Video> > result;
+        if (connectApollo) {
+            result = new CompletableFuture<List<Video>>();
+        } else {
+            result = suggestedVideosGraphDao.getSuggestedVideosForUser(userid);
+        }
+        
+        result.whenComplete((videos, error) -> {
                 if (error != null ) {
                     traceError("getSuggestedForUser", starts, error);
                     grpcResObserver.onError(Status.INTERNAL.withCause(error).asRuntimeException());

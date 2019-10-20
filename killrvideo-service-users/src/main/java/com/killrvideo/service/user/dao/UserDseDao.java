@@ -1,5 +1,6 @@
 package com.killrvideo.service.user.dao;
 
+import java.time.Instant;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
@@ -14,6 +15,7 @@ import com.datastax.oss.driver.api.core.cql.AsyncResultSet;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
+import com.killrvideo.service.user.dao.UserDseDao;
 import com.killrvideo.service.user.dto.User;
 import com.killrvideo.service.user.dto.UserCredentials;
 
@@ -51,7 +53,9 @@ public class UserDseDao {
      *      expected statement
      */
     private SimpleStatement createStatemenToFindUserCredentials(String email) {
-        return SimpleStatement.builder("statement_exercice_1#").build();
+        // SOLUTION
+        return SimpleStatement.builder("select * from user_credentials where email=?")
+                              .addPositionalValues(email).build();
     }
     
     /**
@@ -69,7 +73,12 @@ public class UserDseDao {
      *      expected statement
      */
     private SimpleStatement createStatementToInsertUserCredentials(UUID userid, String email, String password) {
-        return SimpleStatement.builder("statement_exercice_2#").build();
+        // SOLUTION
+        return SimpleStatement.builder(""
+             + "INSERT INTO user_credentials (userid,email,\"password\") "
+             + "VALUES (?,?,?) IF NOT EXISTS")
+                            .addPositionalValues(userid, email, password)
+                            .build();
     }
     
     /**
@@ -85,7 +94,15 @@ public class UserDseDao {
      *      expected statement
      */
     private SimpleStatement createStatementToInserUser(User user) {
-        return SimpleStatement.builder("statement_exercice_3#").build();
+        // SOLUTION
+        return SimpleStatement
+                .builder("INSERT INTO users (userid,firstname,lastname,email,created_date) "
+                        + "VALUES (?,?,?,?,?) "
+                        + "IF NOT EXISTS")
+                .addPositionalValues(
+                        user.getUserid(), user.getFirstname(), user.getLastname(), 
+                        user.getEmail(), Instant.now())
+                .build();
     }
     
     /**
@@ -99,7 +116,10 @@ public class UserDseDao {
      *      expected statement
      */
     private SimpleStatement createStatementToSearchUsers(List<UUID> listOfUserIds) {
-        return SimpleStatement.builder("statement_exercice_4#").build();
+         return SimpleStatement
+                .builder("SELECT * FROM users WHERE userid IN ?")
+                .addPositionalValues(listOfUserIds)
+                .build();
     }
     
     /* Execute Synchronously */
@@ -168,4 +188,3 @@ public class UserDseDao {
     }
     
 }
-

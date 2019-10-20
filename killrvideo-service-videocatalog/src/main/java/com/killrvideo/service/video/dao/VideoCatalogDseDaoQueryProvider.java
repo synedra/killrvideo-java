@@ -20,6 +20,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.datastax.oss.driver.api.core.ConsistencyLevel;
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.PagingIterable;
 import com.datastax.oss.driver.api.core.cql.BatchStatement;
@@ -136,6 +137,7 @@ public class VideoCatalogDseDaoQueryProvider implements DseSchema {
                 .addStatement(bind(psInsertVideo,       video,                   entityHelperVideo))
                 .addStatement(bind(psInsertVideoLatest, new LatestVideo(video),  entityHelperVideoLatest))
                 .addStatement(bind(psInsertVideoUser,   new UserVideo(video),    entityHelperVideoUser))
+                .setConsistencyLevel(ConsistencyLevel.LOCAL_QUORUM)
                 .build()).thenApply(rs -> null);
     }
     

@@ -34,9 +34,8 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
 		<!-- DataStax Java-Driver -->
-		<dse-java-driver.version>2.2.0</dse-java-driver.version>
-		<dse-java-driver-dbaas.version>2.1.1-e25b0bea0-dbaas</dse-java-driver-dbaas.version>
-
+		<dse-java-driver.version>2.2.0-cloud-01</dse-java-driver.version>
+		
 		<!-- Spring -->
 		<spring.version>5.1.9.RELEASE</spring.version>
 		<spring-boot.version>2.1.7.RELEASE</spring-boot.version>
@@ -89,8 +88,6 @@
 				<groupId>com.datastax.dse</groupId>
 				<artifactId>dse-java-driver-core</artifactId>
 				<version>${dse-java-driver.version}</version>
-				<!-- to use caas, uncomment this line -->
-				<!-- <version>${dse-java-driver-dbaas.version}</version>-->
 			</dependency>
 			<dependency>
 				<groupId>com.datastax.dse</groupId>

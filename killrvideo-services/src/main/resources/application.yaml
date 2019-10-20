@@ -32,6 +32,14 @@ killrvideo:
       user: true
       suggestedVideo: true
   
+  apollo:
+    # If set to true => connecting to Apollo (and not local Server)
+    override-local-dse: true
+    username: cedrick
+    password: cedrick
+    keyspace: killrvideo
+    secure-connect-bundle: /tmp/creds.zip
+    
   # ----------------------------------------------------------------------
   # DataStax Enterprise
   # ----------------------------------------------------------------------

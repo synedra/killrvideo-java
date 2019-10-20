@@ -33,12 +33,14 @@ killrvideo:
       suggestedVideo: true
   
   apollo:
-    # If set to true => connecting to Apollo (and not local Server)
+    # SET THIS PROPERTY TO TRUE TO ENABLE APOLLO
     override-local-dse: true
-    username: cedrick
-    password: cedrick
+    # Provide USERNAME used to create Database
+    username: KVUser
+    # Provide PASSWORD used to create Database
+    password: KVPassword
     keyspace: killrvideo
-    secure-connect-bundle: /tmp/creds.zip
+    secure-connect-bundle: /home/ubuntu/workspace/creds.zip
     
   # ----------------------------------------------------------------------
   # DataStax Enterprise

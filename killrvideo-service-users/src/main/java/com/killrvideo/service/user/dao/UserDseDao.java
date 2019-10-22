@@ -43,25 +43,7 @@ public class UserDseDao {
     }
     
     /**
-     * EXERCICE #1
-     * 
-     * Retrieving a record in table 'user_credentials' based on primary key 'email'
-     * 
-     * @param email
-     *      value for the pk
-     * @return
-     *      expected statement
-     */
-    private SimpleStatement createStatemenToFindUserCredentials(String email) {
-        // SOLUTION
-        return SimpleStatement.builder("select * from user_credentials where email=?")
-                              .addPositionalValues(email).build();
-    }
-    
-    /**
-     * EXERCICE #2
-     * 
-     * Create a statement to insert record into table 'user_credentials'
+     * Creates a statement to insert a record into table 'user_credentials'
      * 
      * @param userid
      *      user unique identifier
@@ -73,18 +55,13 @@ public class UserDseDao {
      *      expected statement
      */
     private SimpleStatement createStatementToInsertUserCredentials(UUID userid, String email, String password) {
-        // SOLUTION
-        return SimpleStatement.builder(""
-             + "INSERT INTO user_credentials (userid,email,\"password\") "
-             + "VALUES (?,?,?) IF NOT EXISTS")
-                            .addPositionalValues(userid, email, password)
-                            .build();
+        return SimpleStatement.builder("TODO: PLACE YOUR CQL HERE")
+            .addPositionalValues(userid, email, password)
+            .build();
     }
     
     /**
-     * EXERCICE #3
-     * 
-     * Create a statement to insert record into table 'users'
+     * Creates a statement to insert a record into table 'users'
      * 
      * @param user
      *      Java object wrapping all expected properties
@@ -94,21 +71,31 @@ public class UserDseDao {
      *      expected statement
      */
     private SimpleStatement createStatementToInserUser(User user) {
-        // SOLUTION
-        return SimpleStatement
-                .builder("INSERT INTO users (userid,firstname,lastname,email,created_date) "
-                        + "VALUES (?,?,?,?,?) "
-                        + "IF NOT EXISTS")
-                .addPositionalValues(
-                        user.getUserid(), user.getFirstname(), user.getLastname(), 
-                        user.getEmail(), Instant.now())
-                .build();
+        return SimpleStatement.builder("TODO: PLACE YOUR CQL HERE")
+            .addPositionalValues(user.getUserid(),
+                user.getFirstname(),
+                user.getLastname(), 
+                user.getEmail(),
+                Instant.now())
+            .build();
     }
     
     /**
-     * EXERCICE #4
+     * Creates a statement to retrieve a record in table 'user_credentials' based on primary key 'email'
      * 
-     * Create a statement search for users based on their uniau user identifier (PK)
+     * @param email
+     *      value for the pk
+     * @return
+     *      expected statement
+     */
+    private SimpleStatement createStatemenToFindUserCredentials(String email) {
+        return SimpleStatement.builder("TODO: PLACE YOUR CQL HERE")
+                              .addPositionalValues(email)
+                              .build();
+    }
+    
+    /**
+     * Creates a statement search for users based on their unique user identifier (PK)
      * 
      * @param listOfUserIds
      *     enumeration of searched user identifiers
@@ -116,8 +103,7 @@ public class UserDseDao {
      *      expected statement
      */
     private SimpleStatement createStatementToSearchUsers(List<UUID> listOfUserIds) {
-         return SimpleStatement
-                .builder("SELECT * FROM users WHERE userid IN ?")
+         return SimpleStatement.builder("TODO: PLACE YOUR CQL HERE")
                 .addPositionalValues(listOfUserIds)
                 .build();
     }

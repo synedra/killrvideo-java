@@ -88,10 +88,9 @@ public class UserDseDao {
      * @return
      *      expected statement
      */
-    private SimpleStatement createStatemenToFindUserCredentials(String email) {
+    private SimpleStatement createStatementToFindUserCredentials(String email) {
         return SimpleStatement.builder("TODO: PLACE YOUR CQL HERE")
-                              .addPositionalValues(email)
-                              .build();
+            .addPositionalValues(email).build();
     }
     
     /**
@@ -103,21 +102,21 @@ public class UserDseDao {
      *      expected statement
      */
     private SimpleStatement createStatementToSearchUsers(List<UUID> listOfUserIds) {
-         return SimpleStatement.builder("TODO: PLACE YOUR CQL HERE")
-                .addPositionalValues(listOfUserIds)
-                .build();
+        return SimpleStatement.builder("TODO: PLACE YOUR CQL HERE")
+            .addPositionalValues(listOfUserIds)
+            .build();
     }
     
     /* Execute Synchronously */
     public UserCredentials getUserCredential(String email) {
-        ResultSet rs  = cqlSession.execute(createStatemenToFindUserCredentials(email));
+        ResultSet rs  = cqlSession.execute(createStatementToFindUserCredentials(email));
         Row       row = rs.one(); // Request with Pk ensure unicity
         return mapAsUserCredential(row);                                             
     }
     
     /* Execute ASynchronously */
     public CompletionStage<UserCredentials> getUserCredentialAsync(String email) {
-        return cqlSession.executeAsync(createStatemenToFindUserCredentials(email))
+        return cqlSession.executeAsync(createStatementToFindUserCredentials(email))
                          .thenApply(AsyncResultSet::one)
                          .thenApply(this::mapAsUserCredential);
     }

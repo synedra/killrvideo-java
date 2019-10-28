@@ -70,7 +70,7 @@ public class UserDseDao {
      * @return
      *      expected statement
      */
-    private SimpleStatement createStatementToInserUser(User user) {
+    private SimpleStatement createStatementToInsertUser(User user) {
         return SimpleStatement.builder("TODO: PLACE YOUR CQL HERE")
             .addPositionalValues(user.getUserid(),
                 user.getFirstname(),
@@ -131,7 +131,7 @@ public class UserDseDao {
         
         CompletionStage<AsyncResultSet> resultInsertUser = resultInsertCredentials.thenCompose(rs -> {
           if (rs != null && rs.wasApplied()) {
-              return cqlSession.executeAsync(createStatementToInserUser(user));
+              return cqlSession.executeAsync(createStatementToInsertUser(user));
           }
           return resultInsertCredentials;
         });

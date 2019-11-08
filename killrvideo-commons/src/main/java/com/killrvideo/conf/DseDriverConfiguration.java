@@ -1,6 +1,7 @@
 package com.killrvideo.conf;
 
 import java.net.InetSocketAddress;
+import java.nio.file.Paths;
 import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.List;
@@ -210,7 +211,7 @@ public class DseDriverConfiguration {
             LOGGER.info("+ Apollo Keyspace {}", apolloKeyspace);
             sessionBuilder = DseSession.builder()
                     .withConfigLoader(driverConfigLoaderBuilder.build())
-                    .withCloudSecureConnectBundle(apolloSecureConnectoBundleZipPath)
+                    .withCloudSecureConnectBundle(Paths.get(apolloSecureConnectoBundleZipPath))
                     .withAuthCredentials(apolloUserName, apolloPassword)
                     .withKeyspace(apolloKeyspace);
         } else {

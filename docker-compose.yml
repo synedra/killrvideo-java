@@ -2,7 +2,7 @@ version: '3'
 
 #
 # docker-compose.yaml
-#   Simple compose file for running the Python services in Docker along with other containers comprising the
+#   Simple compose file for running the Java services in Docker along with other containers comprising the
 #   KillrVideo.
 #   For more complex configuration options including metrics, external volumes, OpsCenter,
 #   etc., see https://github.com/KillrVideo/killrvideo-docker-common

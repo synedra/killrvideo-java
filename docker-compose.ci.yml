@@ -1,0 +1,19 @@
+version: '3'
+services:
+  backend:
+    image: killrvideo-java-local
+    depends_on:
+      - dse
+    environment:
+      KILLRVIDEO_LOGGING_LEVEL: debug
+      KILLRVIDEO_DSE_CONTACT_POINTS: dse
+  
+  dse: 
+    image: datastax/dse-server:6.7.4
+    command: [ -s -g ]
+    environment:
+      DS_LICENSE: accept
+    cap_add:
+      - IPC_LOCK
+    ulimits:
+      memlock: -1

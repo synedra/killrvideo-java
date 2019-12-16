@@ -24,6 +24,9 @@ after_success:
 - docker push killrvideo/killrvideo-java:${TRAVIS_TAG}
 - "[ \"$(git tag --sort=-v:refname | grep -P \"^\\d+.\\d+.\\d+$\" | head -n1)\" == \"$TRAVIS_TAG\" ] && { docker tag ${TRAVIS_COMMIT} killrvideo/killrvideo-java:latest; docker push killrvideo/killrvideo-java:latest; }"
 
+after_failure:
+- docker-compose -f docker-compose.ci.yml logs dse-config backend
+
 env:
   global:
   # DOCKER_USER & PASS

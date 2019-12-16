@@ -1,7 +1,7 @@
 version: '3'
 services:
   backend:
-    image: killrvideo-java-local
+    image: killrvideo/killrvideo-java:3.0.0 #killrvideo-java-local
     depends_on:
       - dse
     environment:

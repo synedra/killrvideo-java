@@ -82,10 +82,10 @@ public class DseConfiguration {
     public Optional < String > dsePassword;
     
     @Value("${killrvideo.cassandra.maxNumberOfTries: 10}")
-    private int maxNumberOfTries  = 10;
+    private int maxNumberOfTries  = 20;
     
     @Value("${killrvideo.cassandra.delayBetweenTries: 2}")
-    private int delayBetweenTries = 2;
+    private int delayBetweenTries = 3;
     
     @Value("${killrvideo.ssl.CACertFileLocation: cassandra.cert}")
     private String sslCACertFileLocation;

@@ -11,7 +11,11 @@ services:
 script:
 - mvn clean install
 - docker build -t ${TRAVIS_COMMIT} -t killrvideo-java-local --build-arg JAR_FILE=target/killrvideo-services-3.0.0.jar ./killrvideo-services
-- docker-compose -f docker-compose.ci.yml up -d
+- docker-compose -f docker-compose.ci.yml up -d dse
+- sleep 120
+- docker-compose -f docker-compose.ci.yml up -d dse-config
+- sleep 60
+- docker-compose -f docker-compose.ci.yml up -d backend
 - sleep 240
 - docker-compose logs backend
 - docker-compose ps

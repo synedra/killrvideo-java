@@ -15,6 +15,9 @@ script:
 - docker pull killrvideo/killrvideo-integration-tests
 - sleep 180
 - docker-compose -f docker-compose.ci.yml up -d backend
+- sleep 180
+- docker-compose -f docker-compose.ci.yml logs dse backend
+- docker-compose -f docker-compose.ci.yml exec backend echo 'Still alive!'
 - docker run --network killrvideo-java_default killrvideo/killrvideo-integration-tests
 
 # If successful, see if we need to publish also

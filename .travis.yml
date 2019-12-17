@@ -22,6 +22,7 @@ script:
 # If successful, see if we need to publish also
 after_success:
 - docker-compose -f docker-compose.ci.yml kill
+- ps aux
 - "[ \"$TRAVIS_EVENT_TYPE\" = \"cron\" ] && (echo \"Ignore nightly builds\"; travis_terminate 0)"
 - test -z $TRAVIS_TAG && (echo "Ignore non-tagged builds"; travis_terminate 0)
 - docker tag ${TRAVIS_COMMIT} killrvideo/killrvideo-java:${TRAVIS_TAG}

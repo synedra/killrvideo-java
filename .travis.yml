@@ -10,7 +10,7 @@ services:
 # Build the app and a docker image
 script:
 - mvn clean install
-- docker build -t ${TRAVIS_COMMIT} --build-arg JAR_FILE=target/killrvideo-services-6.7.0.jar ./killrvideo-services
+- docker build -t ${TRAVIS_COMMIT} ./killrvideo-services
 
 # If successful, see if we need to publish also
 after_success:

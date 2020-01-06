@@ -17,8 +17,8 @@ ARG KILLRVIDEO_DSE_PASSWORD
 ENV KILLRVIDEO_DSE_PASSWORD ${KILLRVIDEO_DSE_PASSWORD}
 
 VOLUME /tmp
-ARG JAR_FILE
-ADD ${JAR_FILE} app.jar
+
+ADD target/killrvideo-java.jar app.jar
 ENTRYPOINT ["java","-Djava.security.egd=file:/dev/./urandom","-jar","/app.jar"]
 
 # Exposing expected port by WEBUI

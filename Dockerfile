@@ -1,0 +1,9 @@
+FROM openjdk:11
+
+MAINTAINER Cedrick Lunven <cedrick.lunven@datastax.com>
+MAINTAINER Davig Gilardi  <david.gilardi@datastax.com>
+
+ENTRYPOINT ["java","-Djava.security.egd=file:/dev/./urandom","-jar","/killrvideo-java.jar"]
+EXPOSE 50101
+
+COPY ./killrvideo-services/target/killrvideo-java.jar /killrvideo-java.jar

@@ -81,11 +81,11 @@ public class DseConfiguration {
     @Value("#{environment.KILLRVIDEO_DSE_PASSWORD}")
     public Optional < String > dsePassword;
     
-    @Value("#{environment.KILLRVIDEO_DSE_INIT_RETRY}")
-    private int maxNumberOfTries  = 50;
+    @Value("${KILLRVIDEO_DSE_INIT_RETRY:50}")
+    private Integer maxNumberOfTries;
     
-    @Value("#{environment.KILLRVIDEO_DSE_INIT_RETRY_DELAY}")
-    private int delayBetweenTries = 3;
+    @Value("${KILLRVIDEO_DSE_INIT_RETRY_DELAY:3}")
+    private Integer delayBetweenTries;
     
     @Value("${killrvideo.ssl.CACertFileLocation: cassandra.cert}")
     private String sslCACertFileLocation;
@@ -144,7 +144,7 @@ public class DseConfiguration {
          
          return new CallExecutor<DseSession>(config)
                  .afterFailedTry(s -> { 
-                     LOGGER.info("Attempt #{}/{} failed.. trying in {} seconds, waiting Dse to Start", atomicCount.getAndIncrement(),
+                     LOGGER.info("Attempt #{}/{} failed.. trying in {} seconds, waiting for DSE to start...", atomicCount.getAndIncrement(),
                              maxNumberOfTries,  delayBetweenTries); })
                  .onFailure(s -> {
                      LOGGER.error("Cannot connection to DSE after {} attempts, exiting", maxNumberOfTries);

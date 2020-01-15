@@ -81,11 +81,17 @@ public class DseConfiguration {
     @Value("#{environment.KILLRVIDEO_DSE_PASSWORD}")
     public Optional < String > dsePassword;
     
-    @Value("${KILLRVIDEO_DSE_INIT_RETRY:50}")
+    @Value("${killrvideo.cassandra.maxNumberOfTries: 50}")
     private Integer maxNumberOfTries;
-    
-    @Value("${KILLRVIDEO_DSE_INIT_RETRY_DELAY:3}")
+
+    @Value("#{environment.KILLRVIDEO_MAX_NUMBER_RETRY}")
+    private Optional < Integer > maxNumberOfTriesFromEnvVar;
+	
+    @Value("${killrvideo.cassandra.delayBetweenTries: 3}")
     private Integer delayBetweenTries;
+
+    @Value("#{environment.KILLRVIDEO_DELAY_BETWEEN_RETRY}")
+    private Optional < Integer > delayBetweenTriesFromEnvVar;
     
     @Value("${killrvideo.ssl.CACertFileLocation: cassandra.cert}")
     private String sslCACertFileLocation;
@@ -133,6 +139,14 @@ public class DseConfiguration {
              return clusterConfig.build().connect(CommonConstants.KILLRVIDEO_KEYSPACE);
          };
          
+	 if (!maxNumberOfTriesFromEnvVar.isEmpty()) {
+	     maxNumberOfTries = maxNumberOfTriesFromEnvVar.get();
+	 }
+
+	 if (!delayBetweenTriesFromEnvVar.isEmpty()) {
+	     delayBetweenTries = delayBetweenTriesFromEnvVar.get();
+	 }
+
          // Connecting to DSE with a retry mechanism : 
          /* In docker deployments we may have to wait until all components are up and running. */
          RetryConfig config = new RetryConfigBuilder()

@@ -81,11 +81,17 @@ public class DseConfiguration {
     @Value("#{environment.KILLRVIDEO_DSE_PASSWORD}")
     public Optional < String > dsePassword;
     
-    @Value("${killrvideo.cassandra.maxNumberOfTries: 10}")
-    private int maxNumberOfTries  = 10;
-    
-    @Value("${killrvideo.cassandra.delayBetweenTries: 2}")
-    private int delayBetweenTries = 2;
+    @Value("${killrvideo.cassandra.maxNumberOfTries: 50}")
+    private Integer maxNumberOfTries;
+
+    @Value("#{environment.KILLRVIDEO_MAX_NUMBER_RETRY}")
+    private Optional < Integer > maxNumberOfTriesFromEnvVar;
+	
+    @Value("${killrvideo.cassandra.delayBetweenTries: 3}")
+    private Integer delayBetweenTries;
+
+    @Value("#{environment.KILLRVIDEO_DELAY_BETWEEN_RETRY}")
+    private Optional < Integer > delayBetweenTriesFromEnvVar;
     
     @Value("${killrvideo.ssl.CACertFileLocation: cassandra.cert}")
     private String sslCACertFileLocation;
@@ -133,6 +139,14 @@ public class DseConfiguration {
              return clusterConfig.build().connect(CommonConstants.KILLRVIDEO_KEYSPACE);
          };
          
+	 if (!maxNumberOfTriesFromEnvVar.isEmpty()) {
+	     maxNumberOfTries = maxNumberOfTriesFromEnvVar.get();
+	 }
+
+	 if (!delayBetweenTriesFromEnvVar.isEmpty()) {
+	     delayBetweenTries = delayBetweenTriesFromEnvVar.get();
+	 }
+
          // Connecting to DSE with a retry mechanism : 
          /* In docker deployments we may have to wait until all components are up and running. */
          RetryConfig config = new RetryConfigBuilder()
@@ -144,7 +158,7 @@ public class DseConfiguration {
          
          return new CallExecutor<DseSession>(config)
                  .afterFailedTry(s -> { 
-                     LOGGER.info("Attempt #{}/{} failed.. trying in {} seconds, waiting Dse to Start", atomicCount.getAndIncrement(),
+                     LOGGER.info("Attempt #{}/{} failed.. trying in {} seconds, waiting for DSE to start...", atomicCount.getAndIncrement(),
                              maxNumberOfTries,  delayBetweenTries); })
                  .onFailure(s -> {
                      LOGGER.error("Cannot connection to DSE after {} attempts, exiting", maxNumberOfTries);

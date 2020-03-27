@@ -20,37 +20,21 @@
 			<groupId>ch.qos.logback</groupId>
 			<artifactId>logback-classic</artifactId>
 		</dependency>
-		
-		<!--
-		<dependency>
-    		<groupId>org.slf4j</groupId>
-    		<artifactId>slf4j-jdk14</artifactId>
-    		<version>1.8.0-beta4</version>
-		</dependency>
-		<dependency>
-    		<groupId>org.slf4j</groupId>
-    		<artifactId>slf4j-simple</artifactId>
-    		<version>1.8.0-beta4</version>
-		</dependency>
-		<dependency>
-    		<groupId>org.slf4j</groupId>
-    		<artifactId>slf4j-nop</artifactId>
-    		<version>1.8.0-beta4</version>
-		</dependency>
-		-->
 
+		<!-- Cassandra Driver -->
 		<dependency>
-			<groupId>com.datastax.dse</groupId>
-			<artifactId>dse-java-driver-core</artifactId>
+			<groupId>com.datastax.oss</groupId>
+			<artifactId>java-driver-core</artifactId>
 		</dependency>
 		<dependency>
-			<groupId>com.datastax.dse</groupId>
-			<artifactId>dse-java-driver-query-builder</artifactId>
+			<groupId>com.datastax.oss</groupId>
+			<artifactId>java-driver-query-builder</artifactId>
 		</dependency>
 		<dependency>
-			<groupId>com.datastax.dse</groupId>
-			<artifactId>dse-java-driver-mapper-runtime</artifactId>
+			<groupId>com.datastax.oss</groupId>
+			<artifactId>java-driver-mapper-runtime</artifactId>
 		</dependency>
+		
 		<dependency>
 		   <groupId>com.evanlennick</groupId>
 		   <artifactId>retry4j</artifactId>

@@ -19,8 +19,8 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import com.datastax.dse.driver.api.core.DseSession;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
+import com.datastax.oss.driver.api.core.CqlSession;
 import com.killrvideo.grpc.GrpcMappingUtils;
 import com.killrvideo.messaging.dao.MessagingDao;
 import com.killrvideo.service.rating.dao.RatingDseDao;
@@ -59,7 +59,7 @@ public class RatingsServiceGrpc extends RatingsServiceImplBase {
     private String topicvideoRated;
     
     @Autowired
-    private DseSession dseSession;
+    private CqlSession cqlSession;
     
     @Autowired
     @Qualifier("killrvideo.keyspace")
@@ -67,7 +67,7 @@ public class RatingsServiceGrpc extends RatingsServiceImplBase {
     
     @PostConstruct
     public void init() {
-        dseRatingDao = new RatingDseDaoMapperBuilder(dseSession).build().ratingDao(dseKeySpace);
+        dseRatingDao = new RatingDseDaoMapperBuilder(cqlSession).build().ratingDao(dseKeySpace);
     }
     
     /** {@inheritDoc} */

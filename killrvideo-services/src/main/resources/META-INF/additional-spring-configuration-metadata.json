@@ -197,6 +197,31 @@
       "name": "killrvideo.messaging.memory.queueSize",
       "type": "java.lang.Integer",
       "defaultValue": "1"
+    },
+    {
+      "name": "killrvideo.apollo.override-local-dse",
+      "type": "java.lang.Boolean",
+      "defaultValue": "false"
+    },
+    {
+      "name": "killrvideo.apollo.username",
+      "type": "java.lang.String",
+      "defaultValue": "cassandra"
+    },
+    {
+      "name": "killrvideo.apollo.password",
+      "type": "java.lang.String",
+      "defaultValue": "cassandra"
+    },
+    {
+      "name": "killrvideo.apollo.keyspace",
+      "type": "java.lang.String",
+      "defaultValue": "killrvideo"
+    },
+    {
+      "name": "killrvideo.apollo.secure-connect-bundle",
+      "type": "java.lang.String",
+      "defaultValue": "/tmp/apollo.zip"
     }],
   "hints": []
 }

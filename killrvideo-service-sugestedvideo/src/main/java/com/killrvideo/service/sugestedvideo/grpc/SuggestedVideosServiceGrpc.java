@@ -24,8 +24,8 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import com.datastax.dse.driver.api.core.DseSession;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
+import com.datastax.oss.driver.api.core.CqlSession;
 import com.killrvideo.dse.dto.Video;
 import com.killrvideo.service.sugestedvideo.dao.SuggestedVideosDseDao;
 import com.killrvideo.service.sugestedvideo.dao.SuggestedVideosDseDaoApollo;
@@ -56,7 +56,7 @@ public class SuggestedVideosServiceGrpc extends SuggestedVideoServiceImplBase {
     private SuggestedVideosDseDao suggestedVideosDseDao;
     
     @Autowired
-    private DseSession dseSession;
+    private CqlSession cqlSession;
     
     @Autowired
     @Qualifier("killrvideo.keyspace")
@@ -85,7 +85,7 @@ public class SuggestedVideosServiceGrpc extends SuggestedVideoServiceImplBase {
             suggestedVideosDseDao = new SuggestedVideosDseDaoApollo();
         } else {
             suggestedVideosDseDao = 
-                    new SuggestedVideosDseDaoMapperBuilder(dseSession).build().suggestedVideosDao(dseKeySpace);
+                    new SuggestedVideosDseDaoMapperBuilder(cqlSession).build().suggestedVideosDao(dseKeySpace);
         }
         
         

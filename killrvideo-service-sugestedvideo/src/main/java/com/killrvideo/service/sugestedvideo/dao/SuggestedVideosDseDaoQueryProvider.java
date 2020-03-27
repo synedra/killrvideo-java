@@ -23,7 +23,7 @@ import com.datastax.oss.driver.api.mapper.MapperContext;
 import com.datastax.oss.driver.api.mapper.annotations.QueryProvider;
 import com.datastax.oss.driver.api.mapper.entity.EntityHelper;
 import com.datastax.oss.protocol.internal.util.Bytes;
-import com.killrvideo.conf.DseDriverConfiguration;
+import com.killrvideo.conf.DriverConfigurationFile;
 import com.killrvideo.dse.dao.DseSchema;
 import com.killrvideo.dse.dto.ResultListPage;
 import com.killrvideo.dse.dto.Video;
@@ -123,7 +123,7 @@ public class SuggestedVideosDseDaoQueryProvider implements DseSchema {
         BoundStatement stmt = psSearchRelatedVideos.bind()
                     .setString(SOLR_QUERY, solrQuery.toString())
                     .setPageSize(fetchSize)
-                    .setExecutionProfileName(DseDriverConfiguration.EXECUTION_PROFILE_SEARCH);
+                    .setExecutionProfileName(DriverConfigurationFile.EXECUTION_PROFILE_SEARCH);
         if (pagingState.isPresent()) {
             stmt = stmt.setPagingState(Bytes.fromHexString(pagingState.get()));
         }

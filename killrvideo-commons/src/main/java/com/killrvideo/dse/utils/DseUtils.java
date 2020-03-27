@@ -9,8 +9,8 @@ import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.datastax.dse.driver.api.core.DseSession;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
+import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.cql.BoundStatement;
 import com.datastax.oss.driver.api.core.cql.BoundStatementBuilder;
 import com.datastax.oss.driver.api.core.cql.PreparedStatement;
@@ -43,28 +43,28 @@ public class DseUtils {
      * @param keyspacename
      *      target keyspaceName
      */
-    public static void createKeySpaceSimpleStrategy(DseSession dseSession, String keyspacename, int replicationFactor) {
-        dseSession.execute(SchemaBuilder.createKeyspace(keyspacename)
+    public static void createKeySpaceSimpleStrategy(CqlSession cqlSession, String keyspacename, int replicationFactor) {
+        cqlSession.execute(SchemaBuilder.createKeyspace(keyspacename)
                   .ifNotExists()
                   .withSimpleStrategy(replicationFactor)
                   .build());
-        useKeySpace(dseSession, keyspacename);
+        useKeySpace(cqlSession, keyspacename);
     }
     
-    public static boolean isTableEmpty(DseSession dseSession, CqlIdentifier keyspace, CqlIdentifier tablename) {
-        return 0 == dseSession.execute(QueryBuilder.selectFrom(keyspace, tablename).all().build()).getAvailableWithoutFetching();
+    public static boolean isTableEmpty(CqlSession cqlSession, CqlIdentifier keyspace, CqlIdentifier tablename) {
+        return 0 == cqlSession.execute(QueryBuilder.selectFrom(keyspace, tablename).all().build()).getAvailableWithoutFetching();
     }
     
-    public static void useKeySpace(DseSession dseSession, String keyspacename) {
-        dseSession.execute("USE " + keyspacename);
+    public static void useKeySpace(CqlSession cqlSession, String keyspacename) {
+        cqlSession.execute("USE " + keyspacename);
     }
     
-    public static void dropKeyspace(DseSession dseSession, String keyspacename) {
-        dseSession.executeAsync(SchemaBuilder.dropKeyspace(keyspacename).ifExists().build());
+    public static void dropKeyspace(CqlSession cqlSession, String keyspacename) {
+        cqlSession.executeAsync(SchemaBuilder.dropKeyspace(keyspacename).ifExists().build());
     }
     
-    public static void truncateTable(DseSession dseSession, CqlIdentifier keyspace, CqlIdentifier tableName) {
-        dseSession.execute(QueryBuilder.truncate(keyspace, tableName).build());
+    public static void truncateTable(CqlSession cqlSession, CqlIdentifier keyspace, CqlIdentifier tableName) {
+        cqlSession.execute(QueryBuilder.truncate(keyspace, tableName).build());
     }
     
     /**
@@ -77,7 +77,7 @@ public class DseUtils {
      * @throws FileNotFoundException
      *      cql file has not been found.
      */
-    public static void executeCQLFile(DseSession dseSession, String fileName)
+    public static void executeCQLFile(CqlSession cqlSession, String fileName)
     throws FileNotFoundException {
         long top = System.currentTimeMillis();
         LOGGER.info("Processing file: " + fileName);
@@ -85,7 +85,7 @@ public class DseUtils {
             String query = statement.replaceAll(NEW_LINE, "").trim();
             try {
                 if (query.length() > 0) {
-                    dseSession.execute(query);
+                    cqlSession.execute(query);
                     LOGGER.info(" + Executed. " + query);
                 }
             } catch (InvalidQueryException e) {

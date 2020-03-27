@@ -34,7 +34,7 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
 		<!-- DataStax Java-Driver -->
-		<dse-java-driver.version>2.3.0</dse-java-driver.version>
+		<cassandra-java-driver.version>4.5.1</cassandra-java-driver.version>
 		
 		<!-- Spring -->
 		<spring.version>5.1.9.RELEASE</spring.version>
@@ -82,22 +82,22 @@
 
 	<dependencyManagement>
 		<dependencies>
-		
-			<!-- DSE Driver v2 -->
+
+			<!-- Merge Drivers -->
 			<dependency>
-				<groupId>com.datastax.dse</groupId>
-				<artifactId>dse-java-driver-core</artifactId>
-				<version>${dse-java-driver.version}</version>
+				<groupId>com.datastax.oss</groupId>
+				<artifactId>java-driver-core</artifactId>
+				<version>${cassandra-java-driver.version}</version>
 			</dependency>
 			<dependency>
-				<groupId>com.datastax.dse</groupId>
-				<artifactId>dse-java-driver-query-builder</artifactId>
-				<version>${dse-java-driver.version}</version>
+				<groupId>com.datastax.oss</groupId>
+				<artifactId>java-driver-query-builder</artifactId>
+				<version>${cassandra-java-driver.version}</version>
 			</dependency>
 			<dependency>
-				<groupId>com.datastax.dse</groupId>
-				<artifactId>dse-java-driver-mapper-runtime</artifactId>
-				<version>${dse-java-driver.version}</version>
+				<groupId>com.datastax.oss</groupId>
+				<artifactId>java-driver-mapper-runtime</artifactId>
+				<version>${cassandra-java-driver.version}</version>
 			</dependency>
 			
 			<!-- Bean Validation -->
@@ -294,9 +294,9 @@
 						<target>${java.version}</target>
 						<annotationProcessorPaths>
 							<path>
-								<groupId>com.datastax.dse</groupId>
-								<artifactId>dse-java-driver-mapper-processor</artifactId>
-								<version>${dse-java-driver.version}</version>
+								<groupId>com.datastax.oss</groupId>
+								<artifactId>java-driver-mapper-processor</artifactId>
+								<version>${cassandra-java-driver.version}</version>
 							</path>
 						</annotationProcessorPaths>
 					</configuration>

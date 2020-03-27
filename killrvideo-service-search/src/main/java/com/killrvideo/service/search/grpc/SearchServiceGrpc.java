@@ -19,8 +19,8 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import com.datastax.dse.driver.api.core.DseSession;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
+import com.datastax.oss.driver.api.core.CqlSession;
 import com.killrvideo.dse.dto.ResultListPage;
 import com.killrvideo.dse.dto.Video;
 import com.killrvideo.service.search.dao.SearchDseDao;
@@ -50,7 +50,7 @@ public class SearchServiceGrpc extends SearchServiceImplBase {
     private SearchDseDao dseSearchDao;
     
     @Autowired
-    private DseSession dseSession;
+    private CqlSession cqlSession;
     
     @Autowired
     @Qualifier("killrvideo.keyspace")
@@ -74,7 +74,7 @@ public class SearchServiceGrpc extends SearchServiceImplBase {
             LOGGER.info("Search service will use Apollo");
             dseSearchDao = new SearchDseDaoApollo();
         } else {
-            dseSearchDao = new SearchDseDaoMapperBuilder(dseSession).build().searchDao(dseKeySpace);
+            dseSearchDao = new SearchDseDaoMapperBuilder(cqlSession).build().searchDao(dseKeySpace);
         }
     }
     

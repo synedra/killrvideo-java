@@ -16,10 +16,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 import org.springframework.util.Assert;
 
-import com.datastax.dse.driver.api.core.DseSession;
 import com.datastax.dse.driver.api.core.graph.FluentGraphStatement;
 import com.datastax.dse.driver.api.core.graph.GraphNode;
 import com.datastax.dse.driver.api.core.graph.GraphStatement;
+import com.datastax.oss.driver.api.core.CqlSession;
 import com.killrvideo.dse.dto.Video;
 import com.killrvideo.dse.graph.KillrVideoTraversal;
 import com.killrvideo.dse.graph.KillrVideoTraversalConstants;
@@ -41,7 +41,7 @@ public class SuggestedVideosGraphDao implements KillrVideoTraversalConstants {
     private KillrVideoTraversalSource traversalSource;
     
     @Autowired
-    private DseSession dseSession;
+    private CqlSession cqlSession;
     
     /**
      * Search for videos.
@@ -55,7 +55,7 @@ public class SuggestedVideosGraphDao implements KillrVideoTraversalConstants {
         Assert.notNull(userid, "videoid is required to update statistics");
         KillrVideoTraversal<?,?> graphTraversal = 
                 traversalSource.users(userid.toString()).recommendByUserRating(5, 4, 1000, 5);
-        return dseSession
+        return cqlSession
                .executeAsync(FluentGraphStatement.newInstance(graphTraversal))
                .thenApply(agrs -> agrs.currentPage())
                .thenApply(iter -> StreamSupport.stream(iter.spliterator(), false))
@@ -141,7 +141,7 @@ public class SuggestedVideosGraphDao implements KillrVideoTraversalConstants {
          *  Now that our video is successfully applied lets
          *  insert that video into our graph for the recommendation engine 
          */
-        dseSession.executeAsync(FluentGraphStatement.newInstance(traversal))
+         cqlSession.executeAsync(FluentGraphStatement.newInstance(traversal))
                   .toCompletableFuture()
                   .whenComplete((graphResultSet, ex) -> {
             if (graphResultSet != null) {
@@ -164,7 +164,7 @@ public class SuggestedVideosGraphDao implements KillrVideoTraversalConstants {
     public void updateGraphNewUser(UUID userId, String email, Date userCreation) {
         KillrVideoTraversal<?, ?> graphTraversal = traversalSource.user(userId, email, userCreation);
         GraphStatement<?> graphStatement = FluentGraphStatement.newInstance(graphTraversal);
-        dseSession.executeAsync(graphStatement)
+        cqlSession.executeAsync(graphStatement)
                   .toCompletableFuture()
                   .whenComplete((graphResultSet, ex) -> {
             if (graphResultSet != null) {
@@ -187,7 +187,7 @@ public class SuggestedVideosGraphDao implements KillrVideoTraversalConstants {
     public void updateGraphNewUserRating(String videoId, UUID userId, int rate) {
         final KillrVideoTraversal<?,?> graphTraversal = traversalSource.videos(videoId).add(__.rated(userId, rate));
         GraphStatement<?> graphStatement = FluentGraphStatement.newInstance(graphTraversal);
-        dseSession.executeAsync(graphStatement)
+        cqlSession.executeAsync(graphStatement)
                   .toCompletableFuture()
                   .whenComplete((graphResultSet, ex) -> {
             if (graphResultSet != null) {

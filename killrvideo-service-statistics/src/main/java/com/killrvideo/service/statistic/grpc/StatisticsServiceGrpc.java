@@ -20,8 +20,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
-import com.datastax.dse.driver.api.core.DseSession;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
+import com.datastax.oss.driver.api.core.CqlSession;
 import com.killrvideo.service.statistic.dao.StatisticsDseDao;
 import com.killrvideo.service.statistic.dao.StatisticsDseDaoMapperBuilder;
 import com.killrvideo.service.statistic.dto.VideoPlaybackStats;
@@ -50,7 +50,7 @@ public class StatisticsServiceGrpc extends StatisticsServiceImplBase {
     private StatisticsDseDao statisticsDseDao;
     
     @Autowired
-    private DseSession dseSession;
+    private CqlSession cqlSession;
     
     @Autowired
     @Qualifier("killrvideo.keyspace")
@@ -58,7 +58,7 @@ public class StatisticsServiceGrpc extends StatisticsServiceImplBase {
     
     @PostConstruct
     public void init() {
-        statisticsDseDao = new StatisticsDseDaoMapperBuilder(dseSession).build().statisticsDao(dseKeySpace);
+        statisticsDseDao = new StatisticsDseDaoMapperBuilder(cqlSession).build().statisticsDao(dseKeySpace);
     }
     
     /** {@inheritDoc} */

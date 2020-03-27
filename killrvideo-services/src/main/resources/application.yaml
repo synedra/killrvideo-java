@@ -15,6 +15,7 @@ spring:
 # KillrVideo Backend Services
 # ----------------------------------------------------------------------
 killrvideo:
+
   application:
     name: killrvideo
     
@@ -32,44 +33,16 @@ killrvideo:
       user: true
       suggestedVideo: true
   
-  apollo:
-    # SET THIS PROPERTY TO TRUE TO ENABLE APOLLO
-    override-local-dse: true
-    # Provide USERNAME used to create Database
-    username: KVUser
-    # Provide PASSWORD used to create Database
-    password: KVPassword
-    keyspace: killrvideo
-    secure-connect-bundle: /home/ubuntu/workspace/creds.zip
-    
   # ----------------------------------------------------------------------
-  # DataStax Enterprise
+  # Cassandra configuration
   # ----------------------------------------------------------------------
   dse:
-    # You can override this value by defining env var: KILLRVIDEO_DSE_CONTACT_POINTS
-    contactPoints: localhost
-    port: 9042
-    localdc: dc1
-    keyspace: killrvideo
-    username:
-    password:
-    
-    timeout: 5 seconds
-    consistency: LOCAL_QUORUM
+    # You can override this value by defining env var: KILLRVIDEO_DSE_CONFIGURATION_FILE
+    configFile: application.conf
     maxNumberOfTries: 50
     delayBetweenTries: 5
-    ssl:
-      # You can override this value by defining env var: KILLRVIDEO_ENABLE_SSL
-      enable: false
-      # You can override this value by defining env var: KILLRVIDEO_SSL_CERTIFICATE
-      CACertFileLocation: cassandra.cert
     search:
-      timeout: 5 seconds
-      consistency: LOCAL_ONE
       ignoredWords: and,or,but,nor,so,for,yet,after,as,till,to,the,at,in,not,now,of,if,this,an,are,all,about,along,by,is,it,on,why,be,can,com,get,out,see,some,new,these,that,thing,things,wish,known,say,they,had,here,like,live,let,do,with,what,when,www,watch,will,http,https,us,you,your,more,his,her,they,them,their,me,we,near,bit,ly,back,meet,know,key,video,various,find,only,from,kind,channel,comments,below,check,right,full,while,gets,up,each,no,buy,a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z
-    graph:
-      timeout: 5 seconds
-      recommendation.name: killrvideo_video_recommendations
     mutation-error-log: /tmp/killrvideo-mutation-errors.log
     
   # ----------------------------------------------------------------------

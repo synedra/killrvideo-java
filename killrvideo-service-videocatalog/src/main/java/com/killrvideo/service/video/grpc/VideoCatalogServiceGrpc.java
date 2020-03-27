@@ -31,8 +31,8 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import com.datastax.dse.driver.api.core.DseSession;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
+import com.datastax.oss.driver.api.core.CqlSession;
 import com.google.protobuf.Timestamp;
 import com.killrvideo.dse.dto.CustomPagingState;
 import com.killrvideo.dse.dto.Video;
@@ -80,7 +80,7 @@ public class VideoCatalogServiceGrpc extends VideoCatalogServiceImplBase {
     private MessagingDao messagingDao;
     
     @Autowired
-    private DseSession dseSession;
+    private CqlSession cqlSession;
     
     @Autowired
     @Qualifier("killrvideo.keyspace")
@@ -88,7 +88,7 @@ public class VideoCatalogServiceGrpc extends VideoCatalogServiceImplBase {
     
     @PostConstruct
     public void init() {
-        videoCatalogDao = new VideoCatalogDseDaoMapperBuilder(dseSession).build().videoCatalogDao(dseKeySpace);
+        videoCatalogDao = new VideoCatalogDseDaoMapperBuilder(cqlSession).build().videoCatalogDao(dseKeySpace);
     }
 
     /** {@inheritDoc} */

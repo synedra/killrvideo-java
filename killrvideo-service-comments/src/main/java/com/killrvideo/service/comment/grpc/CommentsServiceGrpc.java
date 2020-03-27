@@ -21,8 +21,8 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import com.datastax.dse.driver.api.core.DseSession;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
+import com.datastax.oss.driver.api.core.CqlSession;
 import com.killrvideo.grpc.GrpcMappingUtils;
 import com.killrvideo.messaging.dao.MessagingDao;
 import com.killrvideo.service.comment.dao.CommentDseDao;
@@ -57,7 +57,7 @@ public class CommentsServiceGrpc extends CommentsServiceImplBase {
     private CommentDseDao dseCommentDao;
    
     @Autowired
-    private DseSession dseSession;
+    private CqlSession cqlSession;
     
     @Autowired
     @Qualifier("killrvideo.keyspace")
@@ -71,7 +71,7 @@ public class CommentsServiceGrpc extends CommentsServiceImplBase {
     
     @PostConstruct
     public void init() {
-        dseCommentDao = new CommentDseDaoMapperBuilder(dseSession).build().commentDao(dseKeySpace);
+        dseCommentDao = new CommentDseDaoMapperBuilder(cqlSession).build().commentDao(dseKeySpace);
     }
     
     /** {@inheritDoc} */

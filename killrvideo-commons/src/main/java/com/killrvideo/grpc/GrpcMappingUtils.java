@@ -22,7 +22,6 @@ public class GrpcMappingUtils {
     /**
      * Conversions.
      */
-    
     public static TimeUuid uuidToTimeUuid(UUID uuid) {
         if (null == uuid) return null;
         return TimeUuid.newBuilder().setValue(uuid.toString()).build();

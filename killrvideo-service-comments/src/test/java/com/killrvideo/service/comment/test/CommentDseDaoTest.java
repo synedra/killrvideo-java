@@ -1,36 +1,12 @@
 package com.killrvideo.service.comment.test;
 
 import static com.datastax.oss.driver.api.querybuilder.SchemaBuilder.createTable;
-import static com.killrvideo.dse.utils.DseUtils.createKeySpaceSimpleStrategy;
-import static com.killrvideo.dse.utils.DseUtils.isTableEmpty;
-import static com.killrvideo.dse.utils.DseUtils.truncateTable;
 
-import java.net.InetSocketAddress;
-import java.util.UUID;
-
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.testcontainers.containers.GenericContainer;
-
-import com.datastax.dse.driver.api.core.DseSession;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.metadata.schema.ClusteringOrder;
 import com.datastax.oss.driver.api.core.type.DataTypes;
-import com.datastax.oss.driver.internal.core.metadata.DefaultEndPoint;
 import com.killrvideo.dse.dao.DseSchema;
-import com.killrvideo.dse.dto.ResultListPage;
-import com.killrvideo.service.comment.dao.CommentDseDao;
-import com.killrvideo.service.comment.dao.CommentDseDaoMapperBuilder;
-import com.killrvideo.service.comment.dao.dto.Comment;
-import com.killrvideo.service.comment.dao.dto.CommentByUserEntity;
-import com.killrvideo.service.comment.dao.dto.CommentByVideoEntity;
-import com.killrvideo.service.comment.grpc.dto.QueryCommentByUser;
-import com.killrvideo.service.comment.grpc.dto.QueryCommentByVideo;
 
 /**
  * Integration Test for Comment Services.

@@ -32,7 +32,7 @@ import com.killrvideo.service.comment.grpc.dto.QueryCommentByVideo;
  */
 public class CommentDseDaoQueryProvider implements CommentDseDao, DseSchema {
 
-    private final CqlSession dseSession;
+    private final CqlSession cqlSession;
     
     private final EntityHelper<CommentByUserEntity>  entityHelperCommentsByUser;
     private final EntityHelper<CommentByVideoEntity> entityHelperCommentsByVideo;
@@ -63,11 +63,11 @@ public class CommentDseDaoQueryProvider implements CommentDseDao, DseSchema {
             EntityHelper<CommentByUserEntity> helperUser,
             EntityHelper<CommentByVideoEntity> helperVideo) {
         
-        this.dseSession                    = context.getSession();
+        this.cqlSession                    = context.getSession();
         this.entityHelperCommentsByUser    = helperUser;
         this.entityHelperCommentsByVideo   = helperVideo;
         
-        this.psFindCommentsByUser          = dseSession.prepare(
+        this.psFindCommentsByUser          = cqlSession.prepare(
                 selectFrom(TABLENAME_COMMENTS_BY_USER_)
                 .column(COMMENTS_COLUMN_USERID).column(COMMENTS_COLUMN_COMMENTID)
                 .column(COMMENTS_COLUMN_VIDEOID).column(COMMENTS_COLUMN_COMMENT)
@@ -75,7 +75,7 @@ public class CommentDseDaoQueryProvider implements CommentDseDao, DseSchema {
                 .where(column(COMMENTS_COLUMN_USERID).isEqualTo(bindMarker(COMMENTS_COLUMN_USERID)))
                 .build());
         
-        this.psFindCommentsByUserPageable  = dseSession.prepare(
+        this.psFindCommentsByUserPageable  = cqlSession.prepare(
                 selectFrom(TABLENAME_COMMENTS_BY_USER_)
                 .column(COMMENTS_COLUMN_USERID).column(COMMENTS_COLUMN_USERID)
                 .column(COMMENTS_COLUMN_VIDEOID).column(COMMENTS_COLUMN_COMMENT)
@@ -85,7 +85,7 @@ public class CommentDseDaoQueryProvider implements CommentDseDao, DseSchema {
                        column(COMMENTS_COLUMN_COMMENTID).isLessThanOrEqualTo(bindMarker(COMMENTS_COLUMN_COMMENTID)))
                 .build());
         
-        this.psFindCommentsByVideo         = dseSession.prepare(
+        this.psFindCommentsByVideo         = cqlSession.prepare(
                 selectFrom(TABLENAME_COMMENTS_BY_VIDEO)
                 .column(COMMENTS_COLUMN_USERID).column(COMMENTS_COLUMN_USERID)
                 .column(COMMENTS_COLUMN_VIDEOID).column(COMMENTS_COLUMN_COMMENT)
@@ -94,7 +94,7 @@ public class CommentDseDaoQueryProvider implements CommentDseDao, DseSchema {
                 .where(column(COMMENTS_COLUMN_VIDEOID).isEqualTo(bindMarker(COMMENTS_COLUMN_VIDEOID)))
                 .build());
         
-        this.psFindCommentsByVideoPageable = dseSession.prepare(
+        this.psFindCommentsByVideoPageable = cqlSession.prepare(
                 selectFrom(TABLENAME_COMMENTS_BY_VIDEO)
                 .column(COMMENTS_COLUMN_USERID).column(COMMENTS_COLUMN_USERID)
                 .column(COMMENTS_COLUMN_VIDEOID).column(COMMENTS_COLUMN_COMMENT)
@@ -104,20 +104,20 @@ public class CommentDseDaoQueryProvider implements CommentDseDao, DseSchema {
                        column(COMMENTS_COLUMN_COMMENTID).isLessThanOrEqualTo(bindMarker(COMMENTS_COLUMN_COMMENTID)))
                 .build());
         
-        this.psInsertCommentUser  = dseSession.prepare(helperUser.insert().asCql());
-        this.psDeleteCommentUser  = dseSession.prepare(helperUser.deleteByPrimaryKey().asCql());
-        this.psInsertCommentVideo = dseSession.prepare(helperVideo.insert().asCql());
-        this.psDeleteCommentVideo = dseSession.prepare(helperVideo.deleteByPrimaryKey().asCql());
+        this.psInsertCommentUser  = cqlSession.prepare(helperUser.insert().asCql());
+        this.psDeleteCommentUser  = cqlSession.prepare(helperUser.deleteByPrimaryKey().asCql());
+        this.psInsertCommentVideo = cqlSession.prepare(helperVideo.insert().asCql());
+        this.psDeleteCommentVideo = cqlSession.prepare(helperVideo.deleteByPrimaryKey().asCql());
     }
     
     /** Javadoc in {@link CommentDseDao} */
     public void upsert(Comment comment) {
-        dseSession.execute(_buildStatementInsertComment(comment));
+        cqlSession.execute(_buildStatementInsertComment(comment));
     }
     
     /** Javadoc in {@link CommentDseDao} */
     public CompletionStage<Void> upsertAsync(Comment comment) {
-        return dseSession.executeAsync(_buildStatementInsertComment(comment))
+        return cqlSession.executeAsync(_buildStatementInsertComment(comment))
                          .thenApply(rs -> null);
     }
     
@@ -129,7 +129,7 @@ public class CommentDseDaoQueryProvider implements CommentDseDao, DseSchema {
         CommentByVideoEntity c2 = new CommentByVideoEntity();
         c2.setVideoid(comment.getVideoid());
         c2.setCommentid(comment.getCommentid());
-        dseSession.execute(
+        cqlSession.execute(
              BatchStatement.builder(DefaultBatchType.LOGGED)
                  .addStatement(bind(psDeleteCommentUser,  c1, entityHelperCommentsByUser))
                  .addStatement(bind(psDeleteCommentVideo, c2, entityHelperCommentsByVideo))
@@ -138,26 +138,26 @@ public class CommentDseDaoQueryProvider implements CommentDseDao, DseSchema {
     
     /** Javadoc in {@link CommentDseDao} */
     public ResultListPage<CommentByVideoEntity> findCommentsByVideoId(final QueryCommentByVideo query) {
-        return new ResultListPage<>(dseSession.execute(_buildStatementVideoComments(query))
+        return new ResultListPage<>(cqlSession.execute(_buildStatementVideoComments(query))
                                               .map(entityHelperCommentsByVideo::get));
     }
     
     /** Javadoc in {@link CommentDseDao} */
     public CompletionStage<ResultListPage<CommentByVideoEntity>> findCommentsByVideoIdAsync(final QueryCommentByVideo query) {
-        return dseSession.executeAsync(_buildStatementVideoComments(query))
+        return cqlSession.executeAsync(_buildStatementVideoComments(query))
                          .thenApply(ars  -> ars.map(entityHelperCommentsByVideo::get))
                          .thenApply(ResultListPage::new);
     }
     
     /** Javadoc in {@link CommentDseDao} */
     public ResultListPage<CommentByUserEntity> findCommentsByUserId(final QueryCommentByUser query) {
-        return new ResultListPage<>(dseSession.execute(_buildStatementUserComments(query))
+        return new ResultListPage<>(cqlSession.execute(_buildStatementUserComments(query))
                                               .map(entityHelperCommentsByUser::get));
     }
     
     /** Javadoc in {@link CommentDseDao} */
     public CompletionStage<ResultListPage<CommentByUserEntity>> findCommentsByUserIdAsync(final QueryCommentByUser query) {
-        return dseSession.executeAsync(_buildStatementUserComments(query))
+        return cqlSession.executeAsync(_buildStatementUserComments(query))
                          .thenApply(ars  -> ars.map(entityHelperCommentsByUser::get))
                          .thenApply(ResultListPage::new);
     }
@@ -172,8 +172,8 @@ public class CommentDseDaoQueryProvider implements CommentDseDao, DseSchema {
      */
     @Override
     protected void finalize() throws Throwable {
-        if (dseSession  != null && !dseSession.isClosed()) {
-            dseSession.close();
+        if (cqlSession  != null && !cqlSession.isClosed()) {
+            cqlSession.close();
         }
     }
     

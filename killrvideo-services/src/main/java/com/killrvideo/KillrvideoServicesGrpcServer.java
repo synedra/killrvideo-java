@@ -35,11 +35,15 @@ public class KillrvideoServicesGrpcServer {
     @Value("${killrvideo.grpc-server.port: 50101}")
     private int grpcPort;
     
+    // --- Comment ---
+    
     @Autowired
     private CommentsServiceGrpc commentService;
     
     @Value("${killrvideo.grpc-server.services.comment: true}")
     private boolean commentServiceEnabled = true;
+    
+    // --- Rating ---
     
     @Autowired
     private RatingsServiceGrpc ratingService;
@@ -47,17 +51,23 @@ public class KillrvideoServicesGrpcServer {
     @Value("${killrvideo.grpc-server.services.rating: true}")
     private boolean ratingServiceEnabled = true;
     
+    // --- Search ---
+    
     @Autowired
     private SearchServiceGrpc searchService;
     
     @Value("${killrvideo.grpc-server.services.search: true}")
     private boolean searchServiceEnabled = true;
     
+    // --- Statistics ---
+      
     @Autowired
     private StatisticsServiceGrpc statisticsService;
     
     @Value("${killrvideo.grpc-server.services.statistic: true}")
     private boolean statisticServiceEnabled = true;
+    
+    // --- Video ---
     
     @Autowired
     private VideoCatalogServiceGrpc videoCatalogService;
@@ -65,11 +75,15 @@ public class KillrvideoServicesGrpcServer {
     @Value("${killrvideo.grpc-server.services.videoCatalog: true}")
     private boolean videoCatalogServiceEnabled = true;
     
+    // --- User ---
+    
     @Autowired
     private UserManagementServiceGrpc userService;
     
     @Value("${killrvideo.grpc-server.services.user: true}")
     private boolean userServiceEnabled = true;
+
+    // --- Suggestion ---
     
     @Autowired
     private SuggestedVideosServiceGrpc suggestedVideosService;
@@ -85,35 +99,34 @@ public class KillrvideoServicesGrpcServer {
     @PostConstruct
     public void start() throws Exception {
         LOGGER.info("Starting Grpc Server...");
-        // Create GRPC server referencing only enabled services
         ServerBuilder<?> builder = ServerBuilder.forPort(grpcPort);
         if (commentServiceEnabled) {
+            LOGGER.info(" + Enabling service 'Comment'...");
             builder.addService(this.commentService.bindService());
-            LOGGER.info(" + Enable service 'Comment");
         }
         if (ratingServiceEnabled) {
+            LOGGER.info(" + Enabling service 'Rating'...");
             builder.addService(this.ratingService.bindService());
-            LOGGER.info(" + Enable service 'Rating'");
         }
         if (searchServiceEnabled) {
+            LOGGER.info(" + Enabling service 'Search'...");
             builder.addService(this.searchService.bindService());
-            LOGGER.info(" + Enable service 'Search'");
         }
         if (statisticServiceEnabled) {
+            LOGGER.info(" + Enabling service 'Statistics'...");
             builder.addService(this.statisticsService.bindService());
-            LOGGER.info(" + Enable service 'Statistics'");
         }
         if (videoCatalogServiceEnabled) {
+            LOGGER.info(" + Enabling service 'VideoCatalog'...");
             builder.addService(this.videoCatalogService.bindService());
-            LOGGER.info(" + Enable service 'VideoCatalog'");
         }
         if (suggestedVideoServiceEnabled) {
+            LOGGER.info(" + Enabling service 'SuggestedVideo'...");
             builder.addService(this.suggestedVideosService.bindService());
-            LOGGER.info(" + Enable service 'SuggestedVideo'");
         }
         if (userServiceEnabled) {
+            LOGGER.info(" + Enabling Service 'User'");
             builder.addService(this.userService.bindService());
-            LOGGER.info(" + Enable Service 'User'");
         }
         grpcServer = builder.build();
         

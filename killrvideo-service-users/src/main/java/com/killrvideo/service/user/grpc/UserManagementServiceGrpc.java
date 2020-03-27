@@ -1,7 +1,7 @@
 package com.killrvideo.service.user.grpc;
 
-import static com.killrvideo.service.user.grpc.UserManagementServiceGrpcMapper.mapUserRequest2User;
 import static com.killrvideo.service.user.grpc.UserManagementServiceGrpcMapper.mapResponseVerifyCredentials;
+import static com.killrvideo.service.user.grpc.UserManagementServiceGrpcMapper.mapUserRequest2User;
 import static com.killrvideo.service.user.grpc.UserManagementServiceGrpcValidator.validateGrpcRequest_VerifyCredentials;
 import static com.killrvideo.service.user.grpc.UserManagementServiceGrpcValidator.validateGrpcRequest_createUser;
 import static com.killrvideo.service.user.grpc.UserManagementServiceGrpcValidator.validateGrpcRequest_getUserProfile;
@@ -22,8 +22,8 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import com.datastax.dse.driver.api.core.DseSession;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
+import com.datastax.oss.driver.api.core.CqlSession;
 import com.google.protobuf.Timestamp;
 import com.killrvideo.messaging.dao.MessagingDao;
 import com.killrvideo.service.user.dao.UserDseDao;
@@ -56,7 +56,7 @@ public class UserManagementServiceGrpc extends UserManagementServiceImplBase {
     private UserDseDao userDseDao;
     
     @Autowired
-    private DseSession dseSession;
+    private CqlSession cqlSession;
     
     @Autowired
     @Qualifier("killrvideo.keyspace")
@@ -70,7 +70,7 @@ public class UserManagementServiceGrpc extends UserManagementServiceImplBase {
     
     @PostConstruct
     public void init() {
-        userDseDao = new UserDseDao(dseSession);
+        userDseDao = new UserDseDao(cqlSession);
     }
     
      /** {@inheritDoc} */

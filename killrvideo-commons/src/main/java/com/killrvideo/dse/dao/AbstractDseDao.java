@@ -3,8 +3,8 @@ package com.killrvideo.dse.dao;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 
-import com.datastax.dse.driver.api.core.DseSession;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
+import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.config.DriverConfig;
 
 /**
@@ -15,7 +15,7 @@ import com.datastax.oss.driver.api.core.config.DriverConfig;
 public abstract class AbstractDseDao implements DseSchema {
    
     @Autowired
-    protected DseSession dseSession;
+    protected CqlSession cqlSession;
    
     @Autowired
     @Qualifier("killrvideo.keyspace")
@@ -31,8 +31,8 @@ public abstract class AbstractDseDao implements DseSchema {
     /**
      * Allow explicit intialization for test purpose.
      */
-    public AbstractDseDao(DseSession dseSession) {
-        this.dseSession      = dseSession;
+    public AbstractDseDao(CqlSession dseSession) {
+        this.cqlSession      = dseSession;
         this.dseDriverConfig = dseSession.getContext().getConfig();
         if (!dseSession.getKeyspace().isEmpty()) {
             keyspaceName = dseSession.getKeyspace().get();

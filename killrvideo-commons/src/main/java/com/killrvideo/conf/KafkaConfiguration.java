@@ -56,7 +56,7 @@ public class KafkaConfiguration {
     private String connectionURL;
     
     /**
-     * Should we init connection with ETCD or direct.
+     * Should we init connection with Env VAR or values in `application.yaml`
      *
      * @return
      *      target kafka adress

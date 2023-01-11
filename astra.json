@@ -1,0 +1,12 @@
+{
+  "name": "KillrVideo Starter App",
+  "description": "A reference application for Java developers looking to learn more about using Apache Cassandra and DataStax Enterprise in their applications and services. Learn more at Killrvideo.",
+  "duration": "50 minutes",
+  "skillLevel": "Intermediate",
+  "githubUrl": "https://github.com/datastaxdevs/workshop-betterreads",
+  "tags": [
+    { "name": "java", "spring" }
+  ],
+  "category": "starter",
+  "priority": 2
+}
